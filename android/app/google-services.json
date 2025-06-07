@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "5789706507",
+    "project_id": "ig-mate-cb751",
+    "storage_bucket": "ig-mate-cb751.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:5789706507:android:a7a7bd8486dc0d99231a0e",
+        "android_client_info": {
+          "package_name": "com.example.ig_mate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8xcyw8Q6k1n669UkZBiWlMrruwxCvVP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
