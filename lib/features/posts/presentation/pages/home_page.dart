@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-  static const String routeName = '/home_page';
   @override
   State<HomePage> createState() => _HomePageState();
 }

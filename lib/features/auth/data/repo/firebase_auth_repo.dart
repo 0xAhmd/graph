@@ -30,19 +30,19 @@ class FirebaseAuthRepo implements AuthRepo {
   }
 
   @override
-  Future<AppUser?> registerWithEmailAndPassword(
-    String email,
-    String password,
-    String name,
-  ) async {
+  Future<AppUser?> registerWithEmailAndPassword({
+    String? email,
+    String? password,
+    String? name,
+  }) async {
     try {
       UserCredential userCredential = await firebaseAuth
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(email: email!, password: password!);
 
       // create the user
       AppUser user = AppUser(
         uid: userCredential.user!.uid,
-        name: name,
+        name: name!,
         email: email,
       );
       await firestore.collection('users').doc(user.uid).set(user.toJson());
@@ -55,33 +55,34 @@ class FirebaseAuthRepo implements AuthRepo {
     }
   }
 
-  Future<AppUser?> signInWithEmailAndPassword(
-    String email,
-    String password,
-  ) async {
-    try {
-      print('Attempting FirebaseAuth login for $email');
-      UserCredential userCredential = await firebaseAuth
-          .signInWithEmailAndPassword(email: email, password: password);
-      final uid = userCredential.user!.uid;
-      print('FirebaseAuth login success, uid: $uid');
+@override
+Future<AppUser?> signInWithEmailAndPassword({
+  String? email,
+  String? password,
+}) async {
+  try {
+    print('Attempting FirebaseAuth login for $email');
+    UserCredential userCredential = await firebaseAuth
+        .signInWithEmailAndPassword(email: email!, password: password!);
+    final uid = userCredential.user!.uid;
+    print('FirebaseAuth login success, uid: $uid');
 
-      final doc = await firestore.collection('users').doc(uid).get();
-      if (!doc.exists || doc.data() == null) {
-        print('User Firestore document not found for $uid');
-        throw "User data not found.";
-      }
-
-      print('User Firestore document found for $uid');
-      return AppUser.fromJson(doc.data()!);
-    } on FirebaseAuthException catch (e) {
-      print('FirebaseAuthException: ${e.code}');
-      throw _mapFirebaseAuthErrorToMessage(e);
-    } catch (e) {
-      print('Unknown error: $e');
-      throw "Something went wrong. Please try again.";
+    final doc = await firestore.collection('users').doc(uid).get();
+    if (!doc.exists || doc.data() == null) {
+      print('User Firestore document not found for $uid');
+      throw "User data not found.";
     }
+
+    print('User Firestore document found for $uid');
+    return AppUser.fromJson(doc.data()!);
+  } on FirebaseAuthException catch (e) {
+    print('FirebaseAuthException: ${e.code}');
+    throw _mapFirebaseAuthErrorToMessage(e);
+  } catch (e) {
+    print('Unknown error: $e');
+    throw "Something went wrong. Please try again.";
   }
+}
 
   String _mapFirebaseAuthErrorToMessage(FirebaseAuthException e) {
     switch (e.code) {

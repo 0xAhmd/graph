@@ -9,13 +9,14 @@ final class AuthLoading extends AuthState {}
 
 final class Authenticated extends AuthState {
   final AppUser user;
-  Authenticated(this.user);
-}
 
-final class UnAuthenticated extends AuthState {}
+  Authenticated({required this.user});
+}
 
 final class AuthError extends AuthState {
   final String errMessage;
 
+  AuthError({required this.errMessage});
+}
 
-  AuthError({required this.errMessage});}
+final class UnAuthenticated extends AuthState {}
