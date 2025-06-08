@@ -4,7 +4,6 @@ import 'package:ig_mate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/auth/presentation/pages/register_page.dart';
 import 'package:ig_mate/features/auth/presentation/widget/custom_btn.dart';
 import 'package:ig_mate/features/auth/presentation/widget/custom_text_field.dart';
-import 'package:ig_mate/features/posts/presentation/pages/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,11 +44,7 @@ class _LoginPageState extends State<LoginPage> {
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.errMessage)));
-          } else if (state is Authenticated) {
-            Navigator.pushReplacementNamed(
-              context,
-HomePage.routeName,            ); // Replace with actual home route
-          }
+          } 
         },
         child: SafeArea(
           child: Center(

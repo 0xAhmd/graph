@@ -1,15 +1,3 @@
-/*
-
-the auth cubit will do this things
-
-1. check if the user is authenticated
-2. get current user
-3. sign in with email and password
-4. register with email and password
-5. sign out 
-
- */
-
 import 'package:bloc/bloc.dart';
 import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
 import 'package:ig_mate/features/auth/domain/repo/auth_repo.dart';
@@ -20,12 +8,12 @@ part 'auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepo repo;
   AppUser? _currentUser;
+
   AuthCubit({required this.repo}) : super(AuthInitial());
 
-  // gating
+  // 1. Gating
   void checkUserAuthenticated() async {
     final AppUser? user = await repo.getCurrentUser();
-
     if (user != null) {
       _currentUser = user;
       emit(Authenticated(user));
@@ -34,12 +22,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  // app user
-
+  // 2. Get current user
   AppUser? get currentUser => _currentUser;
 
-  // login with email and password
-
+  // 3. Login
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     try {
       emit(AuthLoading());
@@ -49,6 +35,7 @@ class AuthCubit extends Cubit<AuthState> {
         _currentUser = user;
         emit(Authenticated(user));
       } else {
+        emit(AuthError(errMessage: 'Login failed.'));
         emit(UnAuthenticated());
       }
     } catch (e) {
@@ -57,6 +44,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  // 4. Register
   Future<void> registerWithEmailAndPassword({
     required String name,
     required String email,
@@ -71,21 +59,22 @@ class AuthCubit extends Cubit<AuthState> {
       );
 
       if (user != null) {
+        _currentUser = user;
         emit(Authenticated(user));
       } else {
+        emit(AuthError(errMessage: 'Registration failed.'));
         emit(UnAuthenticated());
       }
     } catch (e) {
-      // If the error is already a string message, emit it directly,
-      // otherwise fallback to generic message.
-      final errorMessage = (e is String) ? e : "An unknown error occurred.";
+      final errorMessage = (e is String) ? e : 'An unknown error occurred.';
       emit(AuthError(errMessage: errorMessage));
       emit(UnAuthenticated());
     }
   }
 
+  // 5. Logout
   Future<void> logout() async {
-    repo.logout();
+    await repo.logout();
     emit(UnAuthenticated());
   }
 

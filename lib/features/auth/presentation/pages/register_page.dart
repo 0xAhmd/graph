@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/core/helpers/password_strength.dart';
+import 'package:ig_mate/core/helpers/password_validator.dart';
+
+import 'package:ig_mate/core/helpers/validators.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/auth/presentation/pages/login_page.dart';
 import 'package:ig_mate/features/auth/presentation/widget/custom_btn.dart';
@@ -22,20 +25,19 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _passwordCnfrmController =
       TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+
   PasswordStrength _passwordStrength = PasswordStrength.weak;
   final FocusNode _passwordFocusNode = FocusNode();
   bool _isPasswordFocused = false;
 
-  final String _passwordPattern =
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~_])[A-Za-z\d!@#\$&*~_]{8,}$';
-
   void register() {
     final authCubit = context.read<AuthCubit>();
 
-    final String email = _emailController.text;
-    final String name = _nameController.text;
+    final String email = _emailController.text.trim();
+    final String name = _nameController.text.trim();
     final String pw = _passwordController.text;
     final String pwConfirm = _passwordCnfrmController.text;
+
     if (_formKey.currentState!.validate()) {
       if (pw == pwConfirm) {
         authCubit.registerWithEmailAndPassword(
@@ -44,8 +46,6 @@ class _RegisterPageState extends State<RegisterPage> {
           password: pw,
         );
       }
-
-      debugPrint('All fields are valid, registration submitted.');
     }
   }
 
@@ -76,10 +76,9 @@ class _RegisterPageState extends State<RegisterPage> {
         listener: (context, state) {
           if (state is Authenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Registration successful!')),
+              const SnackBar(content: Text('Account Registered Successfully!')),
             );
-            context.read<AuthCubit>().emitUnAuthenticated();
-            Navigator.pushReplacementNamed(context, LoginPage.routeName);
+          
           } else if (state is AuthError) {
             ScaffoldMessenger.of(
               context,
@@ -113,10 +112,22 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _nameController,
                       hintText: "Type your name",
                       isObscured: false,
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'Name is required'
-                          : null,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Username is required';
+                        }
+                        final trimmed = value.trim();
+                        if (startsOrEndsWithSpace(value)) {
+                          return 'Username cannot start or end with a space';
+                        }
+                        if (hasDoubleSpaces(trimmed)) {
+                          return 'Multiple spaces are not allowed';
+                        }
+                        if (containsEmoji(trimmed)) {
+                          return 'Emojis are not allowed';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 6),
                     CustomTextField(
@@ -124,13 +135,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       hintText: "Type your email",
                       isObscured: false,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        if (value == null || value.isEmpty) {
                           return 'Email is required';
                         }
-                        if (!RegExp(
-                          r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
-                        ).hasMatch(value)) {
-                          return 'Enter a valid email';
+                        if (!isValidEmail(value)) {
+                          return 'Invalid email format';
                         }
                         return null;
                       },
@@ -142,13 +151,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       isObscured: true,
                       focusNode: _passwordFocusNode,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password is required';
-                        }
-                        if (!RegExp(_passwordPattern).hasMatch(value)) {
-                          return 'Use 8+ chars with upper/lowercase, number, symbol';
-                        }
-                        return null;
+                        return validatePassword(
+                          password: value ?? '',
+                          email: _emailController.text,
+                        );
                       },
                       onChanged: (value) {
                         setState(() {
@@ -158,7 +164,11 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     if (_isPasswordFocused)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.only(
+                          left: 32,
+                          top: 2,
+                          right: 32,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -167,7 +177,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               value: (_passwordStrength.index + 1) / 4,
                               color: getStrengthColor(_passwordStrength),
                               backgroundColor: Colors.grey[300],
-                              minHeight: 4,
+                              minHeight: 3,
                             ),
                             const SizedBox(height: 4),
                             Text(

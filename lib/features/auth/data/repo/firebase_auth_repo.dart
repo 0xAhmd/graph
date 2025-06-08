@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
 import 'package:ig_mate/features/auth/domain/repo/auth_repo.dart';
@@ -6,6 +7,7 @@ class FirebaseAuthRepo implements AuthRepo {
   // get instance from firebase auth
 
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   @override
   Future<AppUser?> getCurrentUser() async {
@@ -14,7 +16,12 @@ class FirebaseAuthRepo implements AuthRepo {
       return null;
     }
 
-    return AppUser(uid: firebaseUser.uid, name: '', email: firebaseUser.email!);
+    final doc = await firestore.collection('users').doc(firebaseUser.uid).get();
+    if (!doc.exists || doc.data() == null) {
+      return null;
+    }
+
+    return AppUser.fromJson(doc.data()!);
   }
 
   @override
@@ -38,6 +45,7 @@ class FirebaseAuthRepo implements AuthRepo {
         name: name,
         email: email,
       );
+      await firestore.collection('users').doc(user.uid).set(user.toJson());
       return user;
     } on FirebaseAuthException catch (e) {
       // convert Firebase error code to user-friendly message and throw it
@@ -47,26 +55,30 @@ class FirebaseAuthRepo implements AuthRepo {
     }
   }
 
-  @override
   Future<AppUser?> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
     try {
+      print('Attempting FirebaseAuth login for $email');
       UserCredential userCredential = await firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
+      final uid = userCredential.user!.uid;
+      print('FirebaseAuth login success, uid: $uid');
 
-      // create the user
-      AppUser user = AppUser(
-        uid: userCredential.user!.uid,
-        name: '',
-        email: email,
-      );
-      return user;
+      final doc = await firestore.collection('users').doc(uid).get();
+      if (!doc.exists || doc.data() == null) {
+        print('User Firestore document not found for $uid');
+        throw "User data not found.";
+      }
+
+      print('User Firestore document found for $uid');
+      return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-      // 👇 convert Firebase code into user-friendly message
+      print('FirebaseAuthException: ${e.code}');
       throw _mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
+      print('Unknown error: $e');
       throw "Something went wrong. Please try again.";
     }
   }
