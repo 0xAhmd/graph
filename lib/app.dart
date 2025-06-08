@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
             routes: {
               LoginPage.routeName: (context) => const LoginPage(),
               RegisterPage.routeName: (context) => const RegisterPage(),
+              HomePage.routeName: (context) => const HomePage(),
             },
             home: BlocConsumer<AuthCubit, AuthState>(
               builder: (context, state) {
@@ -48,7 +49,13 @@ class MyApp extends StatelessWidget {
                   body: Center(child: Text('Unknown state')),
                 );
               },
-              listener: (context, state) {},
+              listener: (context, state) {
+                if (state is AuthError) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.errMessage)));
+                }
+              },
             ),
           );
         },

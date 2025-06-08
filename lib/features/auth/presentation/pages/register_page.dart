@@ -26,19 +26,25 @@ class _RegisterPageState extends State<RegisterPage> {
   final FocusNode _passwordFocusNode = FocusNode();
   bool _isPasswordFocused = false;
 
-  // Password validation pattern
   final String _passwordPattern =
-      r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$';
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~_])[A-Za-z\d!@#\$&*~_]{8,}$';
 
-  void _submit() {
+  void register() {
     final authCubit = context.read<AuthCubit>();
 
+    final String email = _emailController.text;
+    final String name = _nameController.text;
+    final String pw = _passwordController.text;
+    final String pwCnftm = _passwordCnfrmController.text;
     if (_formKey.currentState!.validate()) {
-      authCubit.registerWithEmailAndPassword(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      if (pw == pwCnftm) {
+        authCubit.registerWithEmailAndPassword(
+          name: name,
+          email: email,
+          password: pw,
+        );
+      }
+
       debugPrint('All fields are valid, registration submitted.');
     }
   }
@@ -66,34 +72,33 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: BlocListener<AuthCubit, AuthState>(
-              listener: (context, state) {
-                if (state is UnAuthenticated) {
-                  // Registration successful → go to login
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Registration successful!')),
-                  );
-                  Navigator.pushReplacementNamed(context, LoginPage.routeName);
-                }
-
-                if (state is AuthError) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(state.errMessage)));
-                }
-              },
+      body: BlocListener<AuthCubit, AuthState>(
+        listener: (context, state) {
+          if (state is Authenticated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Registration successful!')),
+            );
+            context.read<AuthCubit>().emitUnAuthenticated();
+            Navigator.pushReplacementNamed(context, LoginPage.routeName);
+          } else if (state is AuthError) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.errMessage)));
+          }
+        },
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
               child: Form(
                 key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.edit,
-                      color: Theme.of(context).colorScheme.primary,
                       size: 90,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -104,17 +109,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     CustomTextField(
                       controller: _nameController,
                       hintText: "Type your name",
                       isObscured: false,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Name is required';
-                        }
-                        return null;
-                      },
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Name is required'
+                          : null,
                     ),
                     const SizedBox(height: 6),
                     CustomTextField(
@@ -122,9 +124,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       hintText: "Type your email",
                       isObscured: false,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                        if (value == null || value.trim().isEmpty)
                           return 'Email is required';
-                        }
                         if (!RegExp(
                           r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
                         ).hasMatch(value)) {
@@ -138,13 +139,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       controller: _passwordController,
                       hintText: "Type your Password",
                       isObscured: true,
-                      focusNode: _passwordFocusNode, // ✅ Now this works
+                      focusNode: _passwordFocusNode,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.isEmpty)
                           return 'Password is required';
-                        }
                         if (!RegExp(_passwordPattern).hasMatch(value)) {
-                          return 'Use 8+ chars with upper and lowercase, number, special char';
+                          return 'Use 8+ chars with upper/lowercase, number, symbol';
                         }
                         return null;
                       },
@@ -154,26 +154,18 @@ class _RegisterPageState extends State<RegisterPage> {
                         });
                       },
                     ),
-
                     if (_isPasswordFocused)
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                right: 4,
-                                left: 4,
-                                top: 2,
-                              ),
-                              child: LinearProgressIndicator(
-                                borderRadius: BorderRadius.circular(10),
-                                value: (_passwordStrength.index + 1) / 4,
-                                color: getStrengthColor(_passwordStrength),
-                                backgroundColor: Colors.grey[300],
-                                minHeight: 6,
-                              ),
+                            LinearProgressIndicator(
+                              borderRadius: BorderRadius.circular(10),
+                              value: (_passwordStrength.index + 1) / 4,
+                              color: getStrengthColor(_passwordStrength),
+                              backgroundColor: Colors.grey[300],
+                              minHeight: 6,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -186,34 +178,29 @@ class _RegisterPageState extends State<RegisterPage> {
                           ],
                         ),
                       ),
-
                     const SizedBox(height: 6),
                     CustomTextField(
                       controller: _passwordCnfrmController,
                       hintText: "Confirm your Password",
                       isObscured: true,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.isEmpty)
                           return 'Please confirm your password';
-                        }
-                        if (value != _passwordController.text) {
+                        if (value != _passwordController.text)
                           return 'Passwords do not match';
-                        }
                         return null;
                       },
                     ),
                     const SizedBox(height: 12),
-
-                    CustomButton(text: "Register", onTap: _submit),
+                    CustomButton(text: "Register", onTap: register),
                     const SizedBox(height: 18),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Already a member ? ",
+                          "Already a member? ",
                           style: TextStyle(fontSize: 16),
                         ),
-                        const SizedBox(width: 4),
                         GestureDetector(
                           onTap: () {
                             Navigator.pushNamed(context, LoginPage.routeName);

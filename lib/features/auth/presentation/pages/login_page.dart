@@ -4,45 +4,51 @@ import 'package:ig_mate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/auth/presentation/pages/register_page.dart';
 import 'package:ig_mate/features/auth/presentation/widget/custom_btn.dart';
 import 'package:ig_mate/features/auth/presentation/widget/custom_text_field.dart';
+import 'package:ig_mate/features/posts/presentation/pages/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   static const String routeName = '/login_page';
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
+
   void login() {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final authCubit = context.read<AuthCubit>();
 
     if (email.isNotEmpty && password.isNotEmpty) {
+      setState(() => _isLoading = true);
       authCubit.signInWithEmailAndPassword(email, password);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please write your email and password correctly"),
-        ),
+        const SnackBar(content: Text("Please enter email and password")),
       );
     }
   }
 
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AuthCubit>().state;
-    final isLoading = state is AuthLoading;
-
     return Scaffold(
       body: BlocListener<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
+            setState(() => _isLoading = false);
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.errMessage)));
+          } else if (state is Authenticated) {
+            Navigator.pushReplacementNamed(
+              context,
+HomePage.routeName,            ); // Replace with actual home route
           }
         },
         child: SafeArea(
@@ -53,8 +59,8 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Icon(
                     Icons.lock_open_rounded,
-                    color: Theme.of(context).colorScheme.primary,
                     size: 90,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -78,8 +84,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 12),
                   CustomButton(
-                    text: isLoading ? "Signing in..." : "Sign in",
-                    onTap: isLoading ? null : login,
+                    text: _isLoading ? "Signing in..." : "Sign in",
+                    onTap: _isLoading ? null : login,
                   ),
                   const SizedBox(height: 18),
                   Row(
@@ -89,13 +95,12 @@ class _LoginPageState extends State<LoginPage> {
                         "Not a member?",
                         style: TextStyle(fontSize: 16),
                       ),
-                      const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () {
                           Navigator.pushNamed(context, RegisterPage.routeName);
                         },
                         child: Text(
-                          "Register Now",
+                          " Register Now",
                           style: TextStyle(
                             fontSize: 15,
                             color: Theme.of(context).colorScheme.primary,
