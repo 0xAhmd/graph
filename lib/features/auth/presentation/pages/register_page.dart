@@ -35,9 +35,9 @@ class _RegisterPageState extends State<RegisterPage> {
     final String email = _emailController.text;
     final String name = _nameController.text;
     final String pw = _passwordController.text;
-    final String pwCnftm = _passwordCnfrmController.text;
+    final String pwConfirm = _passwordCnfrmController.text;
     if (_formKey.currentState!.validate()) {
-      if (pw == pwCnftm) {
+      if (pw == pwConfirm) {
         authCubit.registerWithEmailAndPassword(
           name: name,
           email: email,
@@ -124,8 +124,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       hintText: "Type your email",
                       isObscured: false,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty)
+                        if (value == null || value.trim().isEmpty) {
                           return 'Email is required';
+                        }
                         if (!RegExp(
                           r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$',
                         ).hasMatch(value)) {
@@ -141,8 +142,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       isObscured: true,
                       focusNode: _passwordFocusNode,
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return 'Password is required';
+                        }
                         if (!RegExp(_passwordPattern).hasMatch(value)) {
                           return 'Use 8+ chars with upper/lowercase, number, symbol';
                         }
@@ -165,7 +167,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               value: (_passwordStrength.index + 1) / 4,
                               color: getStrengthColor(_passwordStrength),
                               backgroundColor: Colors.grey[300],
-                              minHeight: 6,
+                              minHeight: 4,
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -184,10 +186,12 @@ class _RegisterPageState extends State<RegisterPage> {
                       hintText: "Confirm your Password",
                       isObscured: true,
                       validator: (value) {
-                        if (value == null || value.isEmpty)
+                        if (value == null || value.isEmpty) {
                           return 'Please confirm your password';
-                        if (value != _passwordController.text)
+                        }
+                        if (value != _passwordController.text) {
                           return 'Passwords do not match';
+                        }
                         return null;
                       },
                     ),
