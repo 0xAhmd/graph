@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               context.read<AuthCubit>().logout();
             },
-            icon: Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout_rounded),
           ),
         ],
         centerTitle: true,
