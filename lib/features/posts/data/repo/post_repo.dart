@@ -1,28 +1,37 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
+import 'package:mime/mime.dart';
+import 'package:path/path.dart' as path;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 
 class PostRepo implements PostRepoContract {
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final _bucket = Supabase.instance.client.storage.from('images');
+  // ignore: unused_field
+  final _firestore = FirebaseFirestore.instance;
   final CollectionReference collectionReference = FirebaseFirestore.instance
       .collection('posts');
+
   @override
   Future<void> createPost(Post post) async {
     try {
-      print("Saving post to Firestore...");
       await collectionReference.doc(post.id).set(post.toJson());
-      print("Post saved!");
     } catch (e) {
-      print('Firestore write error: $e');
-      throw Exception("Error creating post $e");
+      throw Exception("Error creating post: $e");
     }
   }
 
   @override
-  Future<void> deletePost(String postId) async {
+  Future<void> deletePost(String postId, {String? imageExt}) async {
     try {
       await collectionReference.doc(postId).delete();
-    } on Exception catch (e) {
+
+      if (imageExt != null) {
+        final filePath = 'posts/$postId$imageExt';
+        await _bucket.remove([filePath]);
+      }
+    } catch (e) {
       throw Exception("Error deleting post: $e");
     }
   }
@@ -33,11 +42,9 @@ class PostRepo implements PostRepoContract {
       final postsSnapshot = await collectionReference
           .orderBy('timeStamp', descending: true)
           .get();
-
-      final List<Post> allPosts = postsSnapshot.docs
+      return postsSnapshot.docs
           .map((doc) => Post.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
-      return allPosts;
     } catch (e) {
       throw Exception("Error: $e");
     }
@@ -49,13 +56,32 @@ class PostRepo implements PostRepoContract {
       final postSnapShot = await collectionReference
           .where('userId', isEqualTo: userId)
           .get();
-
-      final userPost = postSnapShot.docs
+      return postSnapShot.docs
           .map((doc) => Post.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
-      return userPost;
     } catch (e) {
       throw Exception("Error: $e");
+    }
+  }
+
+  @override
+  Future<String?> uploadPostImage(File file, String postId) async {
+    try {
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${path.basename(file.path)}';
+      final fileBytes = await file.readAsBytes();
+      final mimeType = lookupMimeType(file.path);
+
+      await _bucket.uploadBinary(
+        fileName,
+        fileBytes,
+        fileOptions: FileOptions(contentType: mimeType),
+      );
+
+      return _bucket.getPublicUrl(fileName);
+    } catch (e) {
+      print('Image upload error: $e');
+      return null;
     }
   }
 }

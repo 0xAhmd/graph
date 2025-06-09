@@ -172,7 +172,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
               ),
               const SizedBox(height: 16),
 
-              // Upload post button
             ],
           ),
         ),

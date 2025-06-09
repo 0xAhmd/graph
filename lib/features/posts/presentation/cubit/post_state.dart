@@ -20,3 +20,5 @@ final class PostError extends PostState {
 }
 
 final class PostUploading extends PostState {}
+
+final class PostUploaded extends PostState {}

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:bloc/bloc.dart';
-import 'package:ig_mate/core/helpers/supabase/supabase_storage.dart';
 import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
 import 'package:meta/meta.dart';
@@ -11,7 +10,6 @@ class PostCubit extends Cubit<PostState> {
   final PostRepoContract postRepo;
   PostCubit({required this.postRepo}) : super(PostInitial());
 
-  /// Fetch all posts
   Future<void> fetchAllPosts() async {
     emit(PostLoading());
     try {
@@ -22,18 +20,14 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  /// Create a new post with an optional image
   Future<void> createPost({required Post post, File? imageFile}) async {
     emit(PostUploading());
 
-    String imageUrl = post.imageUrl;
-
     try {
+      String imageUrl = post.imageUrl;
+
       if (imageFile != null) {
-        final uploadedUrl = await SupabaseStorageService.uploadPostImage(
-          imageFile,
-          post.id,
-        );
+        final uploadedUrl = await postRepo.uploadPostImage(imageFile, post.id);
         if (uploadedUrl == null) {
           emit(PostError(errMessage: 'Image upload failed'));
           return;
@@ -42,28 +36,24 @@ class PostCubit extends Cubit<PostState> {
       }
 
       final postToSave = post.copyWith(imageUrl: imageUrl);
-      print("Creating post: ${postToSave.toJson()}");
-
       await postRepo.createPost(postToSave);
-      print("Post created!");
-
-      await fetchAllPosts(); // Refresh post list
+      emit(PostUploaded());
+      await fetchAllPosts();
     } catch (e) {
       emit(PostError(errMessage: 'Error creating post: $e'));
     }
   }
 
-  /// Delete a post and its image from Supabase
   Future<void> deletePost(Post post) async {
     emit(PostLoading());
     try {
+      String? ext;
       if (post.imageUrl.isNotEmpty) {
-        final ext = Uri.parse(post.imageUrl).path.split('.').last;
-        await SupabaseStorageService.deletePostImage(post.id, '.$ext');
+        ext = '.' + Uri.parse(post.imageUrl).path.split('.').last;
       }
 
-      await postRepo.deletePost(post.id);
-      await fetchAllPosts(); // Refresh post list
+      await postRepo.deletePost(post.id, imageExt: ext);
+      await fetchAllPosts();
     } catch (e) {
       emit(PostError(errMessage: 'Error deleting post: $e'));
     }

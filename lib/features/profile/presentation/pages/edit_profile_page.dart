@@ -62,14 +62,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
       },
       builder: (context, state) {
         if (state is ProfileLoading || state is ProfileImageUploading) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CupertinoActivityIndicator(),
-                  SizedBox(height: 15),
-                  Text("Updating your profile..."),
+                  const CupertinoActivityIndicator(),
+                  const SizedBox(height: 15),
+                  Text(
+                    "Updating your profile...",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -132,7 +137,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           const SizedBox(height: 30),
           const Padding(
             padding: EdgeInsets.only(left: 25),
-            child:  Text('Bio', style: TextStyle(fontSize: 18)),
+            child: Text('Bio', style: TextStyle(fontSize: 18)),
           ),
           const SizedBox(height: 10),
           CustomTextField(
