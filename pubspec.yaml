@@ -43,6 +43,7 @@ dependencies:
   fluttertoast: ^8.2.12
   google_fonts: ^6.2.1
   image_picker: ^1.1.2
+  image_picker_web: ^4.0.0
   json_annotation: ^4.9.0
   json_serializable: ^6.9.5
   meta: ^1.16.0
@@ -53,6 +54,8 @@ dependencies:
   retrofit_generator: ^9.2.0
   supabase: ^2.7.0
   supabase_flutter: ^2.9.0
+  universal_io: ^2.2.2
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_lints: ^5.0.0
