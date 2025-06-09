@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bloc/bloc.dart';
 import 'package:ig_mate/features/profile/data/repo/profile_user_repo.dart';
 import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
@@ -7,6 +9,8 @@ part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   final ProfileUserRepo repo;
+  bool _isUploading = false;
+
   ProfileCubit(this.repo) : super(ProfileInitial());
 
   Future<void> fetchUserProfile(String uid) async {
@@ -44,6 +48,41 @@ class ProfileCubit extends Cubit<ProfileState> {
       }
     } catch (e) {
       emit(ProfileError(errMessage: "Error when updating the user info: $e"));
+    }
+  }
+
+  Future<void> uploadProfileImage({
+    required File image,
+    required String uid,
+  }) async {
+    if (_isUploading) return;
+
+    _isUploading = true;
+    emit(ProfileImageUploading());
+    try {
+      final imageUrl = await repo.uploadUserProfileImage(
+        image: image,
+        uid: uid,
+      );
+      if (imageUrl == null) {
+        emit(ProfileError(errMessage: 'Failed to upload profile image'));
+        return;
+      }
+
+      final updatedUser = await repo.fetchUserProfile(uid);
+      if (updatedUser != null) {
+        emit(ProfileLoaded(profileUserEntity: updatedUser));
+      } else {
+        emit(
+          ProfileError(
+            errMessage: 'Failed to refresh profile after image upload',
+          ),
+        );
+      }
+    } catch (e) {
+      emit(ProfileError(errMessage: 'Image upload failed: $e'));
+    } finally {
+      _isUploading = false;
     }
   }
 }

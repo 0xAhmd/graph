@@ -9,7 +9,10 @@ class BioBox extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 25),
       width: double.infinity,
       padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.secondary,
+      ),
       child: Center(
         child: Text(
           text.isNotEmpty ? text : 'no bio set',

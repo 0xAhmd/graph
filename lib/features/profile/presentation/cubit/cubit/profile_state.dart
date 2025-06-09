@@ -18,3 +18,5 @@ final class ProfileError extends ProfileState {
 
   ProfileError({required this.errMessage});
 }
+
+class ProfileImageUploading extends ProfileState {}
