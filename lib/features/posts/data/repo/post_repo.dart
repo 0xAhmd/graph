@@ -9,8 +9,11 @@ class PostRepo implements PostRepoContract {
   @override
   Future<void> createPost(Post post) async {
     try {
+      print("Saving post to Firestore...");
       await collectionReference.doc(post.id).set(post.toJson());
+      print("Post saved!");
     } catch (e) {
+      print('Firestore write error: $e');
       throw Exception("Error creating post $e");
     }
   }
@@ -28,7 +31,7 @@ class PostRepo implements PostRepoContract {
   Future<List<Post>> fetchAllPosts() async {
     try {
       final postsSnapshot = await collectionReference
-          .orderBy('timestamp', descending: true)
+          .orderBy('timeStamp', descending: true)
           .get();
 
       final List<Post> allPosts = postsSnapshot.docs

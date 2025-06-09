@@ -9,12 +9,15 @@ import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 
 import 'package:ig_mate/features/auth/presentation/pages/auth_page.dart';
 import 'package:ig_mate/features/home/presentation/pages/home_page.dart';
+import 'package:ig_mate/features/posts/data/repo/post_repo.dart';
+import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
 import 'package:ig_mate/features/profile/data/repo/profile_user_repo.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
 
 class MyApp extends StatelessWidget {
   final authRepo = FirebaseAuthRepo();
   final profileRepo = ProfileUserRepo();
+  final postRepo = PostRepo();
 
   MyApp({super.key});
 
@@ -27,6 +30,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ProfileCubit>(
           create: (context) => ProfileCubit(profileRepo),
+        ),
+        BlocProvider<PostCubit>(
+          create: (context) => PostCubit(postRepo: postRepo),
         ),
       ],
       child: MaterialApp(

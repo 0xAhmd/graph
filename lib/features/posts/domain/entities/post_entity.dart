@@ -8,6 +8,7 @@ class Post {
   final String userName;
   final String text;
   final String imageUrl;
+  @JsonKey(fromJson: _fromJson, toJson: _toJson)
   final DateTime timeStamp;
 
   Post({
@@ -30,6 +31,8 @@ class Post {
     );
   }
 
+  static DateTime _fromJson(String date) => DateTime.parse(date);
+  static String _toJson(DateTime date) => date.toIso8601String();
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
 
   Map<String, dynamic> toJson() => _$PostToJson(this);

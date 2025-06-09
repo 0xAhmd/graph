@@ -4,7 +4,6 @@ import 'package:ig_mate/core/helpers/supabase/supabase_storage.dart';
 import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
 import 'package:meta/meta.dart';
-import 'package:uuid/uuid.dart';
 
 part 'post_state.dart';
 
@@ -24,22 +23,16 @@ class PostCubit extends Cubit<PostState> {
   }
 
   /// Create a new post with an optional image
-  Future<void> createPost({
-    required String userId,
-    required String userName,
-    required String text,
-    File? imageFile,
-  }) async {
+  Future<void> createPost({required Post post, File? imageFile}) async {
     emit(PostUploading());
 
-    final postId = const Uuid().v4();
-    String imageUrl = '';
+    String imageUrl = post.imageUrl;
 
     try {
       if (imageFile != null) {
         final uploadedUrl = await SupabaseStorageService.uploadPostImage(
           imageFile,
-          postId,
+          post.id,
         );
         if (uploadedUrl == null) {
           emit(PostError(errMessage: 'Image upload failed'));
@@ -48,16 +41,12 @@ class PostCubit extends Cubit<PostState> {
         imageUrl = uploadedUrl;
       }
 
-      final post = Post(
-        id: postId,
-        userId: userId,
-        userName: userName,
-        text: text,
-        imageUrl: imageUrl,
-        timeStamp: DateTime.now(),
-      );
+      final postToSave = post.copyWith(imageUrl: imageUrl);
+      print("Creating post: ${postToSave.toJson()}");
 
-      await postRepo.createPost(post);
+      await postRepo.createPost(postToSave);
+      print("Post created!");
+
       await fetchAllPosts(); // Refresh post list
     } catch (e) {
       emit(PostError(errMessage: 'Error creating post: $e'));

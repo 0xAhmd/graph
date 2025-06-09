@@ -18,6 +18,7 @@ class HomeDrawer extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const SizedBox(height: 55),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 50),
                 child: Image.asset(

@@ -12,7 +12,7 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
   userName: json['userName'] as String,
   text: json['text'] as String,
   imageUrl: json['imageUrl'] as String,
-  timeStamp: DateTime.parse(json['timeStamp'] as String),
+  timeStamp: Post._fromJson(json['timeStamp'] as String),
 );
 
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
@@ -21,5 +21,5 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'userName': instance.userName,
   'text': instance.text,
   'imageUrl': instance.imageUrl,
-  'timeStamp': instance.timeStamp.toIso8601String(),
+  'timeStamp': Post._toJson(instance.timeStamp),
 };

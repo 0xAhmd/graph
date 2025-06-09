@@ -23,6 +23,7 @@ class CustomTextField extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 4),
       child: TextFormField(
+        style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
         focusNode: focusNode, // ✅ Use it here
         controller: controller,
         obscureText: isObscured,
