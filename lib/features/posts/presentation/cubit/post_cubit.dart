@@ -44,15 +44,10 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  Future<void> deletePost(Post post) async {
+  Future<void> deletePost(String postId) async {
     emit(PostLoading());
     try {
-      String? ext;
-      if (post.imageUrl.isNotEmpty) {
-        ext = '.' + Uri.parse(post.imageUrl).path.split('.').last;
-      }
-
-      await postRepo.deletePost(post.id, imageExt: ext);
+      await postRepo.deletePost(postId);
       await fetchAllPosts();
     } catch (e) {
       emit(PostError(errMessage: 'Error deleting post: $e'));
