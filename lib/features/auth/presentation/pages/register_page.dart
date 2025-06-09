@@ -27,7 +27,9 @@ class _RegisterPageState extends State<RegisterPage> {
         authCubit.register(name, email, password);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please make sure the password matches")),
+          const SnackBar(
+            content: Text("Please make sure the password matches"),
+          ),
         );
       }
     } else {
@@ -101,7 +103,14 @@ class _RegisterPageState extends State<RegisterPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Not a member?", style: TextStyle(fontSize: 16)),
+                Text(
+                  "Not a member?",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 4),
                 GestureDetector(
                   onTap: widget.onTap,
                   child: Text(
@@ -109,6 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     style: TextStyle(
                       fontSize: 15,
                       color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
