@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
@@ -17,18 +16,18 @@ class _RegisterPageState extends State<RegisterPage> {
     final String name = _nameController.text;
     final String email = _emailController.text;
     final String password = _passwordController.text;
-    final String passwordConfirmg = _passwordControllerConfirm.text;
+    final String passwordConfirm = _passwordControllerConfirm.text;
     final authCubit = context.read<AuthCubit>();
 
     if (name.isNotEmpty &&
         email.isNotEmpty &&
         password.isNotEmpty &&
-        passwordConfirmg.isNotEmpty) {
-      if (password == passwordConfirmg) {
+        passwordConfirm.isNotEmpty) {
+      if (password == passwordConfirm) {
         authCubit.register(name, email, password);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please make sure the password matchs")),
+          const SnackBar(content: Text("Please make sure the password matches")),
         );
       }
     } else {
