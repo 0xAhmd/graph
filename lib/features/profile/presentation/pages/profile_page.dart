@@ -124,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: CachedNetworkImage(
                         imageUrl: user.profileImgUrl,
                         imageBuilder: (context, imageProvider) => Container(
-                          width: 150,
+                          width: 160,
                           height: 160,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(100),

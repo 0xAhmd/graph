@@ -70,15 +70,22 @@ class _HomePageState extends State<HomePage> {
               );
             }
 
-            return ListView.builder(
-              itemBuilder: (context, index) {
-                final post = allPosts[index];
-                return PostTile(
-                  post: post,
-                  onDeletePressed: () => deletePost(post.id),
-                );
+            return RefreshIndicator(
+              onRefresh: () async {
+                fetchAllPosts();
               },
-              itemCount: allPosts.length,
+              displacement: 40,
+              color: Theme.of(context).colorScheme.primary,
+              child: ListView.builder(
+                itemBuilder: (context, index) {
+                  final post = allPosts[index];
+                  return PostTile(
+                    post: post,
+                    onDeletePressed: () => deletePost(post.id),
+                  );
+                },
+                itemCount: allPosts.length,
+              ),
             );
           } else if (state is PostError) {
             return Center(

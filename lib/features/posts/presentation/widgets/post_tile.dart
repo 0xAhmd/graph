@@ -55,7 +55,7 @@ class _PostTileState extends State<PostTile> {
 
   Future<void> fetchPostUser() async {
     final fetchedUser = await profileCubit.getUserProfile(widget.post.userId);
-    if (fetchedUser != null) {
+    if (fetchedUser != null && mounted) {
       setState(() {
         postUser = fetchedUser;
       });
@@ -94,6 +94,7 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
+  bool showHeart = false;
   void like() {
     final isLiked = widget.post.likes.contains(currentUser!.uid);
     setState(() {
@@ -102,7 +103,18 @@ class _PostTileState extends State<PostTile> {
       } else {
         widget.post.likes.add(currentUser!.uid);
       }
+      showHeart = true;
     });
+
+    // Hide the heart after a short delay
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (mounted) {
+        setState(() {
+          showHeart = false;
+        });
+      }
+    });
+
     postCubit.toggleLikes(widget.post.id, currentUser!.uid).catchError((error) {
       setState(() {
         if (isLiked) {
@@ -231,14 +243,44 @@ class _PostTileState extends State<PostTile> {
             ),
           ),
 
-          CachedNetworkImage(
-            imageUrl: widget.post.imageUrl,
-            height: 450,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => const SizedBox(height: 450),
-            errorWidget: (context, url, error) =>
-                const Icon(Icons.error_outline),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              GestureDetector(
+                onDoubleTap: like,
+                child: CachedNetworkImage(
+                  imageUrl: widget.post.imageUrl,
+                  height: 450,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const SizedBox(height: 450),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.error_outline),
+                ),
+              ),
+              AnimatedOpacity(
+                opacity: showHeart ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: AnimatedScale(
+                  scale: showHeart ? 1.6 : 0.5,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.favorite,
+                    color: widget.post.likes.contains(currentUser!.uid)
+                        ? Colors.redAccent
+                        : Colors.white,
+                    size: 120,
+                    shadows: const [
+                      Shadow(
+                        blurRadius: 20,
+                        color: Colors.black54,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
 
           // buttons + time
