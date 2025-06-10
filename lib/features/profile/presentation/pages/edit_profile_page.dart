@@ -135,9 +135,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
           ),
           const SizedBox(height: 30),
-          const Padding(
-            padding: EdgeInsets.only(left: 25),
-            child: Text('Bio', style: TextStyle(fontSize: 18)),
+          Padding(
+            padding: const EdgeInsets.only(left: 25),
+            child: Text(
+              'Bio',
+              style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ),
           const SizedBox(height: 10),
           CustomTextField(

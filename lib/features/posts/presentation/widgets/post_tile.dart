@@ -93,7 +93,7 @@ class _PostTileState extends State<PostTile> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).colorScheme.secondary,
@@ -128,14 +128,18 @@ class _PostTileState extends State<PostTile> {
                 Text(
                   widget.post.userName,
                   style: TextStyle(
+                    fontSize: 18,
                     color: Theme.of(context).colorScheme.inversePrimary,
                   ),
                 ),
                 const Spacer(),
                 if (isOwnPost)
-                  IconButton(
-                    onPressed: showOptions,
-                    icon: const Icon(Icons.delete),
+                  GestureDetector(
+                    onTap: showOptions,
+                    child: Icon(
+                      color: Theme.of(context).colorScheme.primary,
+                      Icons.delete,
+                    ),
                   ),
               ],
             ),
@@ -149,6 +153,41 @@ class _PostTileState extends State<PostTile> {
             placeholder: (context, url) => const SizedBox(height: 450),
             errorWidget: (context, url, error) =>
                 const Icon(Icons.error_outline),
+          ),
+
+          // buttons + time
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                const Icon(Icons.favorite_border),
+                const SizedBox(width: 10),
+
+                Text(
+                  '0',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                const Icon(Icons.comment),
+                const SizedBox(width: 10),
+
+                Text(
+                  '4',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  widget.post.timeStamp.toString(),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
