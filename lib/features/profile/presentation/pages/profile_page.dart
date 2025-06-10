@@ -66,12 +66,14 @@ class _ProfilePageState extends State<ProfilePage> {
               title: Text(user.name),
               foregroundColor: Theme.of(context).colorScheme.primary,
             ),
-            body: Center(
-              child: SingleChildScrollView(
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 20),
-
+                    // Profile image and info
                     GestureDetector(
                       onLongPress: () {
                         if (user.profileImgUrl.isNotEmpty) {
@@ -82,7 +84,6 @@ class _ProfilePageState extends State<ProfilePage> {
                             builder: (context) {
                               return GestureDetector(
                                 onTap: () => Navigator.of(context).pop(),
-
                                 child: Stack(
                                   children: [
                                     BackdropFilter(
@@ -154,7 +155,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           errorWidget: (context, url, error) => Container(
                             width: 150,
                             height: 160,
-
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(100),
                               color: Theme.of(context).colorScheme.secondary,
@@ -169,7 +169,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
                     // Email
                     Text(
                       user.email,
@@ -178,10 +177,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 25),
-
                     // Bio
                     Padding(
-                      padding: const EdgeInsets.only(left: 25.0),
+                      padding: const EdgeInsets.only(left: 16.0),
                       child: Row(
                         children: [
                           Text(
@@ -195,9 +193,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 10),
                     BioBox(text: user.bio),
-
                     Padding(
-                      padding: const EdgeInsets.only(left: 25.0, top: 25),
+                      padding: const EdgeInsets.only(left: 16.0, top: 25),
                       child: Row(
                         children: [
                           Text(
@@ -209,6 +206,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                     ),
+                    // Posts list
                     BlocBuilder<PostCubit, PostState>(
                       builder: (context, state) {
                         if (state is PostLoaded) {
@@ -216,6 +214,24 @@ class _ProfilePageState extends State<ProfilePage> {
                               .where((element) => element.userId == widget.uid)
                               .toList();
                           postCount = userPosts.length;
+                          if (userPosts.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 32.0,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "No posts yet.",
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.inversePrimary,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                           return ListView.builder(
                             physics: const NeverScrollableScrollPhysics(),
                             shrinkWrap: true,

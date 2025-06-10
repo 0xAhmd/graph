@@ -56,3 +56,5 @@ void main() async {
 // optionally add user profiles with Firestore
 // update app’s launch screen and icon for production
 // keep auth flow smooth, avoid long loading times
+
+//!todo make in profile page staggard list view
