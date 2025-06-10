@@ -1,3 +1,4 @@
+import 'package:ig_mate/features/posts/domain/entities/comment.dart';
 import 'package:json_annotation/json_annotation.dart';
 part 'post_entity.g.dart';
 
@@ -8,11 +9,14 @@ class Post {
   final String userName;
   final String text;
   final String imageUrl;
+  @JsonKey(defaultValue: <Comment>[])
+  final List<Comment> comments;
   @JsonKey(fromJson: _fromJson, toJson: _toJson)
   final DateTime timeStamp;
-@JsonKey(defaultValue: <String>[])
-final List<String> likes;
+  @JsonKey(defaultValue: <String>[])
+  final List<String> likes;
   Post({
+    required this.comments,
     required this.id,
     required this.likes,
     required this.userId,
@@ -24,6 +28,7 @@ final List<String> likes;
 
   Post copyWith({String? imageUrl}) {
     return Post(
+      comments: comments,
       likes: likes,
       id: id,
       userId: userId,

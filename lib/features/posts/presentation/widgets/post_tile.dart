@@ -1,12 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'package:ig_mate/features/posts/domain/entities/comment.dart';
 import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
+import 'package:ig_mate/features/posts/presentation/widgets/comment_tile.dart';
+import 'package:ig_mate/features/posts/presentation/widgets/custom_bottom_sheet.dart';
 import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
+import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
 import 'package:intl/intl.dart';
 
 class PostTile extends StatefulWidget {
@@ -36,6 +41,12 @@ class _PostTileState extends State<PostTile> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
+  }
+
   void getCurrentUser() {
     final autCubit = context.read<AuthCubit>();
     currentUser = autCubit.currentUser;
@@ -48,6 +59,38 @@ class _PostTileState extends State<PostTile> {
       setState(() {
         postUser = fetchedUser;
       });
+    }
+  }
+
+  final TextEditingController commentController = TextEditingController();
+
+  void openCommentBox() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => CustomBottomSheet(
+        controller: commentController,
+        onPost: (commentText) {
+          comment();
+        },
+        title: 'New Comment',
+        hintText: 'Add a comment...',
+        buttonLabel: 'POST',
+      ),
+    );
+  }
+
+  void comment() {
+    final newComment = Comment(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      postId: widget.post.id,
+      userId: currentUser!.uid,
+      userName: currentUser!.name,
+      text: commentController.text,
+      timestamp: DateTime.now(),
+    );
+    if (commentController.text.isNotEmpty) {
+      postCubit.addComment(widget.post.id, newComment);
     }
   }
 
@@ -127,30 +170,52 @@ class _PostTileState extends State<PostTile> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 postUser?.profileImgUrl != null
-                    ? CachedNetworkImage(
-                        imageBuilder: (context, imageProvider) => Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              image: imageProvider,
-                              fit: BoxFit.cover,
+                    ? GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ProfilePage(uid: widget.post.userId),
+                            ),
+                          );
+                        },
+                        child: CachedNetworkImage(
+                          imageBuilder: (context, imageProvider) => Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                image: imageProvider,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
-                        ),
 
-                        imageUrl: postUser!.profileImgUrl,
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.person),
+                          imageUrl: postUser!.profileImgUrl,
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.person),
+                        ),
                       )
                     : const Icon(Icons.person),
                 const SizedBox(width: 10),
-                Text(
-                  widget.post.userName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Theme.of(context).colorScheme.inversePrimary,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ProfilePage(uid: widget.post.userId),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    widget.post.userName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -208,11 +273,14 @@ class _PostTileState extends State<PostTile> {
                   ),
                 ),
                 const SizedBox(width: 20),
-                const Icon(Icons.comment),
+                GestureDetector(
+                  onTap: openCommentBox,
+                  child: const Icon(Icons.comment),
+                ),
                 const SizedBox(width: 10),
 
                 Text(
-                  '4',
+                  widget.post.comments.length.toString(),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.inversePrimary,
                   ),
@@ -229,6 +297,70 @@ class _PostTileState extends State<PostTile> {
               ],
             ),
           ),
+
+          // caption
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Text(
+                  widget.post.userName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  widget.post.text,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          BlocBuilder<PostCubit, PostState>(
+            builder: (context, state) {
+              if (state is PostLoaded) {
+                final currentPost = state.posts.firstWhere(
+                  (post) => post.id == widget.post.id,
+                );
+
+                if (currentPost.comments.isNotEmpty) {
+                  int showCommentsCount = currentPost.comments.length;
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final comment = currentPost.comments[index];
+
+                      return CommentTile(comment: comment);
+                    },
+                    itemCount: showCommentsCount,
+                  );
+                }
+              } else if (state is PostLoading) {
+                return const Center(child: CupertinoActivityIndicator());
+              } else if (state is PostError) {
+                return Center(child: Text(state.errMessage));
+              } else {
+                return Center(
+                  child: Text(
+                    'Something went wrong',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox();
+            },
+          ),
+          const SizedBox(height: 4),
         ],
       ),
     );

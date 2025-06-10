@@ -7,6 +7,11 @@ part of 'post_entity.dart';
 // **************************************************************************
 
 Post _$PostFromJson(Map<String, dynamic> json) => Post(
+  comments:
+      (json['comments'] as List<dynamic>?)
+          ?.map((e) => Comment.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
   id: json['id'] as String,
   likes:
       (json['likes'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
@@ -23,6 +28,7 @@ Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
   'userName': instance.userName,
   'text': instance.text,
   'imageUrl': instance.imageUrl,
+  'comments': instance.comments,
   'timeStamp': Post._toJson(instance.timeStamp),
   'likes': instance.likes,
 };

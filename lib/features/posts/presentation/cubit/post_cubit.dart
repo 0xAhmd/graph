@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:bloc/bloc.dart';
+import 'package:ig_mate/features/posts/domain/entities/comment.dart';
 import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
 import 'package:meta/meta.dart';
@@ -8,13 +9,16 @@ part 'post_state.dart';
 
 class PostCubit extends Cubit<PostState> {
   final PostRepoContract postRepo;
+  List<Post> _posts = [];
+
   PostCubit({required this.postRepo}) : super(PostInitial());
 
   Future<void> fetchAllPosts() async {
     emit(PostLoading());
     try {
       final posts = await postRepo.fetchAllPosts();
-      emit(PostLoaded(posts: posts));
+      _posts = posts;
+      emit(PostLoaded(posts: _posts));
     } catch (e) {
       emit(PostError(errMessage: "Failed to load posts: $e"));
     }
@@ -57,6 +61,24 @@ class PostCubit extends Cubit<PostState> {
   Future<void> toggleLikes(String postId, String userId) async {
     try {
       await postRepo.toggleLikes(postId, userId);
+    } catch (e) {
+      emit(PostError(errMessage: e.toString()));
+    }
+  }
+
+  Future<void> addComment(String postId, Comment comment) async {
+    try {
+      await postRepo.addComments(postId, comment);
+      await fetchAllPosts();
+    } catch (e) {
+      emit(PostError(errMessage: e.toString()));
+    }
+  }
+
+  Future<void> deleteComment(String postId, String commentId) async {
+    try {
+      await postRepo.deleteComment(postId, commentId);
+      await fetchAllPosts();
     } catch (e) {
       emit(PostError(errMessage: e.toString()));
     }

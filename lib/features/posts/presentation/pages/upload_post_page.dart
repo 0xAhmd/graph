@@ -56,6 +56,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
     }
     // create the post
     final newPost = Post(
+      comments: [],
       likes: [],
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       userId: currentUser!.uid,
@@ -172,7 +173,6 @@ class _UploadPostPageState extends State<UploadPostPage> {
                 isObscured: false,
               ),
               const SizedBox(height: 16),
-
             ],
           ),
         ),
