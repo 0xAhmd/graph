@@ -357,7 +357,7 @@ class _PostTileState extends State<PostTile> {
                 Text(
                   widget.post.text,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: Theme.of(context).colorScheme.inversePrimary,
                   ),
                 ),

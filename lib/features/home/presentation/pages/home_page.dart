@@ -26,10 +26,15 @@ class _HomePageState extends State<HomePage> {
     postCubit.fetchAllPosts();
   }
 
-  // fill this method
-  void deletePost(String postId) {
-    postCubit.deletePost(postId);
-    fetchAllPosts();
+  bool isDeleting = false;
+  void deletePost(String postId) async {
+    setState(() {
+      isDeleting = true;
+    });
+    await postCubit.deletePost(postId);
+    setState(() {
+      isDeleting = false;
+    });
   }
 
   @override
@@ -50,55 +55,66 @@ class _HomePageState extends State<HomePage> {
       ),
       drawer: const HomeDrawer(),
 
-      body: BlocBuilder<PostCubit, PostState>(
-        builder: (context, state) {
-          if (state is PostLoading && state is PostUploading) {
-            return const Scaffold(
-              body: Center(child: CupertinoActivityIndicator()),
-            );
-          } else if (state is PostLoaded) {
-            final allPosts = state.posts;
+      body: Stack(
+        children: [
+          BlocBuilder<PostCubit, PostState>(
+            builder: (context, state) {
+              if (state is PostLoading && state is PostUploading) {
+                return const Scaffold(
+                  body: Center(child: CupertinoActivityIndicator()),
+                );
+              } else if (state is PostLoaded) {
+                final allPosts = state.posts;
 
-            if (allPosts.isEmpty) {
-              return Center(
-                child: Text(
-                  "No Posts Available here...",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                fetchAllPosts();
-              },
-              displacement: 40,
-              color: Theme.of(context).colorScheme.primary,
-              child: ListView.builder(
-                itemBuilder: (context, index) {
-                  final post = allPosts[index];
-                  return PostTile(
-                    post: post,
-                    onDeletePressed: () => deletePost(post.id),
+                if (allPosts.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "No Posts Available here...",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.inversePrimary,
+                      ),
+                    ),
                   );
-                },
-                itemCount: allPosts.length,
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    fetchAllPosts();
+                  },
+                  displacement: 40,
+                  color: Theme.of(context).colorScheme.primary,
+                  child: ListView.builder(
+                    itemBuilder: (context, index) {
+                      final post = allPosts[index];
+                      return PostTile(
+                        post: post,
+                        onDeletePressed: () => deletePost(post.id),
+                      );
+                    },
+                    itemCount: allPosts.length,
+                  ),
+                );
+              } else if (state is PostError) {
+                return Center(
+                  child: Text(
+                    state.errMessage,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox();
+            },
+          ),
+          if (isDeleting)
+            Container(
+              color: Colors.black.withOpacity(0.2),
+              child: const Center(
+                child: CupertinoActivityIndicator(radius: 20),
               ),
-            );
-          } else if (state is PostError) {
-            return Center(
-              child: Text(
-                state.errMessage,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
-              ),
-            );
-          }
-          return const SizedBox();
-        },
+            ),
+        ],
       ),
     );
   }

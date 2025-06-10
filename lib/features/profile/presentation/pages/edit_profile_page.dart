@@ -122,10 +122,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       placeholder: (context, url) =>
                           const CupertinoActivityIndicator(),
-                      errorWidget: (context, url, error) => const CircleAvatar(
+                      errorWidget: (context, url, error) => CircleAvatar(
                         radius: 90,
-                        backgroundImage: AssetImage(
-                          'assets/images/default_avatar.png',
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        child: Icon(
+                          Icons.person,
+                          size: 70,
+                          color: Theme.of(context).colorScheme.inversePrimary,
                         ),
                       ),
                     ),

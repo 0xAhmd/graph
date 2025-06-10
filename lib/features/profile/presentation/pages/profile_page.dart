@@ -154,15 +154,15 @@ class _ProfilePageState extends State<ProfilePage> {
                           errorWidget: (context, url, error) => Container(
                             width: 150,
                             height: 160,
+
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(100),
                               color: Theme.of(context).colorScheme.secondary,
-                              image: const DecorationImage(
-                                image: AssetImage(
-                                  'assets/images/default_avatar.png',
-                                ),
-                                fit: BoxFit.cover,
-                              ),
+                            ),
+                            child: Icon(
+                              Icons.person,
+                              size: 70,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                         ),
