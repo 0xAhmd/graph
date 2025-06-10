@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/settings/presentation/pages/settings_page.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'drawer_tile.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
@@ -58,7 +59,14 @@ class HomeDrawer extends StatelessWidget {
               DrawerTile(
                 icon: Icons.settings,
                 title: "S E T T I N G S ",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsPage(),
+                    ),
+                  );
+                },
               ),
               // search tile
               DrawerTile(

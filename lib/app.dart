@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:google_fonts/google_fonts.dart';
+import 'package:ig_mate/core/themes/theme_cubit.dart';
 import 'package:ig_mate/features/search/data/repo/search_repo.dart';
 import 'package:ig_mate/features/search/presentation/cubit/search_cubit.dart';
-import 'core/themes/dark_mode.dart';
 import 'features/auth/data/repo/firebase_auth_repo.dart';
 import 'features/auth/presentation/cubit/cubit/auth_cubit.dart';
 
@@ -38,34 +38,37 @@ class MyApp extends StatelessWidget {
         BlocProvider<PostCubit>(
           create: (context) => PostCubit(postRepo: postRepo),
         ),
+        BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: darkMode.copyWith(textTheme: GoogleFonts.latoTextTheme()),
-        home: BlocConsumer<AuthCubit, AuthState>(
-          builder: (context, state) {
-            debugPrint(state.toString());
-            if (state is UnAuthenticated) {
-              return const AuthPage();
-            } else if (state is Authenticated) {
-              return const HomePage();
-            } else if (state is AuthLoading) {
-              return const Scaffold(
-                body: Center(child: CupertinoActivityIndicator()),
-              );
-            } else {
-              return const Scaffold(
-                body: Center(child: CupertinoActivityIndicator()),
-              );
-            }
-          },
-          listener: (context, state) {
-            if (state is AuthError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.errMessage)));
-            }
-          },
+      child: BlocBuilder<ThemeCubit, ThemeData>(
+        builder: (context, state) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: state.copyWith(textTheme: GoogleFonts.latoTextTheme()),
+          home: BlocConsumer<AuthCubit, AuthState>(
+            builder: (context, state) {
+              debugPrint(state.toString());
+              if (state is UnAuthenticated) {
+                return const AuthPage();
+              } else if (state is Authenticated) {
+                return const HomePage();
+              } else if (state is AuthLoading) {
+                return const Scaffold(
+                  body: Center(child: CupertinoActivityIndicator()),
+                );
+              } else {
+                return const Scaffold(
+                  body: Center(child: CupertinoActivityIndicator()),
+                );
+              }
+            },
+            listener: (context, state) {
+              if (state is AuthError) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.errMessage)));
+              }
+            },
+          ),
         ),
       ),
     );
