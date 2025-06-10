@@ -7,6 +7,7 @@ import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
 import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
+import 'package:intl/intl.dart';
 
 class PostTile extends StatefulWidget {
   const PostTile({
@@ -48,6 +49,26 @@ class _PostTileState extends State<PostTile> {
         postUser = fetchedUser;
       });
     }
+  }
+
+  void like() {
+    final isLiked = widget.post.likes.contains(currentUser!.uid);
+    setState(() {
+      if (isLiked) {
+        widget.post.likes.remove(currentUser!.uid);
+      } else {
+        widget.post.likes.add(currentUser!.uid);
+      }
+    });
+    postCubit.toggleLikes(widget.post.id, currentUser!.uid).catchError((error) {
+      setState(() {
+        if (isLiked) {
+          widget.post.likes.add(currentUser!.uid);
+        } else {
+          widget.post.likes.remove(currentUser!.uid);
+        }
+      });
+    });
   }
 
   void showOptions() {
@@ -160,11 +181,28 @@ class _PostTileState extends State<PostTile> {
             padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
-                const Icon(Icons.favorite_border),
+                SizedBox(
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: like,
+                        child: Icon(
+                          widget.post.likes.contains(currentUser!.uid)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+
+                          color: widget.post.likes.contains(currentUser!.uid)
+                              ? Colors.red
+                              : Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 10),
 
                 Text(
-                  '0',
+                  widget.post.likes.length.toString(),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.inversePrimary,
                   ),
@@ -181,7 +219,9 @@ class _PostTileState extends State<PostTile> {
                 ),
                 const Spacer(),
                 Text(
-                  widget.post.timeStamp.toString(),
+                  DateFormat(
+                    'MMM d, yyyy • h:mm a',
+                  ).format(widget.post.timeStamp),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.inversePrimary,
                   ),
@@ -194,3 +234,6 @@ class _PostTileState extends State<PostTile> {
     );
   }
 }
+
+
+//! do likes tomorrow يا علق 

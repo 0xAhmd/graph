@@ -10,13 +10,13 @@ class PostRepo implements PostRepoContract {
   final _bucket = Supabase.instance.client.storage.from('images');
   // ignore: unused_field
   final _firestore = FirebaseFirestore.instance;
-  final CollectionReference collectionReference = FirebaseFirestore.instance
+  final CollectionReference postCollection = FirebaseFirestore.instance
       .collection('posts');
 
   @override
   Future<void> createPost(Post post) async {
     try {
-      await collectionReference.doc(post.id).set(post.toJson());
+      await postCollection.doc(post.id).set(post.toJson());
     } catch (e) {
       throw Exception("Error creating post: $e");
     }
@@ -25,7 +25,7 @@ class PostRepo implements PostRepoContract {
   @override
   Future<void> deletePost(String postId, {String? imageExt}) async {
     try {
-      await collectionReference.doc(postId).delete();
+      await postCollection.doc(postId).delete();
 
       if (imageExt != null) {
         final filePath = 'posts/$postId$imageExt';
@@ -39,7 +39,7 @@ class PostRepo implements PostRepoContract {
   @override
   Future<List<Post>> fetchAllPosts() async {
     try {
-      final postsSnapshot = await collectionReference
+      final postsSnapshot = await postCollection
           .orderBy('timeStamp', descending: true)
           .get();
       return postsSnapshot.docs
@@ -53,7 +53,7 @@ class PostRepo implements PostRepoContract {
   @override
   Future<List<Post>> fetchPostsByUserId(String userId) async {
     try {
-      final postSnapShot = await collectionReference
+      final postSnapShot = await postCollection
           .where('userId', isEqualTo: userId)
           .get();
       return postSnapShot.docs
@@ -82,6 +82,29 @@ class PostRepo implements PostRepoContract {
     } catch (e) {
       print('Image upload error: $e');
       return null;
+    }
+  }
+
+  @override
+  Future<void> toggleLikes(String postId, String userId) async {
+    try {
+      final postDoc = await postCollection.doc(postId).get();
+
+      if (postDoc.exists) {
+        final post = Post.fromJson(postDoc.data() as Map<String, dynamic>);
+        final hasLiked = post.likes.contains(userId);
+
+        if (hasLiked) {
+          post.likes.remove(userId);
+        } else {
+          post.likes.add(userId);
+        }
+        await postCollection.doc(postId).update({'likes': post.likes});
+      } else {
+        throw Exception("Post not found");
+      }
+    } catch (e) {
+      throw Exception("error $e");
     }
   }
 }

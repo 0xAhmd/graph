@@ -10,9 +10,11 @@ class Post {
   final String imageUrl;
   @JsonKey(fromJson: _fromJson, toJson: _toJson)
   final DateTime timeStamp;
-
+@JsonKey(defaultValue: <String>[])
+final List<String> likes;
   Post({
     required this.id,
+    required this.likes,
     required this.userId,
     required this.userName,
     required this.text,
@@ -22,6 +24,7 @@ class Post {
 
   Post copyWith({String? imageUrl}) {
     return Post(
+      likes: likes,
       id: id,
       userId: userId,
       userName: userName,

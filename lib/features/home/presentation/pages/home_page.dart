@@ -81,7 +81,14 @@ class _HomePageState extends State<HomePage> {
               itemCount: allPosts.length,
             );
           } else if (state is PostError) {
-            return Center(child: Text(state.errMessage));
+            return Center(
+              child: Text(
+                state.errMessage,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+              ),
+            );
           }
           return const SizedBox();
         },

@@ -8,4 +8,5 @@ abstract class PostRepoContract {
   Future<void> deletePost(String postId, {String? imageExt});
   Future<List<Post>> fetchPostsByUserId(String userId);
   Future<String?> uploadPostImage(File file, String postId);
+  Future<void> toggleLikes(String postId , String userId);
 }

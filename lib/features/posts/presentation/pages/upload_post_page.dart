@@ -56,6 +56,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
     }
     // create the post
     final newPost = Post(
+      likes: [],
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       userId: currentUser!.uid,
       userName: currentUser!.name,
