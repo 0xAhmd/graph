@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
+import '../entities/comment.dart';
+import '../entities/post_entity.dart';
 
 abstract class PostRepoContract {
   Future<List<Post>> fetchAllPosts();

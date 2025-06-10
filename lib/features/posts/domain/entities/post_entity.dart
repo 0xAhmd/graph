@@ -1,4 +1,4 @@
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
+import 'comment.dart';
 import 'package:json_annotation/json_annotation.dart';
 part 'post_entity.g.dart';
 

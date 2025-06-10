@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
-import 'package:ig_mate/features/profile/domain/repo/profile_user.dart';
+import '../../domain/entities/profile_user.dart';
+import '../../domain/repo/profile_user.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';

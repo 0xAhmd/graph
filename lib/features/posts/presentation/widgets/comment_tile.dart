@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
+import '../../domain/entities/comment.dart';
 
 class CommentTile extends StatelessWidget {
   const CommentTile({super.key, required this.comment});

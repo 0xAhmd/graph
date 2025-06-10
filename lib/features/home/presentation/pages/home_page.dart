@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:ig_mate/features/home/presentation/widgets/home_drawer.dart';
-import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
-import 'package:ig_mate/features/posts/presentation/pages/upload_post_page.dart';
-import 'package:ig_mate/features/posts/presentation/widgets/post_tile.dart';
+import '../widgets/home_drawer.dart';
+import '../../../posts/presentation/cubit/post_cubit.dart';
+import '../../../posts/presentation/pages/upload_post_page.dart';
+import '../../../posts/presentation/widgets/post_tile.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

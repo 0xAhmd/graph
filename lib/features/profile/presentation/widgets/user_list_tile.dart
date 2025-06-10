@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
-import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
+import '../../domain/entities/profile_user.dart';
+import '../pages/profile_page.dart';
 
 class UserListTile extends StatelessWidget {
   const UserListTile({super.key, required this.profileUserEntity});

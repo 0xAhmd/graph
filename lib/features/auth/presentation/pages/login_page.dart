@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/auth/presentation/widgets/custom_btn.dart';
-import 'package:ig_mate/features/auth/presentation/widgets/custom_text_field.dart';
+import '../cubit/cubit/auth_cubit.dart';
+import '../widgets/custom_btn.dart';
+import '../widgets/custom_text_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.onTap});

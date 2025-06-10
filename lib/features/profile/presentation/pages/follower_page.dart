@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/user_list_tile.dart';
+import '../cubit/cubit/profile_cubit.dart';
+import '../widgets/user_list_tile.dart';
 
 class FollowerPage extends StatelessWidget {
   const FollowerPage({

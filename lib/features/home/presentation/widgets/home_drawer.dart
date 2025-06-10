@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/home/presentation/widgets/drawer_tile.dart';
-import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
+import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'drawer_tile.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../search/presentation/pages/search_page.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
@@ -63,7 +64,12 @@ class HomeDrawer extends StatelessWidget {
               DrawerTile(
                 icon: Icons.search_rounded,
                 title: "S E A R C H",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SearchPage()),
+                  );
+                },
               ),
               // chat tile
               DrawerTile(icon: Icons.chat_rounded, title: "D M ", onTap: () {}),

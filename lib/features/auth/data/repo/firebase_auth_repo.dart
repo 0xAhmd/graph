@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
-import 'package:ig_mate/features/auth/domain/repo/auth_repo.dart';
+import '../../domain/entities/app_user.dart';
+import '../../domain/repo/auth_repo.dart';
 
 class FirebaseAuthRepo implements AuthRepo {
   // get instance from firebase auth

@@ -3,10 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/core/helpers/image_picker.dart';
-import 'package:ig_mate/features/auth/presentation/widgets/custom_text_field.dart';
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
-import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
+import '../../../../core/helpers/image_picker.dart';
+import '../../../auth/presentation/widgets/custom_text_field.dart';
+import '../../domain/entities/profile_user.dart';
+import '../cubit/cubit/profile_cubit.dart';
 
 class EditProfilePage extends StatefulWidget {
   final ProfileUserEntity profileUserEntity;

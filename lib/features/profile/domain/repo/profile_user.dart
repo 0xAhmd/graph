@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
+import '../entities/profile_user.dart';
 
 abstract class ProfileUserRepoContract {
   Future<ProfileUserEntity?> fetchUserProfile(String uid);

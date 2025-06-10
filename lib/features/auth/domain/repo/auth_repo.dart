@@ -1,4 +1,4 @@
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
+import '../entities/app_user.dart';
 
 abstract class AuthRepo {
   Future<AppUser?> signInWithEmailAndPassword({String email, String password});

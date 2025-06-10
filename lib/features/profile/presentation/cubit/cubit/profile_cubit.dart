@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
-import 'package:ig_mate/features/profile/data/repo/profile_user_repo.dart';
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
+import '../../../data/repo/profile_user_repo.dart';
+import '../../../domain/entities/profile_user.dart';
 import 'package:meta/meta.dart';
 
 part 'profile_state.dart';

@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:bloc/bloc.dart';
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
-import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
+import '../../domain/entities/comment.dart';
+import '../../domain/entities/post_entity.dart';
+import '../../domain/repo/post_repo.dart';
 import 'package:meta/meta.dart';
 
 part 'post_state.dart';

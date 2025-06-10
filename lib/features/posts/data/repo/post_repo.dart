@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
-import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
+import '../../domain/entities/comment.dart';
+import '../../domain/repo/post_repo.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
+import '../../domain/entities/post_entity.dart';
 
 class PostRepo implements PostRepoContract {
   final _bucket = Supabase.instance.client.storage.from('images');

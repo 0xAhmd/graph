@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/core/helpers/image_picker.dart';
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/auth/presentation/widgets/custom_text_field.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
-import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
+import '../../../../core/helpers/image_picker.dart';
+import '../../../auth/domain/entities/app_user.dart';
+import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
+import '../../../auth/presentation/widgets/custom_text_field.dart';
+import '../../domain/entities/post_entity.dart';
+import '../cubit/post_cubit.dart';
 
 class UploadPostPage extends StatefulWidget {
   const UploadPostPage({super.key});

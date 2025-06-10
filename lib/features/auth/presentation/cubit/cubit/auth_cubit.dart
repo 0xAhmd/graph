@@ -1,6 +1,6 @@
 import 'package:bloc/bloc.dart';
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
-import 'package:ig_mate/features/auth/domain/repo/auth_repo.dart';
+import '../../../domain/entities/app_user.dart';
+import '../../../domain/repo/auth_repo.dart';
 import 'package:meta/meta.dart';
 
 part 'auth_state.dart';

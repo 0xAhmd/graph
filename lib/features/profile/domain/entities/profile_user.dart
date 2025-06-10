@@ -1,4 +1,4 @@
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
+import '../../../auth/domain/entities/app_user.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'profile_user.g.dart';

@@ -2,16 +2,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
-import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
-import 'package:ig_mate/features/posts/presentation/widgets/comment_tile.dart';
-import 'package:ig_mate/features/posts/presentation/widgets/custom_bottom_sheet.dart';
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
-import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
-import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
+import '../../../auth/domain/entities/app_user.dart';
+import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
+import '../../domain/entities/comment.dart';
+import '../../domain/entities/post_entity.dart';
+import '../cubit/post_cubit.dart';
+import 'comment_tile.dart';
+import 'custom_bottom_sheet.dart';
+import '../../../profile/domain/entities/profile_user.dart';
+import '../../../profile/presentation/cubit/cubit/profile_cubit.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 import 'package:intl/intl.dart';
 
 class PostTile extends StatefulWidget {
