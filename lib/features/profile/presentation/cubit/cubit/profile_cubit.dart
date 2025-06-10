@@ -90,4 +90,14 @@ class ProfileCubit extends Cubit<ProfileState> {
       _isUploading = false;
     }
   }
+
+  // toggle follow method
+
+  Future<void> toggleFollow(String currentUid, String targetUid) async {
+    try {
+      await repo.toggleFollow(currentUid: currentUid, targetUid: targetUid);
+    } catch (e) {
+      emit(ProfileError(errMessage: e.toString()));
+    }
+  }
 }

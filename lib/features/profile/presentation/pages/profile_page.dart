@@ -12,7 +12,10 @@ import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
 import 'package:ig_mate/features/posts/presentation/widgets/post_tile.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
 import 'package:ig_mate/features/profile/presentation/pages/edit_profile_page.dart';
+import 'package:ig_mate/features/profile/presentation/pages/follower_page.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/bio_box.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/follow_button.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/profile_stats.dart';
 
 class ProfilePage extends StatefulWidget {
   final String uid;
@@ -38,8 +41,36 @@ class _ProfilePageState extends State<ProfilePage> {
     await profileCubit.fetchUserProfile(widget.uid);
   }
 
+  void followButtonPressed() {
+    final profileState = profileCubit.state;
+
+    if (profileState is! ProfileLoaded) {
+      return;
+    }
+    final profileUser = profileState.profileUserEntity;
+    final isFollowing = profileUser.followers.contains(currentUser!.uid);
+
+    setState(() {
+      if (isFollowing) {
+        profileUser.followers.remove(currentUser!.uid);
+      } else {
+        profileUser.followers.add(currentUser!.uid);
+      }
+    });
+    profileCubit.toggleFollow(currentUser!.uid, widget.uid).catchError((error) {
+      setState(() {
+        if (isFollowing) {
+          profileUser.followers.add(currentUser!.uid);
+        } else {
+          profileUser.followers.remove(currentUser!.uid);
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    bool isOwn = (widget.uid == currentUser!.uid);
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
         if (state is ProfileLoaded) {
@@ -47,20 +78,21 @@ class _ProfilePageState extends State<ProfilePage> {
           return Scaffold(
             appBar: AppBar(
               actions: [
-                IconButton(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            EditProfilePage(profileUserEntity: user),
-                      ),
-                    );
-                    // Refresh after returning
-                    refreshProfile();
-                  },
-                  icon: const Icon(Icons.settings),
-                ),
+                if (isOwn)
+                  IconButton(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EditProfilePage(profileUserEntity: user),
+                        ),
+                      );
+                      // Refresh after returning
+                      refreshProfile();
+                    },
+                    icon: const Icon(Icons.settings),
+                  ),
               ],
               centerTitle: true,
               title: Text(user.name),
@@ -177,6 +209,30 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 25),
+
+                    // profile stats
+                    ProfileStats(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FollowerPage(
+                              followers: user.followers,
+                              followings: user.followings,
+                            ),
+                          ),
+                        );
+                      },
+                      postCount: postCount,
+                      followersCount: user.followers.length,
+                      followingCount: user.followings.length,
+                    ),
+                    const SizedBox(height: 25),
+                    if (!isOwn)
+                      FollowButton(
+                        isFollowing: user.followers.contains(currentUser!.uid),
+                        onTap: followButtonPressed,
+                      ),
                     // Bio
                     Padding(
                       padding: const EdgeInsets.only(left: 16.0),

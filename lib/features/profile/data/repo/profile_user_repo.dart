@@ -8,7 +8,7 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfileUserRepo implements ProfileUserRepoDomain {
+class ProfileUserRepo implements ProfileUserRepoContract {
   final _bucket = Supabase.instance.client.storage.from('images');
   final _firestore = FirebaseFirestore.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -21,7 +21,11 @@ class ProfileUserRepo implements ProfileUserRepoDomain {
         final userData = userDoc.data();
 
         if (userData != null) {
+          final followers = List<String>.from(userData['followings'] ?? []);
+          final followings = List<String>.from(userData['followers'] ?? []);
           return ProfileUserEntity(
+            followers: followers,
+            followings: followings,
             bio: userData['bio'] ?? '',
             profileImgUrl: userData['profileImgUrl'] ?? '',
             uid: uid,
@@ -82,5 +86,50 @@ class ProfileUserRepo implements ProfileUserRepoDomain {
       print('Image upload error: $e');
       return null;
     }
+  }
+
+  @override
+  Future<void> toggleFollow({
+    required String currentUid,
+    required String targetUid,
+  }) async {
+    try {
+      final targetUserDoc = await firestore
+          .collection('users')
+          .doc(targetUid)
+          .get();
+
+      final currentUserDoc = await firestore
+          .collection('users')
+          .doc(currentUid)
+          .get();
+
+      if (currentUserDoc.exists && targetUserDoc.exists) {
+        final currentUserData = currentUserDoc.data();
+        final targetUserData = targetUserDoc.data();
+
+        if (currentUserData != null && targetUserData != null) {
+          final List<String> currentFollowing = List<String>.from(
+            currentUserData['following'] ?? [],
+          );
+
+          if (currentFollowing.contains(targetUid)) {
+            await firestore.collection('users').doc(currentUid).update({
+              'following': FieldValue.arrayRemove([targetUid]),
+            });
+            await firestore.collection('users').doc(targetUid).update({
+              'followers': FieldValue.arrayRemove([currentUid]),
+            });
+          } else {
+            await firestore.collection('users').doc(currentUid).update({
+              'following': FieldValue.arrayUnion([targetUid]),
+            });
+            await firestore.collection('users').doc(targetUid).update({
+              'followers': FieldValue.arrayUnion([currentUid]),
+            });
+          }
+        }
+      }
+    } catch (e) {}
   }
 }

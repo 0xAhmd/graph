@@ -8,6 +8,16 @@ part of 'profile_user.dart';
 
 ProfileUserEntity _$ProfileUserEntityFromJson(Map<String, dynamic> json) =>
     ProfileUserEntity(
+      followers:
+          (json['followers'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      followings:
+          (json['followings'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
       bio: json['bio'] as String? ?? '',
       profileImgUrl: json['profileImgUrl'] as String? ?? '',
       uid: json['uid'] as String,
@@ -22,4 +32,6 @@ Map<String, dynamic> _$ProfileUserEntityToJson(ProfileUserEntity instance) =>
       'email': instance.email,
       'bio': instance.bio,
       'profileImgUrl': instance.profileImgUrl,
+      'followers': instance.followers,
+      'followings': instance.followings,
     };
