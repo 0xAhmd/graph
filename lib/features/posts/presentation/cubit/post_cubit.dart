@@ -9,16 +9,13 @@ part 'post_state.dart';
 
 class PostCubit extends Cubit<PostState> {
   final PostRepoContract postRepo;
-  List<Post> _posts = [];
-
   PostCubit({required this.postRepo}) : super(PostInitial());
 
   Future<void> fetchAllPosts() async {
     emit(PostLoading());
     try {
       final posts = await postRepo.fetchAllPosts();
-      _posts = posts;
-      emit(PostLoaded(posts: _posts));
+      emit(PostLoaded(posts: posts));
     } catch (e) {
       emit(PostError(errMessage: "Failed to load posts: $e"));
     }
@@ -66,21 +63,75 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
+  // Optimistic update for adding comments
   Future<void> addComment(String postId, Comment comment) async {
-    try {
-      await postRepo.addComments(postId, comment);
-      await fetchAllPosts();
-    } catch (e) {
-      emit(PostError(errMessage: e.toString()));
+    final currentState = state;
+    if (currentState is PostLoaded) {
+      // Optimistically update UI first
+      final updatedPosts = currentState.posts.map((post) {
+        if (post.id == postId) {
+          return post.copyWith(comments: [...post.comments, comment]);
+        }
+        return post;
+      }).toList();
+
+      emit(PostLoaded(posts: updatedPosts));
+
+      try {
+        // Then sync with backend
+        await postRepo.addComments(postId, comment);
+      } catch (e) {
+        // Revert optimistic update on error
+        emit(PostLoaded(posts: currentState.posts));
+        emit(PostError(errMessage: e.toString()));
+      }
     }
   }
 
+  // Optimistic update for deleting comments
   Future<void> deleteComment(String postId, String commentId) async {
-    try {
-      await postRepo.deleteComment(postId, commentId);
-      await fetchAllPosts();
-    } catch (e) {
-      emit(PostError(errMessage: e.toString()));
+    final currentState = state;
+    if (currentState is PostLoaded) {
+      // Store the comment being deleted for potential rollback
+      Comment? deletedComment;
+
+      // Optimistically update UI first
+      final updatedPosts = currentState.posts.map((post) {
+        if (post.id == postId) {
+          deletedComment = post.comments.firstWhere(
+            (comment) => comment.id == commentId,
+            orElse: () => throw Exception('Comment not found'),
+          );
+          final updatedComments = post.comments
+              .where((comment) => comment.id != commentId)
+              .toList();
+          return post.copyWith(comments: updatedComments);
+        }
+        return post;
+      }).toList();
+
+      emit(PostLoaded(posts: updatedPosts));
+
+      try {
+        // Then sync with backend
+        await postRepo.deleteComment(postId, commentId);
+      } catch (e) {
+        // Revert optimistic update on error
+        if (deletedComment != null) {
+          final revertedPosts = updatedPosts.map((post) {
+            if (post.id == postId) {
+              return post.copyWith(
+                comments: [...post.comments, deletedComment!],
+              );
+            }
+            return post;
+          }).toList();
+          emit(PostLoaded(posts: revertedPosts));
+        } else {
+          emit(PostLoaded(posts: currentState.posts));
+        }
+        emit(PostError(errMessage: e.toString()));
+      }
     }
   }
 }

@@ -15,6 +15,7 @@ class Post {
   final DateTime timeStamp;
   @JsonKey(defaultValue: <String>[])
   final List<String> likes;
+  
   Post({
     required this.comments,
     required this.id,
@@ -26,16 +27,26 @@ class Post {
     required this.timeStamp,
   });
 
-  Post copyWith({String? imageUrl}) {
+  // Updated copyWith method to handle all fields including comments
+  Post copyWith({
+    String? imageUrl,
+    List<Comment>? comments,
+    List<String>? likes,
+    String? id,
+    String? userId,
+    String? userName,
+    String? text,
+    DateTime? timeStamp,
+  }) {
     return Post(
-      comments: comments,
-      likes: likes,
-      id: id,
-      userId: userId,
-      userName: userName,
-      text: text,
+      comments: comments ?? this.comments,
+      likes: likes ?? this.likes,
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      text: text ?? this.text,
       imageUrl: imageUrl ?? this.imageUrl,
-      timeStamp: timeStamp,
+      timeStamp: timeStamp ?? this.timeStamp,
     );
   }
 
@@ -44,5 +55,4 @@ class Post {
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
 
   Map<String, dynamic> toJson() => _$PostToJson(this);
-  // from and to json methods via json serializable
 }
