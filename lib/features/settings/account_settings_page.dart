@@ -45,6 +45,27 @@ class AccountSettingsPage extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(15),
+
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        "Blocked Users ",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
+                        ),
+                      ),
+                      trailing: GestureDetector(
+                        onTap: () {},
+                        child: const Icon(Icons.arrow_forward),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
                   // Delete Account Button
                   GestureDetector(
                     onTap: isLoading

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import '../../../data/repo/profile_user_repo.dart';
 import '../../../domain/entities/profile_user.dart';
 import 'package:meta/meta.dart';
@@ -10,8 +11,9 @@ part 'profile_state.dart';
 class ProfileCubit extends Cubit<ProfileState> {
   final ProfileUserRepo repo;
   bool _isUploading = false;
-
+  List<String> _blockedUserIds = [];
   ProfileCubit(this.repo) : super(ProfileInitial());
+  List<String> get blockedUserIds => _blockedUserIds;
 
   Future<void> fetchUserProfile(String uid) async {
     try {
@@ -96,12 +98,62 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       // Perform the toggle operation
       await repo.toggleFollow(currentUid: currentUid, targetUid: targetUid);
-      
+
       // Refresh the profile to get the updated follow status
       await fetchUserProfile(targetUid);
     } catch (e) {
       print('Error in toggleFollow cubit: $e');
-      emit(ProfileError(errMessage: 'Failed to update follow status: ${e.toString()}'));
+      emit(
+        ProfileError(
+          errMessage: 'Failed to update follow status: ${e.toString()}',
+        ),
+      );
     }
+  } // Block user methods
+
+  Future<void> loadBlockedUsers(String currentUserId) async {
+    try {
+      _blockedUserIds = await repo.getBlockedUsersUids(currentUserId);
+    } catch (e) {
+      debugPrint('Error loading blocked users: $e');
+    }
+  }
+
+  Future<void> blockUser(String currentUserId, String userId) async {
+    try {
+      await repo.blockUser(currentUserId, userId);
+      _blockedUserIds.add(userId);
+      // Emit current state to trigger UI update
+      if (state is ProfileLoaded) {
+        emit(
+          ProfileLoaded(
+            profileUserEntity: (state as ProfileLoaded).profileUserEntity,
+          ),
+        );
+      }
+    } catch (e) {
+      emit(ProfileError(errMessage: 'Failed to block user: ${e.toString()}'));
+    }
+  }
+
+  Future<void> unBlockUser(String currentUserId, String blockedUserId) async {
+    try {
+      await repo.unBlockUser(currentUserId, blockedUserId);
+      _blockedUserIds.remove(blockedUserId);
+      // Emit current state to trigger UI update
+      if (state is ProfileLoaded) {
+        emit(
+          ProfileLoaded(
+            profileUserEntity: (state as ProfileLoaded).profileUserEntity,
+          ),
+        );
+      }
+    } catch (e) {
+      emit(ProfileError(errMessage: 'Failed to unblock user: ${e.toString()}'));
+    }
+  }
+
+  bool isUserBlocked(String userId) {
+    return _blockedUserIds.contains(userId);
   }
 }

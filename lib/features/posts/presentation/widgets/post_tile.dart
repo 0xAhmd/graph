@@ -19,9 +19,16 @@ class PostTile extends StatefulWidget {
     super.key,
     required this.post,
     required this.onDeletePressed,
+    this.onBlockPressed,
+    this.onUnblockPressed,
+    this.isUserBlocked = false,
   });
+
   final Post post;
   final void Function()? onDeletePressed;
+  final void Function()? onBlockPressed;
+  final void Function()? onUnblockPressed;
+  final bool isUserBlocked;
 
   @override
   State<PostTile> createState() => _PostTileState();
@@ -127,43 +134,110 @@ class _PostTileState extends State<PostTile> {
   }
 
   void showOptions() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          "Delete Post ?",
-          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+    if (isOwnPost) {
+      // Show delete dialog for own posts
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            "Delete Post ?",
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.inversePrimary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (widget.onDeletePressed != null) {
+                  widget.onDeletePressed!();
+                }
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                "Delete",
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+              ),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              "Cancel",
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
+      );
+    } else {
+      // Show block/unblock options for other users
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-          ),
 
-          TextButton(
-            onPressed: () {
-              if (widget.onDeletePressed != null) {
-                widget.onDeletePressed!();
-              }
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              "Delete",
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
+              if (!widget.isUserBlocked)
+                ListTile(
+                  leading: const Icon(Icons.block, color: Colors.red),
+                  title: Text(
+                    'Block ${widget.post.userName}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    if (widget.onBlockPressed != null) {
+                      widget.onBlockPressed!();
+                    }
+                  },
+                )
+              else
+                ListTile(
+                  leading: const Icon(Icons.block, color: Colors.green),
+                  title: Text(
+                    'Unblock ${widget.post.userName}',
+                    style: const TextStyle(color: Colors.green),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    if (widget.onUnblockPressed != null) {
+                      widget.onUnblockPressed!();
+                    }
+                  },
+                ),
+              ListTile(
+                leading: Icon(
+                  Icons.cancel,
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+                title: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+    }
   }
 
   @override
@@ -204,7 +278,6 @@ class _PostTileState extends State<PostTile> {
                               ),
                             ),
                           ),
-
                           imageUrl: postUser!.profileImgUrl,
                           errorWidget: (context, url, error) =>
                               const Icon(Icons.person),
@@ -230,15 +303,36 @@ class _PostTileState extends State<PostTile> {
                     ),
                   ),
                 ),
-                const Spacer(),
-                if (isOwnPost)
-                  GestureDetector(
-                    onTap: showOptions,
-                    child: Icon(
-                      color: Theme.of(context).colorScheme.primary,
-                      Icons.delete,
+                // Show blocked indicator
+                if (widget.isUserBlocked)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.red.withOpacity(0.3)),
+                    ),
+                    child: const Text(
+                      'Blocked',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: showOptions,
+                  child: Icon(
+                    isOwnPost ? Icons.delete : Icons.more_vert,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -297,7 +391,6 @@ class _PostTileState extends State<PostTile> {
                           widget.post.likes.contains(currentUser!.uid)
                               ? Icons.favorite
                               : Icons.favorite_border,
-
                           color: widget.post.likes.contains(currentUser!.uid)
                               ? Colors.red
                               : Theme.of(context).colorScheme.inversePrimary,
@@ -307,7 +400,6 @@ class _PostTileState extends State<PostTile> {
                   ),
                 ),
                 const SizedBox(width: 10),
-
                 Text(
                   widget.post.likes.length.toString(),
                   style: TextStyle(
@@ -320,7 +412,6 @@ class _PostTileState extends State<PostTile> {
                   child: const Icon(Icons.comment),
                 ),
                 const SizedBox(width: 10),
-
                 Text(
                   widget.post.comments.length.toString(),
                   style: TextStyle(
@@ -364,12 +455,15 @@ class _PostTileState extends State<PostTile> {
               ],
             ),
           ),
+
+          // ...existing code above...
           const SizedBox(height: 6),
           BlocBuilder<PostCubit, PostState>(
             builder: (context, state) {
               if (state is PostLoaded) {
                 final currentPost = state.posts.firstWhere(
                   (post) => post.id == widget.post.id,
+                  orElse: () => widget.post,
                 );
 
                 if (currentPost.comments.isNotEmpty) {
@@ -377,14 +471,15 @@ class _PostTileState extends State<PostTile> {
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    itemCount: showCommentsCount,
                     itemBuilder: (context, index) {
                       final comment = currentPost.comments[index];
-
                       return CommentTile(comment: comment);
                     },
-                    itemCount: showCommentsCount,
                   );
                 }
+                // If there are no comments, you can return an empty SizedBox or a message
+                return const SizedBox();
               } else if (state is PostLoading) {
                 return const Center(child: CupertinoActivityIndicator());
               } else if (state is PostError) {
@@ -399,15 +494,10 @@ class _PostTileState extends State<PostTile> {
                   ),
                 );
               }
-              return const SizedBox();
             },
           ),
-          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
-
-
-//! do likes tomorrow يا علق 

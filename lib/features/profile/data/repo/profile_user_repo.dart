@@ -12,7 +12,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
   final _bucket = Supabase.instance.client.storage.from('images');
   final _firestore = FirebaseFirestore.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  
+
   @override
   Future<ProfileUserEntity?> fetchUserProfile(String uid) async {
     try {
@@ -24,8 +24,10 @@ class ProfileUserRepo implements ProfileUserRepoContract {
         if (userData != null) {
           // FIXED: Consistent field mapping
           final followers = List<String>.from(userData['followers'] ?? []);
-          final followings = List<String>.from(userData['following'] ?? []); // Changed from 'followings' to 'following'
-          
+          final followings = List<String>.from(
+            userData['following'] ?? [],
+          ); // Changed from 'followings' to 'following'
+
           return ProfileUserEntity(
             followers: followers,
             followings: followings,
@@ -101,7 +103,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
       await firestore.runTransaction((transaction) async {
         final targetUserRef = firestore.collection('users').doc(targetUid);
         final currentUserRef = firestore.collection('users').doc(currentUid);
-        
+
         final targetUserDoc = await transaction.get(targetUserRef);
         final currentUserDoc = await transaction.get(currentUserRef);
 
@@ -113,7 +115,8 @@ class ProfileUserRepo implements ProfileUserRepoContract {
         final targetUserData = targetUserDoc.data()!;
 
         final List<String> currentFollowing = List<String>.from(
-          currentUserData['following'] ?? [], // FIXED: Use 'following' consistently
+          currentUserData['following'] ??
+              [], // FIXED: Use 'following' consistently
         );
         final List<String> targetFollowers = List<String>.from(
           targetUserData['followers'] ?? [],
@@ -130,19 +133,61 @@ class ProfileUserRepo implements ProfileUserRepoContract {
         }
 
         // Update both documents in the transaction
-        transaction.update(currentUserRef, {
-          'following': currentFollowing,
-        });
-        
-        transaction.update(targetUserRef, {
-          'followers': targetFollowers,
-        });
+        transaction.update(currentUserRef, {'following': currentFollowing});
+
+        transaction.update(targetUserRef, {'followers': targetFollowers});
       });
-      
+
       print('Follow/Unfollow operation completed successfully');
     } catch (e) {
       print('Error in toggleFollow: $e');
       throw Exception('Failed to toggle follow: $e');
+    }
+  }
+
+  @override
+  Future<List<String>> getBlockedUsersUids(String currentUserId) async {
+    try {
+      final snapshot = await firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('blockedUsers')
+          .get();
+      return snapshot.docs.map((doc) => doc.id).toList();
+    } catch (e) {
+      debugPrint('Error getting blocked users: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<void> blockUser(String currentUserId, String userId) async {
+    try {
+      debugPrint('Blocking $userId for user $currentUserId');
+      await firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('blockedUsers')
+          .doc(userId)
+          .set({'blockedAt': FieldValue.serverTimestamp()});
+    } catch (e) {
+      debugPrint('Error blocking user: $e');
+      throw Exception('Failed to block user');
+    }
+  }
+
+  @override
+  Future<void> unBlockUser(String currentUserId, String blockedUserId) async {
+    try {
+      await firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('blockedUsers')
+          .doc(blockedUserId)
+          .delete();
+    } catch (e) {
+      debugPrint('Error unblocking user: $e');
+      throw Exception('Failed to unblock user');
     }
   }
 }

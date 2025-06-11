@@ -31,6 +31,7 @@ class _HomePageState extends State<HomePage>
     _tabController = TabController(length: 2, vsync: this);
     fetchAllPosts();
     fetchCurrentUserFollowing();
+    loadBlockedUsers();
   }
 
   @override
@@ -55,9 +56,17 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  Future<void> loadBlockedUsers() async {
+    final currentUser = authCubit.currentUser;
+    if (currentUser != null) {
+      await profileCubit.loadBlockedUsers(currentUser.uid);
+    }
+  }
+
   Future<void> refreshData() async {
     fetchAllPosts();
     await fetchCurrentUserFollowing();
+    await loadBlockedUsers();
   }
 
   void deletePost(String postId) async {
@@ -70,8 +79,88 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  void blockUser(String userId) async {
+    final currentUser = authCubit.currentUser;
+    if (currentUser != null) {
+      // Show confirmation dialog
+      final shouldBlock = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'Block User',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.inversePrimary,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to block this user? You won\'t see their posts anymore.',
+
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.inversePrimary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Block'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldBlock == true) {
+        await profileCubit.blockUser(currentUser.uid, userId);
+        // Refresh posts to remove blocked user's posts
+        fetchAllPosts();
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('User blocked successfully'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void unBlockUser(String userId) async {
+    final currentUser = authCubit.currentUser;
+    if (currentUser != null) {
+      await profileCubit.unBlockUser(currentUser.uid, userId);
+      // Refresh posts to show unblocked user's posts
+      fetchAllPosts();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('User unblocked successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  // Filter out posts from blocked users
+  List<dynamic> filterBlockedUserPosts(List<dynamic> posts) {
+    return posts
+        .where((post) => !profileCubit.isUserBlocked(post.userId))
+        .toList();
+  }
+
   Widget buildPostsList(List<dynamic> posts, {bool showEmptyMessage = true}) {
-    if (posts.isEmpty && showEmptyMessage) {
+    // Filter out blocked users' posts
+    final filteredPosts = filterBlockedUserPosts(posts);
+
+    if (filteredPosts.isEmpty && showEmptyMessage) {
       return Center(
         child: Text(
           _tabController.index == 0
@@ -88,13 +177,24 @@ class _HomePageState extends State<HomePage>
       color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         itemBuilder: (context, index) {
-          final post = posts[index];
+          final post = filteredPosts[index];
+          final currentUser = authCubit.currentUser;
+          final isCurrentUserPost = currentUser?.uid == post.userId;
+          final isUserBlocked = profileCubit.isUserBlocked(post.userId);
+
           return PostTile(
             post: post,
             onDeletePressed: () => deletePost(post.id),
+            onBlockPressed: isCurrentUserPost
+                ? null
+                : () => blockUser(post.userId),
+            onUnblockPressed: isCurrentUserPost
+                ? null
+                : () => unBlockUser(post.userId),
+            isUserBlocked: isUserBlocked,
           );
         },
-        itemCount: posts.length,
+        itemCount: filteredPosts.length,
       ),
     );
   }
@@ -138,18 +238,20 @@ class _HomePageState extends State<HomePage>
               } else if (state is PostLoaded) {
                 final allPosts = state.posts;
 
-                // Filter posts for following tab
-                final followingPosts = allPosts
-                    .where((post) => followingUserIds.contains(post.userId))
-                    .toList();
+                // Filter posts for following tab (also filter out blocked users)
+                final followingPosts = filterBlockedUserPosts(
+                  allPosts
+                      .where((post) => followingUserIds.contains(post.userId))
+                      .toList(),
+                );
 
                 return TabBarView(
                   controller: _tabController,
                   children: [
-                    // For You Tab - All Posts
+                    // For You Tab - All Posts (filtered)
                     buildPostsList(allPosts),
 
-                    // Following Tab - Only posts from users you follow
+                    // Following Tab - Only posts from users you follow (filtered)
                     buildPostsList(followingPosts),
                   ],
                 );

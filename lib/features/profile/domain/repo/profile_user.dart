@@ -14,4 +14,7 @@ abstract class ProfileUserRepoContract {
     required String currentUid,
     required String targetUid,
   });
+  Future<List<String>> getBlockedUsersUids(String currentUserId);
+  Future<void> blockUser(String currentUserId, String userId);
+  Future<void> unBlockUser(String currentUserId, String blockedUserId);
 }
