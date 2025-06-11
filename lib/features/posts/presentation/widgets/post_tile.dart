@@ -98,6 +98,7 @@ class _PostTileState extends State<PostTile> {
     );
     if (commentController.text.isNotEmpty) {
       postCubit.addComment(widget.post.id, newComment);
+      commentController.clear();
     }
   }
 
