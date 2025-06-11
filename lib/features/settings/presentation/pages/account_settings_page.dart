@@ -46,28 +46,30 @@ class AccountSettingsPage extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BlockListPage(),
-                      ),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(15),
+                  Container(
+                    padding: const EdgeInsets.all(15),
 
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          "Blocked Users ",
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.inversePrimary,
-                          ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        "Blocked Users ",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.inversePrimary,
                         ),
-                        trailing: const Icon(Icons.arrow_forward),
+                      ),
+                      trailing: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BlockListPage(),
+                            ),
+                          );
+                        },
+                        child: const Icon(Icons.arrow_forward),
                       ),
                     ),
                   ),

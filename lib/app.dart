@@ -42,14 +42,14 @@ class MyApp extends StatelessWidget {
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeData>(
-        builder: (context, state) => MaterialApp(
+        builder: (context, themeState) => MaterialApp(
           // In your main.dart or app router
           routes: {
             '/login': (context) => const LoginPage(onTap: null),
             // ... other routes
           },
           debugShowCheckedModeBanner: false,
-          theme: state.copyWith(textTheme: GoogleFonts.latoTextTheme()),
+          theme: themeState.copyWith(textTheme: GoogleFonts.latoTextTheme()),
           home: BlocConsumer<AuthCubit, AuthState>(
             builder: (context, state) {
               debugPrint(state.toString());

@@ -40,28 +40,28 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(15),
-            margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Theme.of(context).colorScheme.secondary,
-            ),
-            child: ListTile(
-              title: Text(
-                "Account Settings",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AccountSettingsPage(),
               ),
-              trailing: GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AccountSettingsPage(),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              child: ListTile(
+                title: Text(
+                  "Account Settings",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
                   ),
                 ),
-                child: const Icon(Icons.arrow_forward),
+                trailing: const Icon(Icons.arrow_forward),
               ),
             ),
           ),
