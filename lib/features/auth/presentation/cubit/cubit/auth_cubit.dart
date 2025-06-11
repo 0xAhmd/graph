@@ -62,10 +62,42 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-
-
-  Future<void> logout () async{
+  Future<void> logout() async {
     repo.logout();
     emit(UnAuthenticated());
   }
+
+  Future<void> deleteAccount() async {
+    try {
+      emit(AuthLoading()); // Show loading state during deletion
+
+      // Check if user is logged in
+      if (_currentUser == null) {
+        emit(AuthError(errMessage: 'No user logged in'));
+        return;
+      }
+
+      // The repository handles everything:
+      // 1. Deletes all user data from Firestore
+      // 2. Deletes images from Supabase
+      // 3. Deletes the Firebase Auth account
+      await repo.deleteAccount();
+
+      // Clear local state
+      _currentUser = null;
+
+      // Emit AccountDeleted instead of UnAuthenticated
+      emit(AccountDeleted());
+    } catch (e) {
+      emit(AuthError(errMessage: e.toString()));
+      // Don't emit UnAuthenticated here since deletion failed
+      // Keep the current authenticated state so user can try again
+      if (_currentUser != null) {
+        emit(Authenticated(user: _currentUser!));
+      }
+    }
+  }
+
+  // You can remove this method entirely since the repo handles it
+  // Future<void> deleteUserInfoFromFirebase(String uid) async { ... }
 }

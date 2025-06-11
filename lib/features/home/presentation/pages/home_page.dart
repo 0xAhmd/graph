@@ -6,6 +6,8 @@ import '../widgets/home_drawer.dart';
 import '../../../posts/presentation/cubit/post_cubit.dart';
 import '../../../posts/presentation/pages/upload_post_page.dart';
 import '../../../posts/presentation/widgets/post_tile.dart';
+import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
+import '../../../profile/presentation/cubit/cubit/profile_cubit.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,20 +15,51 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   late final postCubit = context.read<PostCubit>();
+  late final authCubit = context.read<AuthCubit>();
+  late final profileCubit = context.read<ProfileCubit>();
+  late TabController _tabController;
+
+  List<String> followingUserIds = [];
+  bool isDeleting = false;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     fetchAllPosts();
+    fetchCurrentUserFollowing();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   void fetchAllPosts() {
     postCubit.fetchAllPosts();
   }
 
-  bool isDeleting = false;
+  Future<void> fetchCurrentUserFollowing() async {
+    final currentUser = authCubit.currentUser;
+    if (currentUser != null) {
+      final userProfile = await profileCubit.getUserProfile(currentUser.uid);
+      if (userProfile != null) {
+        setState(() {
+          followingUserIds = userProfile.followings;
+        });
+      }
+    }
+  }
+
+  Future<void> refreshData() async {
+    fetchAllPosts();
+    await fetchCurrentUserFollowing();
+  }
+
   void deletePost(String postId) async {
     setState(() {
       isDeleting = true;
@@ -35,6 +68,35 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       isDeleting = false;
     });
+  }
+
+  Widget buildPostsList(List<dynamic> posts, {bool showEmptyMessage = true}) {
+    if (posts.isEmpty && showEmptyMessage) {
+      return Center(
+        child: Text(
+          _tabController.index == 0
+              ? "No Posts Available here..."
+              : "No posts from users you follow...",
+          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: refreshData,
+      displacement: 40,
+      color: Theme.of(context).colorScheme.primary,
+      child: ListView.builder(
+        itemBuilder: (context, index) {
+          final post = posts[index];
+          return PostTile(
+            post: post,
+            onDeletePressed: () => deletePost(post.id),
+          );
+        },
+        itemCount: posts.length,
+      ),
+    );
   }
 
   @override
@@ -52,47 +114,44 @@ class _HomePageState extends State<HomePage> {
         ],
         centerTitle: true,
         title: const Text("Home"),
+        bottom: TabBar(
+          dividerColor: Colors.transparent,
+          controller: _tabController,
+          tabs: const [
+            Tab(text: "For You"),
+            Tab(text: "Following"),
+          ],
+          indicatorColor: Theme.of(context).colorScheme.primary,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(
+            context,
+          ).colorScheme.onSurface.withOpacity(0.6),
+        ),
       ),
       drawer: const HomeDrawer(),
-
       body: Stack(
         children: [
           BlocBuilder<PostCubit, PostState>(
             builder: (context, state) {
-              if (state is PostLoading && state is PostUploading) {
-                return const Scaffold(
-                  body: Center(child: CupertinoActivityIndicator()),
-                );
+              if (state is PostLoading) {
+                return const Center(child: CupertinoActivityIndicator());
               } else if (state is PostLoaded) {
                 final allPosts = state.posts;
 
-                if (allPosts.isEmpty) {
-                  return Center(
-                    child: Text(
-                      "No Posts Available here...",
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.inversePrimary,
-                      ),
-                    ),
-                  );
-                }
+                // Filter posts for following tab
+                final followingPosts = allPosts
+                    .where((post) => followingUserIds.contains(post.userId))
+                    .toList();
 
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    fetchAllPosts();
-                  },
-                  displacement: 40,
-                  color: Theme.of(context).colorScheme.primary,
-                  child: ListView.builder(
-                    itemBuilder: (context, index) {
-                      final post = allPosts[index];
-                      return PostTile(
-                        post: post,
-                        onDeletePressed: () => deletePost(post.id),
-                      );
-                    },
-                    itemCount: allPosts.length,
-                  ),
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // For You Tab - All Posts
+                    buildPostsList(allPosts),
+
+                    // Following Tab - Only posts from users you follow
+                    buildPostsList(followingPosts),
+                  ],
                 );
               } else if (state is PostError) {
                 return Center(

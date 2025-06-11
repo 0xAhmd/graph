@@ -91,13 +91,17 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  // toggle follow method
-
+  // FIXED: Improved toggle follow method
   Future<void> toggleFollow(String currentUid, String targetUid) async {
     try {
+      // Perform the toggle operation
       await repo.toggleFollow(currentUid: currentUid, targetUid: targetUid);
+      
+      // Refresh the profile to get the updated follow status
+      await fetchUserProfile(targetUid);
     } catch (e) {
-      emit(ProfileError(errMessage: e.toString()));
+      print('Error in toggleFollow cubit: $e');
+      emit(ProfileError(errMessage: 'Failed to update follow status: ${e.toString()}'));
     }
   }
 }

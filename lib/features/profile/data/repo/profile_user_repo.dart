@@ -12,6 +12,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
   final _bucket = Supabase.instance.client.storage.from('images');
   final _firestore = FirebaseFirestore.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  
   @override
   Future<ProfileUserEntity?> fetchUserProfile(String uid) async {
     try {
@@ -21,8 +22,10 @@ class ProfileUserRepo implements ProfileUserRepoContract {
         final userData = userDoc.data();
 
         if (userData != null) {
-          final followers = List<String>.from(userData['followings'] ?? []);
-          final followings = List<String>.from(userData['followers'] ?? []);
+          // FIXED: Consistent field mapping
+          final followers = List<String>.from(userData['followers'] ?? []);
+          final followings = List<String>.from(userData['following'] ?? []); // Changed from 'followings' to 'following'
+          
           return ProfileUserEntity(
             followers: followers,
             followings: followings,
@@ -36,7 +39,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
       }
       return null;
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint('Error fetching user profile: $e');
       return null;
     }
   }
@@ -78,7 +81,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
       final publicUrl = _bucket.getPublicUrl(fileName);
 
       await _firestore.collection('users').doc(uid).update({
-        'profileImgUrl': publicUrl, // ← consistent with fetchUserProfile
+        'profileImgUrl': publicUrl,
       });
 
       return publicUrl;
@@ -94,42 +97,52 @@ class ProfileUserRepo implements ProfileUserRepoContract {
     required String targetUid,
   }) async {
     try {
-      final targetUserDoc = await firestore
-          .collection('users')
-          .doc(targetUid)
-          .get();
+      // Use a transaction to ensure consistency
+      await firestore.runTransaction((transaction) async {
+        final targetUserRef = firestore.collection('users').doc(targetUid);
+        final currentUserRef = firestore.collection('users').doc(currentUid);
+        
+        final targetUserDoc = await transaction.get(targetUserRef);
+        final currentUserDoc = await transaction.get(currentUserRef);
 
-      final currentUserDoc = await firestore
-          .collection('users')
-          .doc(currentUid)
-          .get();
-
-      if (currentUserDoc.exists && targetUserDoc.exists) {
-        final currentUserData = currentUserDoc.data();
-        final targetUserData = targetUserDoc.data();
-
-        if (currentUserData != null && targetUserData != null) {
-          final List<String> currentFollowing = List<String>.from(
-            currentUserData['following'] ?? [],
-          );
-
-          if (currentFollowing.contains(targetUid)) {
-            await firestore.collection('users').doc(currentUid).update({
-              'following': FieldValue.arrayRemove([targetUid]),
-            });
-            await firestore.collection('users').doc(targetUid).update({
-              'followers': FieldValue.arrayRemove([currentUid]),
-            });
-          } else {
-            await firestore.collection('users').doc(currentUid).update({
-              'following': FieldValue.arrayUnion([targetUid]),
-            });
-            await firestore.collection('users').doc(targetUid).update({
-              'followers': FieldValue.arrayUnion([currentUid]),
-            });
-          }
+        if (!currentUserDoc.exists || !targetUserDoc.exists) {
+          throw Exception('User not found');
         }
-      }
-    } catch (e) {}
+
+        final currentUserData = currentUserDoc.data()!;
+        final targetUserData = targetUserDoc.data()!;
+
+        final List<String> currentFollowing = List<String>.from(
+          currentUserData['following'] ?? [], // FIXED: Use 'following' consistently
+        );
+        final List<String> targetFollowers = List<String>.from(
+          targetUserData['followers'] ?? [],
+        );
+
+        if (currentFollowing.contains(targetUid)) {
+          // Unfollow
+          currentFollowing.remove(targetUid);
+          targetFollowers.remove(currentUid);
+        } else {
+          // Follow
+          currentFollowing.add(targetUid);
+          targetFollowers.add(currentUid);
+        }
+
+        // Update both documents in the transaction
+        transaction.update(currentUserRef, {
+          'following': currentFollowing,
+        });
+        
+        transaction.update(targetUserRef, {
+          'followers': targetFollowers,
+        });
+      });
+      
+      print('Follow/Unfollow operation completed successfully');
+    } catch (e) {
+      print('Error in toggleFollow: $e');
+      throw Exception('Failed to toggle follow: $e');
+    }
   }
 }

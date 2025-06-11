@@ -29,44 +29,47 @@ class _ProfilePageState extends State<ProfilePage> {
   late final authCubit = context.read<AuthCubit>();
   late final profileCubit = context.read<ProfileCubit>();
   late AppUser? currentUser = authCubit.currentUser;
+  bool _isFollowLoading = false; // Add loading state for follow button
 
   @override
   void initState() {
     super.initState();
     profileCubit.fetchUserProfile(widget.uid);
-    context.read<PostCubit>().fetchAllPosts(); // Make sure posts are fetched
+    context.read<PostCubit>().fetchAllPosts();
   }
 
   Future<void> refreshProfile() async {
     await profileCubit.fetchUserProfile(widget.uid);
-    await context.read<PostCubit>().fetchAllPosts(); // Refresh posts too
+    await context.read<PostCubit>().fetchAllPosts();
   }
 
-  void followButtonPressed() {
-    final profileState = profileCubit.state;
-
-    if (profileState is! ProfileLoaded) return;
-
-    final profileUser = profileState.profileUserEntity;
-    final isFollowing = profileUser.followers.contains(currentUser!.uid);
+  // FIXED: Simplified follow button handler
+  Future<void> followButtonPressed() async {
+    if (_isFollowLoading || currentUser == null) return;
 
     setState(() {
-      if (isFollowing) {
-        profileUser.followers.remove(currentUser!.uid);
-      } else {
-        profileUser.followers.add(currentUser!.uid);
-      }
+      _isFollowLoading = true;
     });
 
-    profileCubit.toggleFollow(currentUser!.uid, widget.uid).catchError((error) {
-      setState(() {
-        if (isFollowing) {
-          profileUser.followers.add(currentUser!.uid);
-        } else {
-          profileUser.followers.remove(currentUser!.uid);
-        }
-      });
-    });
+    try {
+      await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
+    } catch (e) {
+      // Show error message to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update follow status: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFollowLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -239,12 +242,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         const SizedBox(height: 25),
                         if (!isOwn)
-                          FollowButton(
-                            isFollowing: user.followers.contains(
-                              currentUser!.uid,
-                            ),
-                            onTap: followButtonPressed,
-                          ),
+                          // FIXED: Show loading state in follow button
+                          _isFollowLoading
+                              ? const CupertinoActivityIndicator()
+                              : FollowButton(
+                                  isFollowing: user.followers.contains(
+                                    currentUser!.uid,
+                                  ),
+                                  onTap: followButtonPressed,
+                                ),
 
                         Padding(
                           padding: const EdgeInsets.only(left: 16.0),

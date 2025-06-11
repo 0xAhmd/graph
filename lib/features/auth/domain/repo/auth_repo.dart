@@ -9,4 +9,8 @@ abstract class AuthRepo {
   });
   Future<void> logout();
   Future<AppUser?> getCurrentUser();
+
+  Future<void> deleteAccount();
+
+  Future<void> deleteUserInfoFromFirebase(String uid);
 }

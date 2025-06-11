@@ -20,3 +20,5 @@ final class AuthError extends AuthState {
 }
 
 final class UnAuthenticated extends AuthState {}
+
+class AccountDeleted extends AuthState {}

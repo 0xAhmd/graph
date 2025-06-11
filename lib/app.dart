@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ig_mate/core/themes/theme_cubit.dart';
+import 'package:ig_mate/features/auth/presentation/pages/login_page.dart';
 import 'package:ig_mate/features/search/data/repo/search_repo.dart';
 import 'package:ig_mate/features/search/presentation/cubit/search_cubit.dart';
 import 'features/auth/data/repo/firebase_auth_repo.dart';
@@ -42,6 +43,11 @@ class MyApp extends StatelessWidget {
       ],
       child: BlocBuilder<ThemeCubit, ThemeData>(
         builder: (context, state) => MaterialApp(
+          // In your main.dart or app router
+          routes: {
+            '/login': (context) => const LoginPage(onTap: null),
+            // ... other routes
+          },
           debugShowCheckedModeBanner: false,
           theme: state.copyWith(textTheme: GoogleFonts.latoTextTheme()),
           home: BlocConsumer<AuthCubit, AuthState>(
