@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/core/helpers/password_strength.dart';
-import 'package:ig_mate/core/helpers/password_validator.dart';
-import 'package:ig_mate/core/helpers/validators.dart';
+import 'package:ig_mate/core/utils/password_strength.dart';
+import 'package:ig_mate/core/utils/password_validator.dart';
+import 'package:ig_mate/core/utils/validators.dart';
 import '../cubit/cubit/auth_cubit.dart';
 import '../widgets/custom_btn.dart';
 import '../widgets/custom_text_field.dart';

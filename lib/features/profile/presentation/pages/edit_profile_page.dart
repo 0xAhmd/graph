@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../../../../core/helpers/image_picker.dart';
+import '../../../../core/utils/image_picker.dart';
 import '../../../auth/presentation/widgets/custom_text_field.dart';
 import '../../domain/entities/profile_user.dart';
 import '../cubit/cubit/profile_cubit.dart';
