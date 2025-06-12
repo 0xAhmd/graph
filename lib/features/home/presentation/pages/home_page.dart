@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../widgets/home_drawer.dart';
 import '../../../posts/presentation/cubit/post_cubit.dart';
@@ -119,11 +120,12 @@ class _HomePageState extends State<HomePage>
 
         // Show success message
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User blocked successfully'),
-              duration: Duration(seconds: 2),
-            ),
+          Fluttertoast.showToast(
+            msg: "User Blocked!",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.green, // or Colors.green, etc.
+            textColor: Colors.white,
           );
         }
       }
@@ -139,11 +141,12 @@ class _HomePageState extends State<HomePage>
 
       // Show success message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('User unblocked successfully'),
-            duration: Duration(seconds: 2),
-          ),
+        Fluttertoast.showToast(
+          msg: "User unblocked!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.green, // or Colors.green, etc.
+          textColor: Colors.white,
         );
       }
     }

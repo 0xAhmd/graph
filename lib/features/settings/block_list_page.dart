@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
 import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
@@ -73,24 +74,23 @@ class _BlockListPageState extends State<BlockListPage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'User unblocked successfully',
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-          ),
+        Fluttertoast.showToast(
+          msg: "User unblocked Successfully",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.green, // or Colors.green, etc.
+          textColor: Colors.white,
         );
       }
     } catch (e) {
       debugPrint('Error unblocking user: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to unblock user: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        Fluttertoast.showToast(
+          msg: "Failed unblock user $e",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red, // or Colors.green, etc.
+          textColor: Colors.white,
         );
       }
     }

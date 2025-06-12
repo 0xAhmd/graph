@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../../../core/helpers/image_picker.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
@@ -47,10 +48,12 @@ class _UploadPostPageState extends State<UploadPostPage> {
   void uploadPost() {
     // check if both image and caption are provided
     if (selectedImage == null || postController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select an image and write a caption.'),
-        ),
+      Fluttertoast.showToast(
+        msg: "Please select image and write caption",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red, // or Colors.green, etc.
+        textColor: Colors.white,
       );
       return;
     }

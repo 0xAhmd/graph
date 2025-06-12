@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/core/helpers/password_strength.dart';
 import 'package:ig_mate/core/helpers/password_validator.dart';
 import 'package:ig_mate/core/helpers/validators.dart';
@@ -125,10 +126,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
       authCubit.register(name, email, password);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fix all errors before proceeding"),
-        ),
+      Fluttertoast.showToast(
+        msg: "please end all fields before proceeding",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red, // or Colors.green, etc.
+        textColor: Colors.white,
       );
     }
   }

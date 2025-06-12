@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../cubit/cubit/auth_cubit.dart';
 import '../widgets/custom_btn.dart';
 import '../widgets/custom_text_field.dart';
@@ -23,10 +24,12 @@ class _LoginPageState extends State<LoginPage> {
     if (email.isNotEmpty && password.isNotEmpty) {
       authCubit.login(email, password);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please Write both email and password correctly "),
-        ),
+      Fluttertoast.showToast(
+        msg: "Please write correct email and password ",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red, // or Colors.green, etc.
+        textColor: Colors.white,
       );
     }
   }

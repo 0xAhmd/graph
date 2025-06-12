@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
@@ -55,11 +56,12 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       // Show error message to user
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update follow status: $e'),
-            backgroundColor: Colors.red,
-          ),
+        Fluttertoast.showToast(
+          msg: "Failed to update follow stats",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red, // or Colors.green, etc.
+          textColor: Colors.white,
         );
       }
     } finally {

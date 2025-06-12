@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ig_mate/core/themes/theme_cubit.dart';
@@ -69,9 +70,13 @@ class MyApp extends StatelessWidget {
             },
             listener: (context, state) {
               if (state is AuthError) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(state.errMessage)));
+                Fluttertoast.showToast(
+                  msg: state.errMessage,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.red, // or Colors.green, etc.
+                  textColor: Colors.white,
+                );
               }
             },
           ),

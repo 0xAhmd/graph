@@ -31,7 +31,7 @@ void main() async {
 // create auth service to handle sign in, sign out, register
 // use FirebaseAuth.instance for auth actions
 // validate user input in login/signup forms
-// display error messages with SnackBar or similar
+// display error messages with toast or similar
 // add loading indicator during async calls
 // navigate to home after successful login or registration
 // enable email/password sign-in in Firebase Console

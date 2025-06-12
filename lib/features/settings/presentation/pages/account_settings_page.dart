@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/settings/block_list_page.dart';
 
@@ -18,22 +19,21 @@ class AccountSettingsPage extends StatelessWidget {
         listener: (context, state) {
           // Handle different states after delete account attempt
           if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error deleting account: ${state.errMessage}'),
-                backgroundColor: Colors.red,
-              ),
+            Fluttertoast.showToast(
+              msg: "Error Deleting Account",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red, // or Colors.green, etc.
+              textColor: Colors.white,
             );
           } else if (state is AccountDeleted) {
             // Account deleted successfully, navigate to login/welcome screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Account deleted successfully',
-                  style: TextStyle(color: Colors.white),
-                ),
-                backgroundColor: Colors.green,
-              ),
+            Fluttertoast.showToast(
+              msg: "Account Deleted Successfully",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.green, // or Colors.green, etc.
+              textColor: Colors.white,
             );
             Navigator.of(context).pushReplacementNamed('/login');
           }
