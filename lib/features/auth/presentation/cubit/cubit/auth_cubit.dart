@@ -2,7 +2,6 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/app_user.dart';
 import '../../../domain/repo/auth_repo.dart';
-import 'package:meta/meta.dart';
 
 part 'auth_state.dart';
 

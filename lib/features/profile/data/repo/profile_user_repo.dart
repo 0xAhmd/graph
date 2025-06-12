@@ -46,6 +46,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
     }
   }
 
+  @override
   Future<void> updateUserProfile(ProfileUserEntity profile) async {
     try {
       final docRef = FirebaseFirestore.instance
@@ -54,16 +55,13 @@ class ProfileUserRepo implements ProfileUserRepoContract {
 
       // 🔍 DEBUG: Print what's being sent to Firestore
       final dataToUpdate = profile.toJson();
-      print('🔍 Data being sent to Firestore: $dataToUpdate');
 
       await docRef.update(dataToUpdate);
 
       // Verify the update
-      final doc = await docRef.get();
-      print('🔍 Data in Firestore after update: ${doc.data()}');
+      final _ = await docRef.get();
     } catch (e) {
-      print('🔍 ERROR in updateUserProfile: $e');
-      throw e;
+      rethrow;
     }
   }
 

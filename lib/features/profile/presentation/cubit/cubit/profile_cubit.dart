@@ -159,24 +159,16 @@ class ProfileCubit extends Cubit<ProfileState> {
       );
 
       // 🔍 DEBUG: Print what we're trying to save
-      print('=== DEBUG PROFILE UPDATE ===');
-      print('Original email: ${currentUser.email}');
-      print('New email: $newEmail');
-      print('Updated profile email: ${updatedProfile.email}');
-      print('Updated profile JSON: ${updatedProfile.toJson()}');
-      print('================================');
 
       await repo.updateUserProfile(updatedProfile);
 
       final refreshedUser = await repo.fetchUserProfile(uid);
       if (refreshedUser != null) {
-        print('🔍 AFTER UPDATE - Refreshed user email: ${refreshedUser.email}');
         emit(ProfileLoaded(profileUserEntity: refreshedUser));
       } else {
         emit(ProfileError(errMessage: 'Failed to fetch updated user info'));
       }
     } catch (e) {
-      print('🔍 ERROR in updatedProfile: $e');
       emit(ProfileError(errMessage: "Error when updating the user info: $e"));
     }
   }
