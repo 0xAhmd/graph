@@ -215,7 +215,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return ConstrainedScaffold(
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
