@@ -1,4 +1,4 @@
-# ig_mate
+# graph
 
 A new Flutter project.
 
