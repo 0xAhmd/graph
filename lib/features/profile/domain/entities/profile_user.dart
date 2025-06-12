@@ -13,7 +13,11 @@ class ProfileUserEntity extends AppUser {
   final List<String> followers;
   @JsonKey(defaultValue: <String>[])
   final List<String> followings;
+  @JsonKey(defaultValue: 0)
+  final int? lastEmailUpdate;
+
   ProfileUserEntity({
+    this.lastEmailUpdate,
     required this.followers,
     required this.followings,
     required this.bio,
@@ -26,16 +30,18 @@ class ProfileUserEntity extends AppUser {
   ProfileUserEntity copyWith({
     List<String>? newFollowers,
     List<String>? newFollowings,
-
     String? newBio,
     String? newProfileImgUrl,
+    String? newEmail, // ✅ Add email parameter
+    int? newLastEmailUpdate, // ✅ Add lastEmailUpdate parameter
   }) {
     return ProfileUserEntity(
+      lastEmailUpdate: newLastEmailUpdate ?? lastEmailUpdate,
       bio: newBio ?? bio,
       profileImgUrl: newProfileImgUrl ?? profileImgUrl,
       uid: uid,
       name: name,
-      email: email,
+      email: newEmail ?? email, // ✅ Use newEmail parameter
       followers: newFollowers ?? followers,
       followings: newFollowings ?? followings,
     );

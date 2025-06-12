@@ -46,20 +46,24 @@ class ProfileUserRepo implements ProfileUserRepoContract {
     }
   }
 
-  @override
-  Future<void> updateUserProfile(ProfileUserEntity updatedProfile) async {
+  Future<void> updateUserProfile(ProfileUserEntity profile) async {
     try {
-      await firestore.collection('users').doc(updatedProfile.uid).update({
-        'bio': (updatedProfile.bio == 'null') ? '' : updatedProfile.bio,
-        'profileImgUrl': (updatedProfile.profileImgUrl == 'null')
-            ? ''
-            : (updatedProfile.profileImgUrl),
-      });
-      debugPrint(
-        'Updating: bio=${updatedProfile.bio}, profileImgUrl=${updatedProfile.profileImgUrl}',
-      );
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(profile.uid);
+
+      // 🔍 DEBUG: Print what's being sent to Firestore
+      final dataToUpdate = profile.toJson();
+      print('🔍 Data being sent to Firestore: $dataToUpdate');
+
+      await docRef.update(dataToUpdate);
+
+      // Verify the update
+      final doc = await docRef.get();
+      print('🔍 Data in Firestore after update: ${doc.data()}');
     } catch (e) {
-      throw Exception(e);
+      print('🔍 ERROR in updateUserProfile: $e');
+      throw e;
     }
   }
 

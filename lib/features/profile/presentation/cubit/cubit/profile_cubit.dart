@@ -33,29 +33,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     return user;
   }
 
-  Future<void> updatedProfile({required String uid, String? newBio}) async {
-    emit(ProfileLoading());
-    try {
-      final currentUser = await repo.fetchUserProfile(uid);
-      if (currentUser == null) {
-        emit(ProfileError(errMessage: 'failed to fetch user info'));
-        return;
-      }
-      final updatedProfile = currentUser.copyWith(
-        newBio: newBio ?? currentUser.bio,
-      );
-      await repo.updateUserProfile(updatedProfile);
-
-      final refreshedUser = await repo.fetchUserProfile(uid);
-      if (refreshedUser != null) {
-        emit(ProfileLoaded(profileUserEntity: refreshedUser));
-      } else {
-        emit(ProfileError(errMessage: 'Failed to fetch updated user info'));
-      }
-    } catch (e) {
-      emit(ProfileError(errMessage: "Error when updating the user info: $e"));
-    }
-  }
+  // Add this method to your ProfileCubit class
 
   Future<void> uploadProfileImage({
     required File image,
@@ -156,5 +134,50 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   bool isUserBlocked(String userId) {
     return _blockedUserIds.contains(userId);
+  }
+
+  Future<void> updatedProfile({
+    required String uid,
+    String? newBio,
+    String? newEmail,
+  }) async {
+    emit(ProfileLoading());
+    try {
+      final currentUser = await repo.fetchUserProfile(uid);
+      if (currentUser == null) {
+        emit(ProfileError(errMessage: 'failed to fetch user info'));
+        return;
+      }
+
+      // Create updated profile with new fields
+      final updatedProfile = currentUser.copyWith(
+        newBio: newBio ?? currentUser.bio,
+        newEmail: newEmail ?? currentUser.email,
+        newLastEmailUpdate: (newEmail != null && newEmail != currentUser.email)
+            ? DateTime.now().millisecondsSinceEpoch
+            : currentUser.lastEmailUpdate,
+      );
+
+      // 🔍 DEBUG: Print what we're trying to save
+      print('=== DEBUG PROFILE UPDATE ===');
+      print('Original email: ${currentUser.email}');
+      print('New email: $newEmail');
+      print('Updated profile email: ${updatedProfile.email}');
+      print('Updated profile JSON: ${updatedProfile.toJson()}');
+      print('================================');
+
+      await repo.updateUserProfile(updatedProfile);
+
+      final refreshedUser = await repo.fetchUserProfile(uid);
+      if (refreshedUser != null) {
+        print('🔍 AFTER UPDATE - Refreshed user email: ${refreshedUser.email}');
+        emit(ProfileLoaded(profileUserEntity: refreshedUser));
+      } else {
+        emit(ProfileError(errMessage: 'Failed to fetch updated user info'));
+      }
+    } catch (e) {
+      print('🔍 ERROR in updatedProfile: $e');
+      emit(ProfileError(errMessage: "Error when updating the user info: $e"));
+    }
   }
 }

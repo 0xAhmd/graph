@@ -6,7 +6,8 @@ class CustomTextField extends StatelessWidget {
   final bool isObscured;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
-  final FocusNode? focusNode; // ✅ Add this line
+  final FocusNode? focusNode;
+  final bool enabled; // ✅ Add enabled property
 
   const CustomTextField({
     super.key,
@@ -15,7 +16,8 @@ class CustomTextField extends StatelessWidget {
     required this.isObscured,
     this.validator,
     this.onChanged,
-    this.focusNode, // ✅ Add this line
+    this.focusNode,
+    this.enabled = true, // ✅ Default to true
   });
 
   @override
@@ -23,15 +25,22 @@ class CustomTextField extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 4),
       child: TextFormField(
-        style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
-        focusNode: focusNode, // ✅ Use it here
+        style: TextStyle(
+          color: enabled
+              ? Theme.of(context).colorScheme.inversePrimary
+              : Theme.of(context).colorScheme.inversePrimary.withOpacity(0.5),
+        ),
+        focusNode: focusNode,
         controller: controller,
         obscureText: isObscured,
         validator: validator,
         onChanged: onChanged,
+        enabled: enabled, // ✅ Use enabled property
         decoration: InputDecoration(
           hintText: hintText,
-          fillColor: Theme.of(context).colorScheme.secondary,
+          fillColor: enabled
+              ? Theme.of(context).colorScheme.secondary
+              : Theme.of(context).colorScheme.secondary.withOpacity(0.5),
           filled: true,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
@@ -43,6 +52,13 @@ class CustomTextField extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             borderSide: BorderSide(
               color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          disabledBorder: OutlineInputBorder(
+            // ✅ Add disabled border
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.tertiary.withOpacity(0.5),
             ),
           ),
         ),
