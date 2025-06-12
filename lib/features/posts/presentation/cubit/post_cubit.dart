@@ -134,4 +134,68 @@ class PostCubit extends Cubit<PostState> {
       }
     }
   }
+
+  Future<void> editComment(
+    String postId,
+    String commentId,
+    String newText,
+  ) async {
+    final currentState = state;
+    if (currentState is PostLoaded) {
+      // Store the old comment for potential rollback
+      Comment? oldComment;
+
+      // Optimistically update UI first
+      final updatedPosts = currentState.posts.map((post) {
+        if (post.id == postId) {
+          final commentIndex = post.comments.indexWhere(
+            (c) => c.id == commentId,
+          );
+          if (commentIndex != -1) {
+            oldComment = post.comments[commentIndex];
+            final updatedComment = Comment(
+              postId: postId,
+              id: oldComment!.id,
+              userId: oldComment!.userId,
+              userName: oldComment!.userName,
+              text: newText,
+              timestamp: DateTime.now(),
+            );
+            final updatedComments = List<Comment>.from(post.comments);
+            updatedComments[commentIndex] = updatedComment;
+            return post.copyWith(comments: updatedComments);
+          }
+        }
+        return post;
+      }).toList();
+
+      emit(PostLoaded(posts: updatedPosts));
+
+      try {
+        // Then sync with backend
+        await postRepo.editComment(postId, commentId, newText);
+      } catch (e) {
+        // Revert optimistic update on error
+        if (oldComment != null) {
+          final revertedPosts = updatedPosts.map((post) {
+            if (post.id == postId) {
+              final commentIndex = post.comments.indexWhere(
+                (c) => c.id == commentId,
+              );
+              if (commentIndex != -1) {
+                final revertedComments = List<Comment>.from(post.comments);
+                revertedComments[commentIndex] = oldComment!;
+                return post.copyWith(comments: revertedComments);
+              }
+            }
+            return post;
+          }).toList();
+          emit(PostLoaded(posts: revertedPosts));
+        } else {
+          emit(PostLoaded(posts: currentState.posts));
+        }
+        emit(PostError(errMessage: e.toString()));
+      }
+    }
+  }
 }

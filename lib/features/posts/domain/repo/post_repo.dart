@@ -12,4 +12,5 @@ abstract class PostRepoContract {
   Future<void> toggleLikes(String postId, String userId);
   Future<void> addComments(String postId, Comment comment);
   Future<void> deleteComment(String postId, String commentId);
+  Future<void> editComment(String postId , String commentId , String newText);
 }

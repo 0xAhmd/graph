@@ -145,4 +145,41 @@ class PostRepo implements PostRepoContract {
       throw Exception("error deleting comment: $e");
     }
   }
+
+  @override
+  Future<void> editComment(
+    String postId,
+    String commentId,
+    String newText,
+  ) async {
+    try {
+      final postDoc = await postCollection.doc(postId).get();
+      if (postDoc.exists) {
+        final post = Post.fromJson(postDoc.data() as Map<String, dynamic>);
+        final commentIndex = post.comments.indexWhere((c) => c.id == commentId);
+        if (commentIndex != -1) {
+          final oldComment = post.comments[commentIndex];
+          // Create a new Comment with updated text
+          final updatedComment = Comment(
+            postId: postId,
+            id: oldComment.id,
+            userId: oldComment.userId,
+            userName: oldComment.userName,
+            text: newText,
+            timestamp: DateTime.now(),
+          );
+          post.comments[commentIndex] = updatedComment;
+          await postCollection.doc(postId).update({
+            'comments': post.comments.map((c) => c.toJson()).toList(),
+          });
+        } else {
+          throw Exception('Comment not found');
+        }
+      } else {
+        throw Exception('Post not found');
+      }
+    } catch (e) {
+      throw Exception("error editing comment: $e");
+    }
+  }
 }

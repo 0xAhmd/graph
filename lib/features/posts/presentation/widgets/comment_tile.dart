@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/core/utils/text_bomb_detector.dart';
+import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
 import '../../domain/entities/comment.dart';
 
 class CommentTile extends StatefulWidget {
@@ -22,7 +25,194 @@ class _CommentTileState extends State<CommentTile> {
   bool isExpanded = false;
 
   bool get isOwnComment => widget.comment.userId == widget.currentUserId;
+  void _showEditCommentDialog() {
+    final TextEditingController controller = TextEditingController(
+      text: widget.comment.text,
+    );
 
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              Text(
+                'Edit Comment',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Text field
+              TextField(
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                ),
+                controller: controller,
+                maxLines: null,
+                minLines: 2,
+                maxLength: 700, // Adjust as needed
+                decoration: InputDecoration(
+                  hintText: 'Edit your comment...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => _handleEditComment(controller.text.trim()),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Add this method to handle the edit comment logic
+  void _handleEditComment(String newText) {
+    // Validate input
+    if (newText.isEmpty) {
+      Fluttertoast.showToast(
+        msg: "Comment cannot be empty",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    // Check for text bomb (replace with your actual isTextBomb function)
+    if (isTextBomb(newText)) {
+      Fluttertoast.showToast(
+        msg: "Comment contains inappropriate content",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
+
+    // Check if text is the same as original
+    if (newText == widget.comment.text) {
+      Navigator.pop(context);
+      return;
+    }
+
+    // Close the bottom sheet
+    Navigator.pop(context);
+
+    // Call the cubit method to edit comment
+    // Replace 'postCubit' with your actual cubit instance
+    context.read<PostCubit>().editComment(
+      widget.comment.postId,
+      widget.comment.id,
+      newText,
+    );
+
+    // Show success message
+    Fluttertoast.showToast(
+      msg: "Comment updated successfully",
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
+  }
+
+  // Show a confirmation dialog before deleting a comment
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Comment'),
+        content: const Text('Are you sure you want to delete this comment?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Call the cubit to delete the comment
+              context.read<PostCubit>().deleteComment(
+                widget.comment.postId,
+                widget.comment.id,
+              );
+              // Optionally call the callback
+              if (widget.onDeleteComment != null) {
+                widget.onDeleteComment!();
+              }
+              Fluttertoast.showToast(
+                msg: "Comment deleted",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                backgroundColor: Colors.green,
+                textColor: Colors.white,
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Update your existing _showOptionsMenu method to call the edit dialog
   void _showOptionsMenu() {
     showModalBottomSheet(
       context: context,
@@ -33,17 +223,15 @@ class _CommentTileState extends State<CommentTile> {
             if (isOwnComment) ...[
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: const Text('Edit comment'),
+                title: Text(
+                  'Edit comment',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: Implement edit functionality
-                  Fluttertoast.showToast(
-                    msg: "Feature still under construction",
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    backgroundColor: Colors.red, // or Colors.green, etc.
-                    textColor: Colors.white,
-                  );
+                  _showEditCommentDialog(); // Updated this line
                 },
               ),
               ListTile(
@@ -67,7 +255,7 @@ class _CommentTileState extends State<CommentTile> {
                     msg: "Comment Reported",
                     toastLength: Toast.LENGTH_SHORT,
                     gravity: ToastGravity.BOTTOM,
-                    backgroundColor: Colors.red, // or Colors.green, etc.
+                    backgroundColor: Colors.red,
                     textColor: Colors.white,
                   );
                 },
@@ -75,36 +263,6 @@ class _CommentTileState extends State<CommentTile> {
             ],
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Delete Comment',
-          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
-        ),
-        content: Text(
-          'Are you sure you want to delete this comment?',
-          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onDeleteComment?.call();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
       ),
     );
   }
