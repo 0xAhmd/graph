@@ -162,12 +162,15 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(
-            value: (_passwordStrength.index + 1) / 4,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              getStrengthColor(_passwordStrength),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(right: 25.0),
+            child: LinearProgressIndicator(
+              value: (_passwordStrength.index + 1) / 4,
+              backgroundColor: Colors.grey.shade300,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                getStrengthColor(_passwordStrength),
+              ),
             ),
           ),
         ],
@@ -178,13 +181,17 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildErrorText(String? error) {
     if (error == null) return const SizedBox.shrink();
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20, top: 4),
-      child: Text(
-        error,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.error,
-          fontSize: 12,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 20, right: 20, top: 4),
+        child: Text(
+          error,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.error,
+            fontSize: 12,
+          ),
         ),
       ),
     );
