@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../../domain/entities/comment.dart';
 import '../../domain/repo/post_repo.dart';
 import 'package:mime/mime.dart';
@@ -81,7 +82,7 @@ class PostRepo implements PostRepoContract {
 
       return _bucket.getPublicUrl(fileName);
     } catch (e) {
-      print('Image upload error: $e');
+      debugPrint('Image upload error: $e');
       return null;
     }
   }

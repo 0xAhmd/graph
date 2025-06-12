@@ -55,7 +55,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
             ? ''
             : (updatedProfile.profileImgUrl),
       });
-      print(
+      debugPrint(
         'Updating: bio=${updatedProfile.bio}, profileImgUrl=${updatedProfile.profileImgUrl}',
       );
     } catch (e) {
@@ -88,7 +88,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
 
       return publicUrl;
     } catch (e) {
-      print('Image upload error: $e');
+      debugPrint('Image upload error: $e');
       return null;
     }
   }
@@ -138,9 +138,9 @@ class ProfileUserRepo implements ProfileUserRepoContract {
         transaction.update(targetUserRef, {'followers': targetFollowers});
       });
 
-      print('Follow/Unfollow operation completed successfully');
+      debugPrint('Follow/Unfollow operation completed successfully');
     } catch (e) {
-      print('Error in toggleFollow: $e');
+      debugPrint('Error in toggleFollow: $e');
       throw Exception('Failed to toggle follow: $e');
     }
   }

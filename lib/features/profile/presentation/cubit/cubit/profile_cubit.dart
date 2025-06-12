@@ -4,7 +4,6 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import '../../../data/repo/profile_user_repo.dart';
 import '../../../domain/entities/profile_user.dart';
-import 'package:meta/meta.dart';
 
 part 'profile_state.dart';
 
@@ -102,7 +101,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       // Refresh the profile to get the updated follow status
       await fetchUserProfile(targetUid);
     } catch (e) {
-      print('Error in toggleFollow cubit: $e');
+      debugPrint('Error in toggleFollow cubit: $e');
       emit(
         ProfileError(
           errMessage: 'Failed to update follow status: ${e.toString()}',

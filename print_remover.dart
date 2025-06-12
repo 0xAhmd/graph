@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
+
 void main() async {
   final dir = Directory('./lib');
   await for (final file in dir.list(recursive: true, followLinks: false)) {
@@ -14,9 +16,9 @@ void main() async {
 
       if (content != updated) {
         await file.writeAsString(updated);
-        print('Updated: ${file.path}');
+        debugPrint('Updated: ${file.path}');
       }
     }
   }
-  print('All print statements replaced with debugPrint.');
+  debugPrint('All print statements replaced with debugPrint.');
 }
