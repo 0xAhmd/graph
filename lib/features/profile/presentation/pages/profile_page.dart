@@ -138,204 +138,215 @@ class _ProfilePageState extends State<ProfilePage>
                   title: Text(user.name),
                   foregroundColor: Theme.of(context).colorScheme.primary,
                 ),
-                body: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 20),
-                        GestureDetector(
-                          onLongPress: () {
-                            if (user.profileImgUrl.isNotEmpty) {
-                              showDialog(
-                                context: context,
-                                barrierDismissible: true,
-                                barrierColor: Colors.black.withOpacity(0.5),
-                                builder: (context) {
-                                  return GestureDetector(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: Stack(
-                                      children: [
-                                        BackdropFilter(
-                                          filter: ImageFilter.blur(
-                                            sigmaX: 10,
-                                            sigmaY: 10,
-                                          ),
-                                          child: Container(
-                                            color: Colors.black.withOpacity(
-                                              0.3,
+                body: RefreshIndicator(
+                  onRefresh: () {
+                    return refreshProfile();
+                  },
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onLongPress: () {
+                              if (user.profileImgUrl.isNotEmpty) {
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  barrierColor: Colors.black.withOpacity(0.5),
+                                  builder: (context) {
+                                    return GestureDetector(
+                                      onTap: () => Navigator.of(context).pop(),
+                                      child: Stack(
+                                        children: [
+                                          BackdropFilter(
+                                            filter: ImageFilter.blur(
+                                              sigmaX: 10,
+                                              sigmaY: 10,
                                             ),
-                                          ),
-                                        ),
-                                        Center(
-                                          child: Hero(
-                                            tag: 'profile-image',
-                                            child: ClipOval(
-                                              child: CachedNetworkImage(
-                                                imageUrl: user.profileImgUrl,
-                                                width:
-                                                    MediaQuery.of(
-                                                      context,
-                                                    ).size.width *
-                                                    0.8,
-                                                height:
-                                                    MediaQuery.of(
-                                                      context,
-                                                    ).size.width *
-                                                    0.8,
-                                                fit: BoxFit.cover,
+                                            child: Container(
+                                              color: Colors.black.withOpacity(
+                                                0.3,
                                               ),
                                             ),
                                           ),
+                                          Center(
+                                            child: Hero(
+                                              tag: 'profile-image',
+                                              child: ClipOval(
+                                                child: CachedNetworkImage(
+                                                  imageUrl: user.profileImgUrl,
+                                                  width:
+                                                      MediaQuery.of(
+                                                        context,
+                                                      ).size.width *
+                                                      0.8,
+                                                  height:
+                                                      MediaQuery.of(
+                                                        context,
+                                                      ).size.width *
+                                                      0.8,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              }
+                            },
+                            child: Hero(
+                              tag: 'profile-image',
+                              child: CachedNetworkImage(
+                                imageUrl: user.profileImgUrl,
+                                imageBuilder: (context, imageProvider) =>
+                                    Container(
+                                      width: 160,
+                                      height: 160,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                          100,
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          },
-                          child: Hero(
-                            tag: 'profile-image',
-                            child: CachedNetworkImage(
-                              imageUrl: user.profileImgUrl,
-                              imageBuilder: (context, imageProvider) =>
-                                  Container(
-                                    width: 160,
-                                    height: 160,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(100),
-                                      image: DecorationImage(
-                                        image: imageProvider,
-                                        fit: BoxFit.cover,
+                                        image: DecorationImage(
+                                          image: imageProvider,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                     ),
+                                placeholder: (context, url) => Container(
+                                  width: 120,
+                                  height: 120,
+                                  padding: const EdgeInsets.all(25),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(100),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
                                   ),
-                              placeholder: (context, url) => Container(
-                                width: 120,
-                                height: 120,
-                                padding: const EdgeInsets.all(25),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(100),
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary,
+                                  child: const CupertinoActivityIndicator(),
                                 ),
-                                child: const CupertinoActivityIndicator(),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 150,
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(100),
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary,
-                                ),
-                                child: Icon(
-                                  Icons.person,
-                                  size: 70,
-                                  color: Theme.of(context).colorScheme.primary,
+                                errorWidget: (context, url, error) => Container(
+                                  width: 150,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(100),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 70,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          user.email,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                          const SizedBox(height: 24),
+                          Text(
+                            user.email,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 25),
+                          const SizedBox(height: 25),
 
-                        ProfileStats(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FollowerPage(
-                                  followers: user.followers,
-                                  followings: user.followings,
-                                ),
-                              ),
-                            );
-                          },
-                          postCount: userPosts.length,
-                          followersCount: user.followers.length,
-                          followingCount: user.followings.length,
-                        ),
-
-                        const SizedBox(height: 25),
-                        if (!isOwn)
-                          _isFollowLoading
-                              ? const CupertinoActivityIndicator()
-                              : FollowButton(
-                                  isFollowing: user.followers.contains(
-                                    currentUser!.uid,
+                          ProfileStats(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FollowerPage(
+                                    followers: user.followers,
+                                    followings: user.followings,
                                   ),
-                                  onTap: followButtonPressed,
                                 ),
-
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16.0),
-                          child: Row(
-                            children: [
-                              Text(
-                                "Bio",
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ],
+                              );
+                            },
+                            postCount: userPosts.length,
+                            followersCount: user.followers.length,
+                            followingCount: user.followings.length,
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        BioBox(text: user.bio),
 
-                        // Tab Bar and Posts Grid
-                        Padding(
-                          padding: const EdgeInsets.only(top: 25),
-                          child: Column(
-                            children: [
-                              // Tab Bar
-                              TabBar(
-                                dividerColor: Colors.transparent,
-                                controller: _tabController,
-                                indicatorColor: Theme.of(
-                                  context,
-                                ).colorScheme.primary,
-                                tabs: const [Tab(icon: Icon(Icons.grid_on))],
-                              ),
+                          const SizedBox(height: 25),
+                          if (!isOwn)
+                            _isFollowLoading
+                                ? const CupertinoActivityIndicator()
+                                : FollowButton(
+                                    isFollowing: user.followers.contains(
+                                      currentUser!.uid,
+                                    ),
+                                    onTap: followButtonPressed,
+                                  ),
 
-                              // Posts Grid
-                              SizedBox(
-                                height: 400, // Fixed height for the grid
-                                child: TabBarView(
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Row(
+                              children: [
+                                Text(
+                                  "Bio",
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          BioBox(text: user.bio),
+
+                          // Tab Bar and Posts Grid
+                          Padding(
+                            padding: const EdgeInsets.only(top: 25),
+                            child: Column(
+                              children: [
+                                // Tab Bar
+                                TabBar(
+                                  dividerColor: Colors.transparent,
                                   controller: _tabController,
-                                  children: [
-                                    if (postState is PostLoading)
-                                      const Center(
-                                        child: CupertinoActivityIndicator(),
-                                      )
-                                    else
-                                      ProfilePostsGrid(
-                                        posts: userPosts,
-                                        onPostTap: (index) =>
-                                            _navigateToPostPreview(
-                                              userPosts,
-                                              index,
-                                            ),
-                                      ),
-                                  ],
+                                  indicatorColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  tabs: const [Tab(icon: Icon(Icons.grid_on))],
                                 ),
-                              ),
-                            ],
+
+                                // Posts Grid
+                                SizedBox(
+                                  height: 400, // Fixed height for the grid
+                                  child: TabBarView(
+                                    controller: _tabController,
+                                    children: [
+                                      if (postState is PostLoading)
+                                        const Center(
+                                          child: CupertinoActivityIndicator(),
+                                        )
+                                      else
+                                        ProfilePostsGrid(
+                                          posts: userPosts,
+                                          onPostTap: (index) =>
+                                              _navigateToPostPreview(
+                                                userPosts,
+                                                index,
+                                              ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
