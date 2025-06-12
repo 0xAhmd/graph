@@ -541,7 +541,13 @@ class _PostTileState extends State<PostTile> {
                     itemCount: showCommentsCount,
                     itemBuilder: (context, index) {
                       final comment = currentPost.comments[index];
-                      return CommentTile(comment: comment);
+                      return CommentTile(
+                        comment: comment,
+                        onDeleteComment: () {
+                          postCubit.deleteComment(widget.post.id, comment.id);
+                        },
+                        currentUserId: currentUser!.uid,
+                      );
                     },
                   );
                 }

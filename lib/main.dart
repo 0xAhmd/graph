@@ -21,4 +21,3 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(MyApp());
 }
-//!todo make in profile page staggard list view

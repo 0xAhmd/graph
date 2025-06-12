@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import '../../domain/entities/comment.dart';
 
 class CommentTile extends StatefulWidget {
-  const CommentTile({super.key, required this.comment});
+  const CommentTile({
+    super.key,
+    required this.comment,
+    required this.currentUserId, // Add this to identify if user owns the comment
+    this.onDeleteComment, // Callback for deleting comment
+  });
+
   final Comment comment;
+  final String currentUserId;
+  final VoidCallback? onDeleteComment;
 
   @override
   State<CommentTile> createState() => _CommentTileState();
@@ -11,6 +20,94 @@ class CommentTile extends StatefulWidget {
 
 class _CommentTileState extends State<CommentTile> {
   bool isExpanded = false;
+
+  bool get isOwnComment => widget.comment.userId == widget.currentUserId;
+
+  void _showOptionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isOwnComment) ...[
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Edit comment'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Implement edit functionality
+                  Fluttertoast.showToast(
+                    msg: "Feature still under construction",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.red, // or Colors.green, etc.
+                    textColor: Colors.white,
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  'Delete comment',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation();
+                },
+              ),
+            ] else ...[
+              ListTile(
+                leading: const Icon(Icons.report, color: Colors.orange),
+                title: const Text('Report comment'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Fluttertoast.showToast(
+                    msg: "Comment Reported",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.red, // or Colors.green, etc.
+                    textColor: Colors.white,
+                  );
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete Comment',
+          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+        ),
+        content: Text(
+          'Are you sure you want to delete this comment?',
+          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onDeleteComment?.call();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,13 +147,28 @@ class _CommentTileState extends State<CommentTile> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.comment.userName,
-                    style: TextStyle(
-                      color: theme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.comment.userName,
+                          style: TextStyle(
+                            color: theme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      // Three dots menu
+                      GestureDetector(
+                        onTap: _showOptionsMenu,
+                        child: Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: theme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Row(
