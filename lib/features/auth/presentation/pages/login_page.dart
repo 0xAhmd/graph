@@ -104,8 +104,18 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 30),
             CustomSquareTile(
+              title: "Google",
               onTap: () {
                 context.read<AuthCubit>().signInWithGoogle();
+              },
+              img: "assets/images/google.png",
+            ),
+            const SizedBox(height: 16),
+
+            CustomSquareTile(
+              title: "Github",
+              onTap: () {
+                context.read<AuthCubit>().signInWithGitHub();
               },
               img: "assets/images/google.png",
             ),

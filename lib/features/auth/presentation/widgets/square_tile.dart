@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class CustomSquareTile extends StatelessWidget {
-  const CustomSquareTile({super.key, required this.onTap, required this.img});
+  const CustomSquareTile({super.key, required this.onTap, required this.img, required this.title});
   final String img;
   final void Function()? onTap;
-
+final String title;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -25,7 +25,7 @@ class CustomSquareTile extends StatelessWidget {
             Image.asset(img, height: 45),
             const SizedBox(width: 16),
             Text(
-              "Sign in with google",
+              "Sign in with $title",
               style: TextStyle(
                 fontSize: 18,
                 color: Theme.of(context).colorScheme.inversePrimary,

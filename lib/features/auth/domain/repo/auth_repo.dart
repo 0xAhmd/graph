@@ -14,4 +14,5 @@ abstract class AuthRepoContract {
 
   Future<void> deleteUserInfoFromFirebase(String uid);
   Future<AppUser?> signInWithGoogle();
+  Future<AppUser?> signInWithGitHub();
 }

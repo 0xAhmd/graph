@@ -115,4 +115,22 @@ class AuthCubit extends Cubit<AuthState> {
       emit(UnAuthenticated());
     }
   }
+
+  // Sign in with GitHub
+  Future<void> signInWithGitHub() async {
+    try {
+      emit(AuthLoading());
+      final user = await repo.signInWithGitHub();
+      if (user != null) {
+        _currentUser = user;
+        emit(Authenticated(user: user));
+      } else {
+        emit(UnAuthenticated());
+      }
+    } catch (e) {
+      debugPrint('GitHub sign-in error: $e');
+      emit(AuthError(errMessage: e.toString()));
+      emit(UnAuthenticated());
+    }
+  }
 }

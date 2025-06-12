@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide User;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    hide User, OAuthProvider;
 import '../../domain/entities/app_user.dart';
 import '../../domain/repo/auth_repo.dart';
 
@@ -336,6 +337,53 @@ class FirebaseAuthRepo implements AuthRepoContract {
     } catch (e) {
       debugPrint('Google sign-in error: $e');
       throw "Google sign-in failed. Please try again.";
+    }
+  }
+
+  @override
+  Future<AppUser?> signInWithGitHub() async {
+    try {
+      // Create a generic OAuth provider for GitHub
+      final githubProvider = OAuthProvider('github.com');
+
+      // Add the scopes you need
+      githubProvider.addScope('user:email');
+      githubProvider.addScope('read:user');
+
+      // Set custom parameters if needed
+      githubProvider.setCustomParameters({'allow_signup': 'true'});
+
+      // Trigger the authentication flow
+      final UserCredential userCredential = await firebaseAuth
+          .signInWithProvider(githubProvider);
+      final User? firebaseUser = userCredential.user;
+
+      if (firebaseUser == null) return null;
+
+      debugPrint('GitHub sign-in success, uid: ${firebaseUser.uid}');
+
+      // Check if user exists in Firestore
+      final docRef = firestore.collection('users').doc(firebaseUser.uid);
+      final doc = await docRef.get();
+
+      if (!doc.exists) {
+        // New user - create their profile
+        final newUser = AppUser(
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName ?? 'Unknown',
+          email: firebaseUser.email ?? '',
+        );
+        await docRef.set(newUser.toJson());
+        return newUser;
+      }
+
+      return AppUser.fromJson(doc.data()!);
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: ${e.code}');
+      throw _mapFirebaseAuthErrorToMessage(e);
+    } catch (e) {
+      debugPrint('GitHub sign-in error: $e');
+      throw "GitHub sign-in failed. Please try again.";
     }
   }
 }
