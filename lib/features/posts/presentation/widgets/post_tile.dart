@@ -42,7 +42,7 @@ class _PostTileState extends State<PostTile> {
   AppUser? currentUser;
   bool isOwnPost = false;
   ProfileUserEntity? postUser;
-
+  bool isCaptionExpanded = false;
   @override
   void initState() {
     getCurrentUser();
@@ -434,32 +434,96 @@ class _PostTileState extends State<PostTile> {
             ),
           ),
 
-          // caption
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Text(
-                  widget.post.userName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.inversePrimary,
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  isCaptionExpanded = !isCaptionExpanded;
+                });
+              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.post.userName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  widget.post.text,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Theme.of(context).colorScheme.inversePrimary,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final text = widget.post.text;
+                        final showSeeMore =
+                            text.length > 40 || text.split('\n').length > 1;
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                text,
+                                maxLines: isCaptionExpanded ? null : 1,
+                                overflow: isCaptionExpanded
+                                    ? TextOverflow.visible
+                                    : TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.inversePrimary,
+                                ),
+                              ),
+                            ),
+                            if (showSeeMore && !isCaptionExpanded)
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    isCaptionExpanded = true;
+                                  });
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size(0, 0),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  "See more",
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            if (isCaptionExpanded && showSeeMore)
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    isCaptionExpanded = false;
+                                  });
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size(0, 0),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  "See less",
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
-          // ...existing code above...
           const SizedBox(height: 6),
           BlocBuilder<PostCubit, PostState>(
             builder: (context, state) {
