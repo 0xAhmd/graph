@@ -1,6 +1,6 @@
 import '../entities/app_user.dart';
 
-abstract class AuthRepo {
+abstract class AuthRepoContract {
   Future<AppUser?> signInWithEmailAndPassword({String email, String password});
   Future<AppUser?> registerWithEmailAndPassword({
     String email,
@@ -13,4 +13,5 @@ abstract class AuthRepo {
   Future<void> deleteAccount();
 
   Future<void> deleteUserInfoFromFirebase(String uid);
+  Future<AppUser?> signInWithGoogle();
 }

@@ -12,7 +12,20 @@
           "package_name": "com.example.ig_mate"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "5789706507-3f5brq5b18rnde6g13o3m1m639v1oaji.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ig_mate",
+            "certificate_hash": "543383ca581375823cb5e489fbe518e1e62ca41a"
+          }
+        },
+        {
+          "client_id": "5789706507-e9bmj7b7mmpl2sp89hkrppujri0o24el.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD8xcyw8Q6k1n669UkZBiWlMrruwxCvVP4"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "5789706507-e9bmj7b7mmpl2sp89hkrppujri0o24el.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "5789706507-9qei6c8f0d9qul5ahbdc49r9op258mlo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.igMate"
+              }
+            }
+          ]
         }
       }
     }

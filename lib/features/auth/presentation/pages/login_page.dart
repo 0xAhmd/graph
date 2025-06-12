@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/features/auth/presentation/widgets/square_tile.dart';
 import 'package:ig_mate/layout/constrained_scaffold.dart';
 import '../cubit/cubit/auth_cubit.dart';
 import '../widgets/custom_btn.dart';
@@ -100,6 +101,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 30),
+            CustomSquareTile(
+              onTap: () {
+                context.read<AuthCubit>().signInWithGoogle();
+              },
+              img: "assets/images/google.png",
             ),
           ],
         ),

@@ -8,9 +8,10 @@ import 'firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await dotenv.load(fileName: ".env");
 
-  WidgetsFlutterBinding.ensureInitialized();
   final supabaseUrl = dotenv.env['url'];
   final supabaseAnonKey = dotenv.env['anonKey'];
   if (supabaseUrl == null || supabaseAnonKey == null) {

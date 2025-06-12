@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../../domain/entities/app_user.dart';
 import '../../domain/repo/auth_repo.dart';
 
-class FirebaseAuthRepo implements AuthRepo {
+class FirebaseAuthRepo implements AuthRepoContract {
   // get instance from firebase auth
 
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -290,6 +291,51 @@ class FirebaseAuthRepo implements AuthRepo {
     } catch (e) {
       debugPrint('Error extracting filename from URL: $url, Error: $e');
       return null;
+    }
+  }
+
+  @override
+  Future<AppUser?> signInWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return null; // User cancelled
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await firebaseAuth
+          .signInWithCredential(credential);
+
+      final User? firebaseUser = userCredential.user;
+      if (firebaseUser == null) return null;
+
+      final docRef = firestore.collection('users').doc(firebaseUser.uid);
+      final doc = await docRef.get();
+
+      if (!doc.exists) {
+        // New user - create their profile
+        final newUser = AppUser(
+          uid: firebaseUser.uid,
+          name: firebaseUser.displayName ?? 'Unknown',
+          email: firebaseUser.email ?? '',
+        );
+        await docRef.set(newUser.toJson());
+        return newUser;
+      }
+
+      return AppUser.fromJson(doc.data()!);
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: ${e.code}');
+      throw _mapFirebaseAuthErrorToMessage(e);
+    } catch (e) {
+      debugPrint('Google sign-in error: $e');
+      throw "Google sign-in failed. Please try again.";
     }
   }
 }

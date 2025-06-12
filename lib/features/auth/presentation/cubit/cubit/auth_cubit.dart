@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import '../../../domain/entities/app_user.dart';
 import '../../../domain/repo/auth_repo.dart';
 import 'package:meta/meta.dart';
@@ -6,7 +7,7 @@ import 'package:meta/meta.dart';
 part 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final AuthRepo repo;
+  final AuthRepoContract repo;
   AppUser? _currentUser;
   AuthCubit(this.repo) : super(AuthInitial());
 
@@ -98,6 +99,20 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  // You can remove this method entirely since the repo handles it
-  // Future<void> deleteUserInfoFromFirebase(String uid) async { ... }
+  Future<void> signInWithGoogle() async {
+    try {
+      emit(AuthLoading());
+      final user = await repo.signInWithGoogle();
+      if (user != null) {
+        _currentUser = user;
+        emit(Authenticated(user: user));
+      } else {
+        emit(UnAuthenticated());
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      emit(AuthError(errMessage: e.toString()));
+      emit(UnAuthenticated());
+    }
+  }
 }
