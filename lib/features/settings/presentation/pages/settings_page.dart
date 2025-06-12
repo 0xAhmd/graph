@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/core/themes/theme_cubit.dart';
 import 'package:ig_mate/features/settings/account_settings_page.dart';
-import 'package:ig_mate/layout/consentrained_scaffold.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});

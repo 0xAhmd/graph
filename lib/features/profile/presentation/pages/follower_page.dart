@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/layout/consentrained_scaffold.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 import '../cubit/cubit/profile_cubit.dart';
 import '../widgets/user_list_tile.dart';
 

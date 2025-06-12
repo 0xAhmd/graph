@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/user_list_tile.dart';
 import 'package:ig_mate/features/search/presentation/cubit/search_cubit.dart';
-import 'package:ig_mate/layout/consentrained_scaffold.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});

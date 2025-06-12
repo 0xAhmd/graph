@@ -8,7 +8,7 @@ import 'package:ig_mate/core/themes/theme_cubit.dart';
 import 'package:ig_mate/features/auth/presentation/pages/login_page.dart';
 import 'package:ig_mate/features/search/data/repo/search_repo.dart';
 import 'package:ig_mate/features/search/presentation/cubit/search_cubit.dart';
-import 'package:ig_mate/layout/consentrained_scaffold.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 import 'features/auth/data/repo/firebase_auth_repo.dart';
 import 'features/auth/presentation/cubit/cubit/auth_cubit.dart';
 

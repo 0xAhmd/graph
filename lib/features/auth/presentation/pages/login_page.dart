@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/layout/consentrained_scaffold.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 import '../cubit/cubit/auth_cubit.dart';
 import '../widgets/custom_btn.dart';
 import '../widgets/custom_text_field.dart';

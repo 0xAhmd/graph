@@ -9,15 +9,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
-import 'package:ig_mate/features/posts/presentation/widgets/post_tile.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
 import 'package:ig_mate/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:ig_mate/features/profile/presentation/pages/follower_page.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/bio_box.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/follow_button.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/preview_page.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/profile_grid.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/profile_stats.dart';
-import 'package:ig_mate/layout/consentrained_scaffold.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 
 class ProfilePage extends StatefulWidget {
   final String uid;
@@ -27,17 +29,29 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with TickerProviderStateMixin {
   late final authCubit = context.read<AuthCubit>();
   late final profileCubit = context.read<ProfileCubit>();
   late AppUser? currentUser = authCubit.currentUser;
-  bool _isFollowLoading = false; // Add loading state for follow button
+  bool _isFollowLoading = false;
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(
+      length: 1,
+      vsync: this,
+    ); // Only one tab for posts
     profileCubit.fetchUserProfile(widget.uid);
     context.read<PostCubit>().fetchAllPosts();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> refreshProfile() async {
@@ -55,13 +69,12 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
     } catch (e) {
-      // Show error message to user
       if (mounted) {
         Fluttertoast.showToast(
           msg: "Failed to update follow stats",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red, // or Colors.green, etc.
+          backgroundColor: Colors.red,
           textColor: Colors.white,
         );
       }
@@ -74,6 +87,19 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _navigateToPostPreview(List<Post> userPosts, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostPreviewPage(
+          userPosts: userPosts,
+          initialIndex: index,
+          userId: widget.uid,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isOwn = (widget.uid == currentUser!.uid);
@@ -84,11 +110,11 @@ class _ProfilePageState extends State<ProfilePage> {
             if (profileState is ProfileLoaded) {
               final user = profileState.profileUserEntity;
 
-              final userPosts = (postState is PostLoaded)
+              final List<Post> userPosts = (postState is PostLoaded)
                   ? postState.posts
                         .where((post) => post.userId == widget.uid)
                         .toList()
-                  : [];
+                  : <Post>[];
 
               return ConstrainedScaffold(
                 appBar: AppBar(
@@ -244,7 +270,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         const SizedBox(height: 25),
                         if (!isOwn)
-                          // FIXED: Show loading state in follow button
                           _isFollowLoading
                               ? const CupertinoActivityIndicator()
                               : FollowButton(
@@ -269,41 +294,47 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: 10),
                         BioBox(text: user.bio),
+
+                        // Tab Bar and Posts Grid
                         Padding(
-                          padding: const EdgeInsets.only(left: 16.0, top: 25),
-                          child: Row(
+                          padding: const EdgeInsets.only(top: 25),
+                          child: Column(
                             children: [
-                              Text(
-                                "Posts",
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
+                              // Tab Bar
+                              TabBar(
+                                dividerColor: Colors.transparent,
+                                controller: _tabController,
+                                indicatorColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                tabs: const [Tab(icon: Icon(Icons.grid_on))],
+                              ),
+
+                              // Posts Grid
+                              SizedBox(
+                                height: 400, // Fixed height for the grid
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    if (postState is PostLoading)
+                                      const Center(
+                                        child: CupertinoActivityIndicator(),
+                                      )
+                                    else
+                                      ProfilePostsGrid(
+                                        posts: userPosts,
+                                        onPostTap: (index) =>
+                                            _navigateToPostPreview(
+                                              userPosts,
+                                              index,
+                                            ),
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        if (postState is PostLoading)
-                          const CupertinoActivityIndicator()
-                        else if (userPosts.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 32.0),
-                            child: Center(child: Text("No posts yet.")),
-                          )
-                        else
-                          ListView.builder(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            itemCount: userPosts.length,
-                            itemBuilder: (context, index) {
-                              final post = userPosts[index];
-                              return PostTile(
-                                post: post,
-                                onDeletePressed: () => context
-                                    .read<PostCubit>()
-                                    .deletePost(post.id),
-                              );
-                            },
-                          ),
                       ],
                     ),
                   ),
