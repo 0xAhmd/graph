@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/core/utils/password_strength.dart';
 import 'package:ig_mate/core/utils/password_validator.dart';
 import 'package:ig_mate/core/utils/validators.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 import '../cubit/cubit/auth_cubit.dart';
 import '../widgets/custom_btn.dart';
 import '../widgets/custom_text_field.dart';
@@ -211,7 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ConstrainedScaffold(
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),

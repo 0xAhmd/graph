@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/core/themes/theme_cubit.dart';
 import 'package:ig_mate/features/settings/account_settings_page.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -11,7 +12,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeCubit = context.read<ThemeCubit>();
     bool isDarkMode = themeCubit.isDark;
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         foregroundColor: Theme.of(context).colorScheme.primary,
         title: const Text("Settings", style: TextStyle(fontSize: 18)),

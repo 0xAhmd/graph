@@ -487,7 +487,7 @@ class _PostTileState extends State<PostTile> {
                                 },
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
-                                  minimumSize: Size(0, 0),
+                                  minimumSize: const Size(0, 0),
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
@@ -505,7 +505,7 @@ class _PostTileState extends State<PostTile> {
                                 },
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
-                                  minimumSize: Size(0, 0),
+                                  minimumSize: const Size(0, 0),
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),

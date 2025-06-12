@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 
 import '../widgets/home_drawer.dart';
 import '../../../posts/presentation/cubit/post_cubit.dart';
@@ -204,7 +205,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         actions: [
           IconButton(

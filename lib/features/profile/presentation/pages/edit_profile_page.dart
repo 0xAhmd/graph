@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 import '../../../../core/utils/image_picker.dart';
 import '../../../auth/presentation/widgets/custom_text_field.dart';
 import '../../domain/entities/profile_user.dart';
@@ -62,7 +63,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       },
       builder: (context, state) {
         if (state is ProfileLoading || state is ProfileImageUploading) {
-          return Scaffold(
+          return ConstrainedScaffold(
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -90,7 +91,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ? state.profileUserEntity
         : widget.profileUserEntity;
 
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         actions: [
           IconButton(

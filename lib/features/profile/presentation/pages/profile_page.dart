@@ -17,6 +17,7 @@ import 'package:ig_mate/features/profile/presentation/pages/follower_page.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/bio_box.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/follow_button.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/profile_stats.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 
 class ProfilePage extends StatefulWidget {
   final String uid;
@@ -89,7 +90,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         .toList()
                   : [];
 
-              return Scaffold(
+              return ConstrainedScaffold(
                 appBar: AppBar(
                   actions: [
                     if (isOwn)
@@ -310,11 +311,11 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             } else if (profileState is ProfileLoading ||
                 profileState is ProfileImageUploading) {
-              return const Scaffold(
+              return const ConstrainedScaffold(
                 body: Center(child: CupertinoActivityIndicator()),
               );
             } else if (profileState is ProfileError) {
-              return Scaffold(
+              return ConstrainedScaffold(
                 body: Center(
                   child: Text(
                     profileState.errMessage,
@@ -323,7 +324,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               );
             } else {
-              return const Scaffold(
+              return const ConstrainedScaffold(
                 body: Center(child: Text("No Profile Loaded")),
               );
             }

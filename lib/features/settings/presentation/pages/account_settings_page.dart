@@ -3,13 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/settings/block_list_page.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 
 class AccountSettingsPage extends StatelessWidget {
   const AccountSettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         centerTitle: true,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,

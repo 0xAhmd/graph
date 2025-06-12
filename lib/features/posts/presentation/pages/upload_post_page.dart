@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/core/utils/text_bomb_detector.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 import '../../../../core/utils/image_picker.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
@@ -117,7 +118,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
     return BlocConsumer<PostCubit, PostState>(
       builder: (context, state) {
         if (state is PostLoading || state is PostUploading) {
-          return const Scaffold(
+          return const ConstrainedScaffold(
             body: Center(child: CupertinoActivityIndicator()),
           );
         }
@@ -227,7 +228,7 @@ class _UploadPostPageState extends State<UploadPostPage> {
   }
 
   Widget buildUploadingPage() {
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         actions: [
           IconButton(onPressed: uploadPost, icon: const Icon(Icons.add)),

@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
 import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 
@@ -107,7 +108,7 @@ class _BlockListPageState extends State<BlockListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
         centerTitle: true,

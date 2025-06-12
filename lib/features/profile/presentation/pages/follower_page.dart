@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/layout/consentrained_scaffold.dart';
 import '../cubit/cubit/profile_cubit.dart';
 import '../widgets/user_list_tile.dart';
 
@@ -15,7 +16,7 @@ class FollowerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
+      child: ConstrainedScaffold(
         appBar: AppBar(
           bottom: TabBar(
             dividerColor: Colors.transparent,
