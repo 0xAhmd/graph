@@ -111,11 +111,13 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   } // Block user methods
 
-  Future<void> loadBlockedUsers(String currentUserId) async {
+  Future<List<String>> loadBlockedUsers(String currentUserId) async {
     try {
       _blockedUserIds = await repo.getBlockedUsersUids(currentUserId);
+      return _blockedUserIds;
     } catch (e) {
       debugPrint('Error loading blocked users: $e');
+      return [];
     }
   }
 

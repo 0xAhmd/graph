@@ -51,6 +51,7 @@ dependencies:
   mime: ^2.0.0
   path: ^1.9.1
   path_provider: ^2.1.5
+  quickalert: ^1.1.0
   retrofit: ^4.4.2
   retrofit_generator: ^9.2.0
   supabase: ^2.7.0
@@ -59,14 +60,14 @@ dependencies:
   uuid: ^4.5.1
 
 dev_dependencies:
-  flutter_lints: ^5.0.0  
   flutter_launcher_icons: ^0.14.3
+  flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter
 
 flutter_launcher_icons:
-  android : true
-  ios : true
+  android: true
+  ios: true
   image_path: "assets/images/graph.png"
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
