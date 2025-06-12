@@ -43,7 +43,6 @@ class _ProfilePageState extends State<ProfilePage> {
     await context.read<PostCubit>().fetchAllPosts();
   }
 
-  // FIXED: Simplified follow button handler
   Future<void> followButtonPressed() async {
     if (_isFollowLoading || currentUser == null) return;
 

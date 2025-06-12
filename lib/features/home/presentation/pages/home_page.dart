@@ -251,8 +251,44 @@ class _HomePageState extends State<HomePage>
                     // For You Tab - All Posts (filtered)
                     buildPostsList(allPosts),
 
-                    // Following Tab - Only posts from users you follow (filtered)
-                    buildPostsList(followingPosts),
+                    // Following Tab - Only posts from users you follow (filtered) with RefreshIndicator
+                    RefreshIndicator(
+                      onRefresh: refreshData,
+                      displacement: 40,
+                      color: Theme.of(context).colorScheme.primary,
+                      child: followingPosts.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 32.0,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      "No posts from people you follow.",
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.inversePrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: followingPosts.length,
+                              itemBuilder: (context, index) {
+                                final post = followingPosts[index];
+                                return PostTile(
+                                  post: post,
+                                  onDeletePressed: () => deletePost(post.id),
+                                );
+                              },
+                            ),
+                    ),
                   ],
                 );
               } else if (state is PostError) {
