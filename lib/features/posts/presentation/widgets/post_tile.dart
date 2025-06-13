@@ -1,21 +1,17 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../widgets/index.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../domain/entities/comment.dart';
 import '../../domain/entities/post_entity.dart';
 import '../cubit/post_cubit.dart';
-import 'comment_tile.dart';
-import 'custom_bottom_sheet.dart';
+
 import '../../../profile/domain/entities/profile_user.dart';
 import '../../../profile/presentation/cubit/cubit/profile_cubit.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
-import 'package:intl/intl.dart';
 
 class PostTile extends StatefulWidget {
   const PostTile({
@@ -137,218 +133,6 @@ class _PostTileState extends State<PostTile> {
     });
   }
 
-  void showOptions() {
-    if (isOwnPost) {
-      // Show delete dialog for own posts
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            "Delete Post ?",
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.inversePrimary,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                "Cancel",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                if (widget.onDeletePressed != null) {
-                  widget.onDeletePressed!();
-                }
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                "Delete",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      // Show block/unblock options for other users
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              if (!widget.isUserBlocked)
-                ListTile(
-                  leading: const Icon(Icons.block, color: Colors.red),
-                  title: Text(
-                    'Block ${widget.post.userName}',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    if (widget.onBlockPressed != null) {
-                      widget.onBlockPressed!();
-                    }
-                  },
-                )
-              else
-                ListTile(
-                  leading: const Icon(Icons.block, color: Colors.green),
-                  title: Text(
-                    'Unblock ${widget.post.userName}',
-                    style: const TextStyle(color: Colors.green),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    if (widget.onUnblockPressed != null) {
-                      widget.onUnblockPressed!();
-                    }
-                  },
-                ),
-              ListTile(
-                leading: Icon(
-                  Icons.cancel,
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
-                title: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-  }
-
-  // Platform-specific profile image builder
-  Widget _buildProfileImage() {
-    if (kIsWeb) {
-      // Use Image.network for web
-      return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfilePage(uid: widget.post.userId),
-            ),
-          );
-        },
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            image: postUser?.profileImgUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(postUser!.profileImgUrl),
-                    fit: BoxFit.cover,
-                    onError: (exception, stackTrace) {
-                      debugPrint('Image load error: $exception');
-                    },
-                  )
-                : null,
-          ),
-          child: postUser?.profileImgUrl == null
-              ? const Icon(Icons.person)
-              : null,
-        ),
-      );
-    } else {
-      // Use CachedNetworkImage for mobile
-      return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfilePage(uid: widget.post.userId),
-            ),
-          );
-        },
-        child: CachedNetworkImage(
-          imageBuilder: (context, imageProvider) => Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
-            ),
-          ),
-          imageUrl: postUser!.profileImgUrl,
-          errorWidget: (context, url, error) => const Icon(Icons.person),
-        ),
-      );
-    }
-  }
-
-  // Platform-specific post image builder
-  Widget _buildPostImage() {
-    if (kIsWeb) {
-      return GestureDetector(
-        onDoubleTap: like,
-        child: Image.network(
-          widget.post.imageUrl,
-          height: 450,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const SizedBox(
-            height: 450,
-            child: Center(child: Icon(Icons.error_outline, size: 50)),
-          ),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return SizedBox(
-              height: 450,
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    } else {
-      return GestureDetector(
-        onDoubleTap: like,
-        child: CachedNetworkImage(
-          imageUrl: widget.post.imageUrl,
-          height: 450,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => const SizedBox(height: 450),
-          errorWidget: (context, url, error) => const Icon(Icons.error_outline),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -361,236 +145,40 @@ class _PostTileState extends State<PostTile> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                postUser?.profileImgUrl != null
-                    ? _buildProfileImage()
-                    : const Icon(Icons.person),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProfilePage(uid: widget.post.userId),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    widget.post.userName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).colorScheme.inversePrimary,
-                    ),
-                  ),
-                ),
-                // Show blocked indicator
-                if (widget.isUserBlocked)
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.red.withOpacity(0.3)),
-                    ),
-                    child: const Text(
-                      'Blocked',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: showOptions,
-                  child: Icon(
-                    isOwnPost ? Icons.delete : Icons.more_vert,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ],
+            child: PostHeader(
+              post: widget.post,
+              postUser: postUser,
+              isOwnPost: isOwnPost,
+              isUserBlocked: widget.isUserBlocked,
             ),
           ),
 
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              _buildPostImage(),
-              AnimatedOpacity(
-                opacity: showHeart ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: AnimatedScale(
-                  scale: showHeart ? 1.6 : 0.5,
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
-                    Icons.favorite,
-                    color: widget.post.likes.contains(currentUser!.uid)
-                        ? Colors.redAccent
-                        : Colors.white,
-                    size: 120,
-                    shadows: const [
-                      Shadow(
-                        blurRadius: 20,
-                        color: Colors.black54,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          PostImage(
+            imageUrl: widget.post.imageUrl,
+            onDoubleTap: like,
+            showHeart: showHeart,
+            isLiked: widget.post.likes.contains(currentUser!.uid),
           ),
-
           // buttons + time
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                SizedBox(
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: like,
-                        child: Icon(
-                          widget.post.likes.contains(currentUser!.uid)
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: widget.post.likes.contains(currentUser!.uid)
-                              ? Colors.red
-                              : Theme.of(context).colorScheme.inversePrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  widget.post.likes.length.toString(),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-                const SizedBox(width: 20),
-                GestureDetector(
-                  onTap: openCommentBox,
-                  child: const Icon(Icons.comment),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  widget.post.comments.length.toString(),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  DateFormat(
-                    'MMM d, yyyy • h:mm a',
-                  ).format(widget.post.timeStamp),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-              ],
-            ),
+          PostActions(
+            post: widget.post,
+            isLiked: widget.post.likes.contains(currentUser!.uid),
+            likeCount: widget.post.likes.length,
+            commentCount: widget.post.comments.length,
+            onLike: like,
+            onComment: openCommentBox,
+            timeStamp: widget.post.timeStamp,
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  isCaptionExpanded = !isCaptionExpanded;
-                });
-              },
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.post.userName,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.inversePrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        final text = widget.post.text;
-                        final showSeeMore =
-                            text.length > 40 || text.split('\n').length > 1;
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                text,
-                                maxLines: isCaptionExpanded ? null : 1,
-                                overflow: isCaptionExpanded
-                                    ? TextOverflow.visible
-                                    : TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.inversePrimary,
-                                ),
-                              ),
-                            ),
-                            if (showSeeMore && !isCaptionExpanded)
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    isCaptionExpanded = true;
-                                  });
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(0, 0),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text(
-                                  "See more",
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            if (isCaptionExpanded && showSeeMore)
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    isCaptionExpanded = false;
-                                  });
-                                },
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(0, 0),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text(
-                                  "See less",
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          PostCaption(
+            userName: widget.post.userName,
+            text: widget.post.text,
+            isExpanded: isCaptionExpanded,
+            onToggleExpand: () {
+              setState(() {
+                isCaptionExpanded = !isCaptionExpanded;
+              });
+            },
           ),
 
           const SizedBox(height: 6),
