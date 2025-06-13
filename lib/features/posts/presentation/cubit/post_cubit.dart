@@ -88,23 +88,31 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  // Optimistic update for deleting comments
   Future<void> deleteComment(String postId, String commentId) async {
     final currentState = state;
     if (currentState is PostLoaded) {
-      // Store the comment being deleted for potential rollback
       Comment? deletedComment;
 
-      // Optimistically update UI first
+      // Optimistically update UI
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == postId) {
-          deletedComment = post.comments.firstWhere(
-            (comment) => comment.id == commentId,
-            orElse: () => throw Exception('Comment not found'),
-          );
+          // Try to find the comment manually
+          for (final comment in post.comments) {
+            if (comment.id.trim() == commentId.trim()) {
+              deletedComment = comment;
+              break;
+            }
+          }
+
+          if (deletedComment == null) {
+            emit(PostError(errMessage: 'Comment not found in local state'));
+            return post;
+          }
+
           final updatedComments = post.comments
-              .where((comment) => comment.id != commentId)
+              .where((comment) => comment.id.trim() != commentId.trim())
               .toList();
+
           return post.copyWith(comments: updatedComments);
         }
         return post;
@@ -113,10 +121,10 @@ class PostCubit extends Cubit<PostState> {
       emit(PostLoaded(posts: updatedPosts));
 
       try {
-        // Then sync with backend
+        // Sync with backend
         await postRepo.deleteComment(postId, commentId);
       } catch (e) {
-        // Revert optimistic update on error
+        // Revert if deletion failed
         if (deletedComment != null) {
           final revertedPosts = updatedPosts.map((post) {
             if (post.id == postId) {
@@ -126,11 +134,13 @@ class PostCubit extends Cubit<PostState> {
             }
             return post;
           }).toList();
+
           emit(PostLoaded(posts: revertedPosts));
         } else {
           emit(PostLoaded(posts: currentState.posts));
         }
-        emit(PostError(errMessage: e.toString()));
+
+        emit(PostError(errMessage: 'Error deleting comment: $e'));
       }
     }
   }

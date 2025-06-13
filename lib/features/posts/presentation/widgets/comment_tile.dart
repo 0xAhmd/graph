@@ -178,8 +178,14 @@ class _CommentTileState extends State<CommentTile> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Comment'),
-        content: const Text('Are you sure you want to delete this comment?'),
+        title: Text(
+          'Delete Comment',
+          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+        ),
+        content: Text(
+          'Are you sure you want to delete this comment?',
+          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
