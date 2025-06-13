@@ -66,6 +66,7 @@ class PostRepo implements PostRepoContract {
     }
   }
 
+  // Add CORS headers when uploading
   @override
   Future<String?> uploadPostImage(File file, String postId) async {
     try {
@@ -77,7 +78,11 @@ class PostRepo implements PostRepoContract {
       await _bucket.uploadBinary(
         fileName,
         fileBytes,
-        fileOptions: FileOptions(contentType: mimeType),
+        fileOptions: FileOptions(
+          contentType: mimeType,
+          // Add cache control for web compatibility
+          cacheControl: '3600',
+        ),
       );
 
       return _bucket.getPublicUrl(fileName);

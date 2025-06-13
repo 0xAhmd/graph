@@ -2,6 +2,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/domain/entities/app_user.dart';
@@ -243,6 +244,111 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
+  // Platform-specific profile image builder
+  Widget _buildProfileImage() {
+    if (kIsWeb) {
+      // Use Image.network for web
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfilePage(uid: widget.post.userId),
+            ),
+          );
+        },
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            image: postUser?.profileImgUrl != null
+                ? DecorationImage(
+                    image: NetworkImage(postUser!.profileImgUrl),
+                    fit: BoxFit.cover,
+                    onError: (exception, stackTrace) {
+                      debugPrint('Image load error: $exception');
+                    },
+                  )
+                : null,
+          ),
+          child: postUser?.profileImgUrl == null
+              ? const Icon(Icons.person)
+              : null,
+        ),
+      );
+    } else {
+      // Use CachedNetworkImage for mobile
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfilePage(uid: widget.post.userId),
+            ),
+          );
+        },
+        child: CachedNetworkImage(
+          imageBuilder: (context, imageProvider) => Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
+            ),
+          ),
+          imageUrl: postUser!.profileImgUrl,
+          errorWidget: (context, url, error) => const Icon(Icons.person),
+        ),
+      );
+    }
+  }
+
+  // Platform-specific post image builder
+  Widget _buildPostImage() {
+    if (kIsWeb) {
+      return GestureDetector(
+        onDoubleTap: like,
+        child: Image.network(
+          widget.post.imageUrl,
+          height: 450,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => const SizedBox(
+            height: 450,
+            child: Center(child: Icon(Icons.error_outline, size: 50)),
+          ),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return SizedBox(
+              height: 450,
+              child: Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    } else {
+      return GestureDetector(
+        onDoubleTap: like,
+        child: CachedNetworkImage(
+          imageUrl: widget.post.imageUrl,
+          height: 450,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const SizedBox(height: 450),
+          errorWidget: (context, url, error) => const Icon(Icons.error_outline),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -259,33 +365,7 @@ class _PostTileState extends State<PostTile> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 postUser?.profileImgUrl != null
-                    ? GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ProfilePage(uid: widget.post.userId),
-                            ),
-                          );
-                        },
-                        child: CachedNetworkImage(
-                          imageBuilder: (context, imageProvider) => Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          imageUrl: postUser!.profileImgUrl,
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.person),
-                        ),
-                      )
+                    ? _buildProfileImage()
                     : const Icon(Icons.person),
                 const SizedBox(width: 10),
                 GestureDetector(
@@ -343,18 +423,7 @@ class _PostTileState extends State<PostTile> {
           Stack(
             alignment: Alignment.center,
             children: [
-              GestureDetector(
-                onDoubleTap: like,
-                child: CachedNetworkImage(
-                  imageUrl: widget.post.imageUrl,
-                  height: 450,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => const SizedBox(height: 450),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.error_outline),
-                ),
-              ),
+              _buildPostImage(),
               AnimatedOpacity(
                 opacity: showHeart ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
