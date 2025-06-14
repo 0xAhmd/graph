@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/core/utils/text_bomb_detector.dart';
+
+import 'package:ig_mate/features/posts/domain/entities/comment.dart';
 import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
-import '../../domain/entities/comment.dart';
+
+import 'comment_avatar.dart';
+import 'comment_bubble.dart';
+import 'comment_menu.dart';
 
 class CommentTile extends StatefulWidget {
   const CommentTile({
     super.key,
     required this.comment,
-    required this.currentUserId, // Add this to identify if user owns the comment
-    this.onDeleteComment, // Callback for deleting comment
+    required this.currentUserId,
+    this.onDeleteComment,
   });
 
   final Comment comment;
@@ -25,6 +31,7 @@ class _CommentTileState extends State<CommentTile> {
   bool isExpanded = false;
 
   bool get isOwnComment => widget.comment.userId == widget.currentUserId;
+
   void _showEditCommentDialog() {
     final TextEditingController controller = TextEditingController(
       text: widget.comment.text,
@@ -120,7 +127,6 @@ class _CommentTileState extends State<CommentTile> {
     );
   }
 
-  // Add this method to handle the edit comment logic
   void _handleEditComment(String newText) {
     // Validate input
     if (newText.isEmpty) {
@@ -173,7 +179,6 @@ class _CommentTileState extends State<CommentTile> {
     );
   }
 
-  // Show a confirmation dialog before deleting a comment
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
@@ -218,56 +223,30 @@ class _CommentTileState extends State<CommentTile> {
     );
   }
 
-  // Update your existing _showOptionsMenu method to call the edit dialog
   void _showOptionsMenu() {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isOwnComment) ...[
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: Text(
-                  'Edit comment',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showEditCommentDialog(); // Updated this line
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text(
-                  'Delete comment',
-                  style: TextStyle(color: Colors.red),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showDeleteConfirmation();
-                },
-              ),
-            ] else ...[
-              ListTile(
-                leading: const Icon(Icons.report, color: Colors.orange),
-                title: const Text('Report comment'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Fluttertoast.showToast(
-                    msg: "Comment Reported",
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                  );
-                },
-              ),
-            ],
-          ],
+        child: CommentMenu(
+          isOwnComment: isOwnComment,
+          onEdit: () {
+            Navigator.pop(context);
+            _showEditCommentDialog();
+          },
+          onDelete: () {
+            Navigator.pop(context);
+            _showDeleteConfirmation();
+          },
+          onReport: () {
+            Navigator.pop(context);
+            Fluttertoast.showToast(
+              msg: "Comment Reported",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          },
         ),
       ),
     );
@@ -284,111 +263,20 @@ class _CommentTileState extends State<CommentTile> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Circle avatar with first letter of username
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: theme.primary.withOpacity(0.2),
-            child: Text(
-              widget.comment.userName.isNotEmpty
-                  ? widget.comment.userName[0].toUpperCase()
-                  : '?',
-              style: TextStyle(
-                color: theme.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+          CommentAvatar(
+            userName: widget.comment.userName,
+            color: theme.primary,
           ),
           const SizedBox(width: 12),
-          // Comment bubble
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: theme.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.comment.userName,
-                          style: TextStyle(
-                            color: theme.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      // Three dots menu
-                      GestureDetector(
-                        onTap: _showOptionsMenu,
-                        child: Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: theme.onSurface.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          text,
-                          maxLines: isExpanded ? null : 1,
-                          overflow: isExpanded
-                              ? TextOverflow.visible
-                              : TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: theme.onSurface,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      if (showSeeMore && !isExpanded)
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              isExpanded = true;
-                            });
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            "See more",
-                            style: TextStyle(fontSize: 13),
-                          ),
-                        ),
-                      if (showSeeMore && isExpanded)
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              isExpanded = false;
-                            });
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text(
-                            "See less",
-                            style: TextStyle(fontSize: 13),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+            child: CommentBubble(
+              userName: widget.comment.userName,
+              text: text,
+              isExpanded: isExpanded,
+              showSeeMore: showSeeMore,
+              onSeeMore: () => setState(() => isExpanded = true),
+              onSeeLess: () => setState(() => isExpanded = false),
+              onMenuTap: _showOptionsMenu,
             ),
           ),
         ],
