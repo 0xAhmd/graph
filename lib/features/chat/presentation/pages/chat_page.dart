@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/chat/presentation/widgets/chat_bubble.dart';
 import 'package:ig_mate/features/chat/presentation/widgets/chat_input_field.dart';
+import 'package:ig_mate/features/posts/presentation/widgets/custom_bottom_sheet.dart';
 import '../../../../layout/constrained_scaffold.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../domain/entities/chat_convo.dart';
@@ -94,12 +95,20 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _editMessage(ChatMessage message) {
-    showDialog(
+    final controller = TextEditingController(text: message.content);
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _EditMessageDialog(
-        message: message,
-        onEdit: (newContent) {
-          context.read<ChatCubit>().editMessage(message.id, newContent);
+      isScrollControlled: true,
+
+      builder: (context) => CustomBottomSheet(
+        controller: controller,
+        title: 'Edit Message',
+        hintText: 'Enter your message...',
+        buttonLabel: 'Save',
+        onPost: (newContent) {
+          if (newContent.isNotEmpty && newContent != message.content) {
+            context.read<ChatCubit>().editMessage(message.id, newContent);
+          }
         },
       ),
     );
@@ -447,13 +456,19 @@ class _EditMessageDialogState extends State<_EditMessageDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit Message'),
+      title: Text(
+        'Edit Message',
+        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+      ),
       content: TextField(
+        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+
         controller: _controller,
         maxLines: 3,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
+          hintStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
           hintText: 'Enter your message...',
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
         ),
       ),
       actions: [

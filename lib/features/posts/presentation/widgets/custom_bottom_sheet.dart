@@ -57,7 +57,7 @@ class _CustomBottomSheetState extends State<CustomBottomSheet> {
           bottom: MediaQuery.of(context).viewInsets.bottom + 24,
           left: 16,
           right: 16,
-          top: 16,
+          top: 25,
         ),
         child: SingleChildScrollView(
           child: Column(

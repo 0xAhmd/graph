@@ -31,10 +31,15 @@ class ChatMessageBubble extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Align(
         alignment: alignment,
-        child: GestureDetector(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
           onLongPress: (onEdit != null || onDelete != null)
               ? () => _showMessageOptions(context)
               : null,
+          splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          highlightColor: Theme.of(
+            context,
+          ).colorScheme.primary.withOpacity(0.08),
           child: ChatBubble(
             clipper: ChatBubbleClipper1(type: bubbleType),
             alignment: alignment,
@@ -98,11 +103,9 @@ class ChatMessageBubble extends StatelessWidget {
                       if (isMe) ...[
                         const SizedBox(width: 8),
                         Icon(
-                          message.isRead ? Icons.done_all : Icons.done,
-                          size: 16,
-                          color: message.isRead
-                              ? (isDark ? Colors.lightBlue : Colors.blue)
-                              : _getSecondaryColor(isDark, colorScheme),
+                          message.isRead ? Icons.visibility : Icons.done,
+                          size: 18,
+                          color: message.isRead ? Colors.white : Colors.grey,
                         ),
                       ],
                     ],
@@ -118,34 +121,32 @@ class ChatMessageBubble extends StatelessWidget {
 
   Color _getBubbleColor(bool isDark, ColorScheme colorScheme) {
     if (isMe) {
-      // User messages (left side) - Blue gradient like in the image
-      return isDark
-          ? const Color(0xFF2196F3) // Blue for dark mode
-          : const Color(0xFF2196F3); // Blue for light mode
+      // Telegram sender bubble blue
+      return const Color(0xFF54A9FB);
     } else {
-      // Received messages (right side) - Gray like in the image
+      // Telegram receiver bubble gray
       return isDark
-          ? const Color(0xFF424242) // Dark gray for dark mode
-          : const Color(0xFFE0E0E0); // Light gray for light mode
+          ? const Color(0xFF232A36) // Telegram dark mode gray
+          : const Color(0xFFF3F3F3); // Telegram light mode gray
     }
   }
 
   Color _getTextColor(bool isDark, ColorScheme colorScheme) {
     if (isMe) {
-      // User messages - white text on blue background
+      // Sender bubble: white text
       return Colors.white;
     } else {
-      // Received messages - dark text on gray background
+      // Receiver bubble: dark text or white in dark mode
       return isDark ? Colors.white : Colors.black87;
     }
   }
 
   Color _getSecondaryColor(bool isDark, ColorScheme colorScheme) {
     if (isMe) {
-      // User messages - light white/gray for timestamps
+      // Sender bubble: white with opacity for timestamps
       return Colors.white.withOpacity(0.8);
     } else {
-      // Received messages - muted text color
+      // Receiver bubble: muted text color
       return isDark ? Colors.white.withOpacity(0.7) : Colors.black54;
     }
   }
@@ -162,13 +163,6 @@ class ChatMessageBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
         ),
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -223,7 +217,7 @@ class ChatMessageBubble extends StatelessWidget {
   }) {
     final color = isDestructive
         ? Colors.red
-        : (isDark ? Colors.white : Colors.black87);
+        : Theme.of(context).colorScheme.primary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
