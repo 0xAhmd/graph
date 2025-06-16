@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/core/utils/app_updater.dart';
 import 'package:ig_mate/layout/constrained_scaffold.dart';
 
 import '../widgets/home_drawer.dart';
@@ -34,6 +35,7 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     fetchCurrentUserFollowing();
     loadBlockedUsers();
+    AppUpdater();
   }
 
   @override
