@@ -201,7 +201,7 @@ class PostHeader extends StatelessWidget {
                 ),
               ),
 
-              if (isUserBlocked)
+              if (!isUserBlocked)
                 ListTile(
                   leading: const Icon(Icons.block, color: Colors.red),
                   title: Text(
@@ -217,7 +217,7 @@ class PostHeader extends StatelessWidget {
                 )
               else
                 ListTile(
-                  leading: const Icon(Icons.block, color: Colors.green),
+                  leading: const Icon(Icons.lock_open, color: Colors.green),
                   title: Text(
                     'Unblock ${post.userName}',
                     style: const TextStyle(color: Colors.green),

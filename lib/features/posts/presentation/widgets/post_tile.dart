@@ -146,10 +146,13 @@ class _PostTileState extends State<PostTile> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: PostHeader(
+              onDeletePressed: widget.onDeletePressed,
               post: widget.post,
               postUser: postUser,
               isOwnPost: isOwnPost,
               isUserBlocked: widget.isUserBlocked,
+              onBlockPressed: widget.onBlockPressed,
+              onUnblockPressed: widget.onUnblockPressed,
             ),
           ),
 

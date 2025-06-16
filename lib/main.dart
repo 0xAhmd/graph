@@ -12,8 +12,8 @@ void main() async {
 
   await dotenv.load(fileName: ".env");
 
-  final supabaseUrl = dotenv.env['url'];
-  final supabaseAnonKey = dotenv.env['anonKey'];
+  final supabaseUrl = dotenv.env['SUPABASE_URL'];
+  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
   if (supabaseUrl == null || supabaseAnonKey == null) {
     throw Exception('Supabase URL or Anon Key is missing in .env file');
   }
