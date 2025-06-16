@@ -6,6 +6,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ig_mate/core/themes/theme_cubit.dart';
 import 'package:ig_mate/features/auth/presentation/pages/login_page.dart';
+import 'package:ig_mate/features/chat/data/chat_repo.dart';
+import 'package:ig_mate/features/chat/presentation/cubit/chat_cubit.dart';
 import 'package:ig_mate/features/search/data/repo/search_repo.dart';
 import 'package:ig_mate/features/search/presentation/cubit/search_cubit.dart';
 import 'package:ig_mate/layout/constrained_scaffold.dart';
@@ -24,6 +26,7 @@ class MyApp extends StatelessWidget {
   final profileRepo = ProfileUserRepo();
   final postRepo = PostRepo();
   final searchRepo = SearchRepo();
+  final chatRepo = FirebaseChatRepo();
 
   MyApp({super.key});
 
@@ -31,6 +34,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<ChatCubit>(create: (context) => ChatCubit(chatRepo)),
         BlocProvider<AuthCubit>(
           create: (context) => AuthCubit(authRepo)..checkAuth(),
         ),

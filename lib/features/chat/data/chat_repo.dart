@@ -52,7 +52,7 @@ class FirebaseChatRepo implements ChatRepoContract {
               email: data['email'],
               profileImgUrl: data['profileImgUrl'],
               isOnline: data['isOnline'] ?? false,
-              lastSeen: data['lastSeen']?.toDate(),
+              lastSeen: _parseDateTime(data['lastSeen']),
             ),
           );
         }
@@ -80,11 +80,11 @@ class FirebaseChatRepo implements ChatRepoContract {
           id: doc.id,
           participants: List<String>.from(data['participants']),
           lastMessage: data['lastMessage'],
-          lastMessageTime: data['lastMessageTime']?.toDate(),
+          lastMessageTime: _parseDateTime(data['lastMessageTime']),
           lastMessageSenderId: data['lastMessageSenderId'],
           unreadCount: Map<String, int>.from(data['unreadCount'] ?? {}),
-          createdAt: data['createdAt'].toDate(),
-          updatedAt: data['updatedAt'].toDate(),
+          createdAt: _parseDateTime(data['createdAt'])!,
+          updatedAt: _parseDateTime(data['updatedAt'])!,
         );
       }).toList();
     } catch (e) {
@@ -113,11 +113,11 @@ class FirebaseChatRepo implements ChatRepoContract {
             id: doc.id,
             participants: participants,
             lastMessage: data['lastMessage'],
-            lastMessageTime: data['lastMessageTime']?.toDate(),
+            lastMessageTime: _parseDateTime(data['lastMessageTime']),
             lastMessageSenderId: data['lastMessageSenderId'],
             unreadCount: Map<String, int>.from(data['unreadCount'] ?? {}),
-            createdAt: data['createdAt'].toDate(),
-            updatedAt: data['updatedAt'].toDate(),
+            createdAt: _parseDateTime(data['createdAt'])!,
+            updatedAt: _parseDateTime(data['updatedAt'])!,
           );
         }
       }
@@ -197,10 +197,10 @@ class FirebaseChatRepo implements ChatRepoContract {
               senderId: data['senderId'],
               receiverId: data['receiverId'],
               content: data['content'],
-              timestamp: data['timestamp'].toDate(),
+              timestamp: _parseDateTime(data['timestamp'])!,
               isRead: data['isRead'] ?? false,
               isEdited: data['isEdited'] ?? false,
-              editedAt: data['editedAt']?.toDate(),
+              editedAt: _parseDateTime(data['editedAt']),
             );
           }).toList();
         });
@@ -297,12 +297,33 @@ class FirebaseChatRepo implements ChatRepoContract {
         id: doc.id,
         participants: List<String>.from(data['participants']),
         lastMessage: data['lastMessage'],
-        lastMessageTime: data['lastMessageTime']?.toDate(),
+        lastMessageTime: _parseDateTime(data['lastMessageTime']),
         lastMessageSenderId: data['lastMessageSenderId'],
         unreadCount: Map<String, int>.from(data['unreadCount'] ?? {}),
-        createdAt: data['createdAt'].toDate(),
-        updatedAt: data['updatedAt'].toDate(),
+        createdAt: _parseDateTime(data['createdAt'])!,
+        updatedAt: _parseDateTime(data['updatedAt'])!,
       );
     });
+  }
+
+  // Helper method to parse DateTime from either Timestamp or String
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+
+    if (value is Timestamp) {
+      return value.toDate();
+    } else if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        debugPrint('Error parsing DateTime from string: $value, error: $e');
+        return null;
+      }
+    } else if (value is DateTime) {
+      return value;
+    }
+
+    debugPrint('Unexpected DateTime type: ${value.runtimeType}');
+    return null;
   }
 }

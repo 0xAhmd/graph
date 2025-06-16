@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/chat/presentation/pages/chat_list_page.dart';
 import 'package:ig_mate/features/settings/presentation/pages/settings_page.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'drawer_tile.dart';
@@ -80,7 +81,18 @@ class HomeDrawer extends StatelessWidget {
                 },
               ),
               // chat tile
-              DrawerTile(icon: Icons.chat_rounded, title: "D M ", onTap: () {}),
+              DrawerTile(
+                icon: Icons.chat_rounded,
+                title: "D M ",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChatListPage(),
+                    ),
+                  );
+                },
+              ),
               // logout tile
               const Spacer(),
               DrawerTile(

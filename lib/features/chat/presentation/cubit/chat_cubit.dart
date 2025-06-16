@@ -10,15 +10,15 @@ import 'package:ig_mate/features/chat/domain/repo/chat_repo_contract.dart';
 part 'chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  ChatCubit(this._chatRepo) : super(ChatInitial());
-  final ChatRepoContract _chatRepo;
+  ChatCubit(this.chatRepo) : super(ChatInitial());
+  final ChatRepoContract chatRepo;
   StreamSubscription<List<ChatMessage>>? _messagesSubscription;
   StreamSubscription<ChatConversation>? _conversationSubscription;
   // Load available users to chat with
   Future<void> loadAvailableUsers(String currentUserId) async {
     try {
       emit(ChatLoading());
-      final users = await _chatRepo.getAvailableUsers(currentUserId);
+      final users = await chatRepo.getAvailableUsers(currentUserId);
       emit(ChatUsersLoaded(users));
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -29,7 +29,7 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> loadConversations(String userId) async {
     try {
       emit(ChatLoading());
-      final conversations = await _chatRepo.getUserConversations(userId);
+      final conversations = await chatRepo.getUserConversations(userId);
       emit(ChatConversationsLoaded(conversations));
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -40,7 +40,7 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> startConversation(String userId1, String userId2) async {
     try {
       emit(ChatLoading());
-      final conversation = await _chatRepo.getOrCreateConversation(
+      final conversation = await chatRepo.getOrCreateConversation(
         userId1,
         userId2,
       );
@@ -59,13 +59,13 @@ class ChatCubit extends Cubit<ChatState> {
       _messagesSubscription?.cancel();
 
       // Listen to messages
-      _messagesSubscription = _chatRepo
+      _messagesSubscription = chatRepo
           .getMessages(chatId)
           .listen(
             (messages) {
               emit(ChatMessagesLoaded(messages));
               // Mark messages as read
-              _chatRepo.markMessagesAsRead(chatId, currentUserId);
+              chatRepo.markMessagesAsRead(chatId, currentUserId);
             },
             onError: (error) {
               emit(ChatError(error.toString()));
@@ -80,7 +80,7 @@ class ChatCubit extends Cubit<ChatState> {
   void listenToConversation(String chatId) {
     _conversationSubscription?.cancel();
 
-    _conversationSubscription = _chatRepo
+    _conversationSubscription = chatRepo
         .listenToConversation(chatId)
         .listen(
           (conversation) {
@@ -105,7 +105,7 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       if (content.trim().isEmpty) return;
 
-      await _chatRepo.sendMessage(
+      await chatRepo.sendMessage(
         chatId: chatId,
         senderId: senderId,
         receiverId: receiverId,
@@ -123,7 +123,7 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       if (newContent.trim().isEmpty) return;
 
-      await _chatRepo.editMessage(messageId, newContent.trim());
+      await chatRepo.editMessage(messageId, newContent.trim());
       // Message update will be reflected through the stream
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -133,7 +133,7 @@ class ChatCubit extends Cubit<ChatState> {
   // Delete a message
   Future<void> deleteMessage(String messageId) async {
     try {
-      await _chatRepo.deleteMessage(messageId);
+      await chatRepo.deleteMessage(messageId);
       // Message deletion will be reflected through the stream
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -143,7 +143,7 @@ class ChatCubit extends Cubit<ChatState> {
   // Get unread message count
   Future<void> loadUnreadCount(String userId) async {
     try {
-      final count = await _chatRepo.getUnreadMessageCount(userId);
+      final count = await chatRepo.getUnreadMessageCount(userId);
       emit(ChatUnreadCountLoaded(count));
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -153,7 +153,7 @@ class ChatCubit extends Cubit<ChatState> {
   // Update user online status
   Future<void> updateOnlineStatus(String userId, bool isOnline) async {
     try {
-      await _chatRepo.updateUserOnlineStatus(userId, isOnline);
+      await chatRepo.updateUserOnlineStatus(userId, isOnline);
     } catch (e) {
       debugPrint('Error updating online status: $e');
     }

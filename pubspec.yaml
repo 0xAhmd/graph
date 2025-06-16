@@ -39,6 +39,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_chat_bubble: ^2.0.2
   flutter_dotenv: ^5.2.1
   fluttertoast: ^8.2.12
   google_fonts: ^6.2.1
