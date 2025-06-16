@@ -50,7 +50,8 @@ class PostCaption extends StatelessWidget {
               overflow: isExpanded
                   ? TextOverflow.visible
                   : TextOverflow.ellipsis,
-            ),/*  */
+            ),
+            /*  */
             if (showSeeMore)
               Align(
                 alignment: Alignment.centerRight,

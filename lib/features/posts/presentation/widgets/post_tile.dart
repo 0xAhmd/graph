@@ -1,12 +1,11 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/index.dart';
+import '../pages/comments_page.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
-import '../../domain/entities/comment.dart';
 import '../../domain/entities/post_entity.dart';
 import '../cubit/post_cubit.dart';
 
@@ -40,17 +39,12 @@ class _PostTileState extends State<PostTile> {
   bool isOwnPost = false;
   ProfileUserEntity? postUser;
   bool isCaptionExpanded = false;
+
   @override
   void initState() {
     getCurrentUser();
     fetchPostUser();
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    commentController.dispose();
-    super.dispose();
   }
 
   void getCurrentUser() {
@@ -68,37 +62,11 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
-  final TextEditingController commentController = TextEditingController();
-
-  void openCommentBox() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => CustomBottomSheet(
-        controller: commentController,
-        onPost: (commentText) {
-          comment();
-        },
-        title: 'New Comment',
-        hintText: 'Add a comment...',
-        buttonLabel: 'POST',
-      ),
+  void openCommentsPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CommentsPage(post: widget.post)),
     );
-  }
-
-  void comment() {
-    final newComment = Comment(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      postId: widget.post.id,
-      userId: currentUser!.uid,
-      userName: currentUser!.name,
-      text: commentController.text,
-      timestamp: DateTime.now(),
-    );
-    if (commentController.text.isNotEmpty) {
-      postCubit.addComment(widget.post.id, newComment);
-      commentController.clear();
-    }
   }
 
   bool showHeart = false;
@@ -133,6 +101,147 @@ class _PostTileState extends State<PostTile> {
     });
   }
 
+  Widget _buildLatestComment(Post currentPost) {
+    if (currentPost.comments.isEmpty) {
+      return const SizedBox();
+    }
+
+    // Get the latest comment (last in the list)
+    final latestComment = currentPost.comments.last;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+          width: 0.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: openCommentsPage,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Comment avatar with shadow
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.shadow.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      latestComment.userName.isNotEmpty
+                          ? latestComment.userName[0].toUpperCase()
+                          : 'U',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Comment content with better typography
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: latestComment.userName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 14,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  '  ${latestComment.text.length > 60 ? '${latestComment.text.substring(0, 60)}...' : latestComment.text}',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.85),
+                                fontSize: 14,
+                                height: 1.3,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Time indicator
+                      Text(
+                        _getTimeAgo(latestComment.timestamp),
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Arrow indicator
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.4),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getTimeAgo(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m';
+    } else {
+      return 'now';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -162,6 +271,7 @@ class _PostTileState extends State<PostTile> {
             showHeart: showHeart,
             isLiked: widget.post.likes.contains(currentUser!.uid),
           ),
+
           // buttons + time
           PostActions(
             post: widget.post,
@@ -169,7 +279,8 @@ class _PostTileState extends State<PostTile> {
             likeCount: widget.post.likes.length,
             commentCount: widget.post.comments.length,
             onLike: like,
-            onComment: openCommentBox,
+            onComment:
+                openCommentsPage, // Navigate to comments page instead of opening modal
             timeStamp: widget.post.timeStamp,
           ),
 
@@ -183,8 +294,23 @@ class _PostTileState extends State<PostTile> {
               });
             },
           ),
+          const SizedBox(height: 15),
+          // Show latest comment only
+          BlocBuilder<PostCubit, PostState>(
+            builder: (context, state) {
+              if (state is PostLoaded) {
+                final currentPost = state.posts.firstWhere(
+                  (post) => post.id == widget.post.id,
+                  orElse: () => widget.post,
+                );
 
-          const SizedBox(height: 6),
+                return _buildLatestComment(currentPost);
+              }
+              return const SizedBox();
+            },
+          ),
+
+          // View all comments button (if there are comments)
           BlocBuilder<PostCubit, PostState>(
             builder: (context, state) {
               if (state is PostLoaded) {
@@ -194,41 +320,35 @@ class _PostTileState extends State<PostTile> {
                 );
 
                 if (currentPost.comments.isNotEmpty) {
-                  int showCommentsCount = currentPost.comments.length;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: showCommentsCount,
-                    itemBuilder: (context, index) {
-                      final comment = currentPost.comments[index];
-                      return CommentTile(
-                        comment: comment,
-                        onDeleteComment: () {
-                          postCubit.deleteComment(widget.post.id, comment.id);
-                        },
-                        currentUserId: currentUser!.uid,
-                      );
-                    },
+                  return GestureDetector(
+                    onTap: openCommentsPage,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        currentPost.comments.length == 1
+                            ? 'View comment'
+                            : 'View all ${currentPost.comments.length} comments',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   );
                 }
-                // If there are no comments, you can return an empty SizedBox or a message
-                return const SizedBox();
-              } else if (state is PostLoading) {
-                return const Center(child: CupertinoActivityIndicator());
-              } else if (state is PostError) {
-                return Center(child: Text(state.errMessage));
-              } else {
-                return Center(
-                  child: Text(
-                    'Something went wrong',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.inversePrimary,
-                    ),
-                  ),
-                );
               }
+              return const SizedBox();
             },
           ),
+
+          const SizedBox(height: 8),
         ],
       ),
     );
