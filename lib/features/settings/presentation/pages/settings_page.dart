@@ -12,8 +12,9 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ConstrainedScaffold(
       appBar: AppBar(
+        centerTitle: true,
         foregroundColor: Theme.of(context).colorScheme.primary,
-        title: const Text("Settings", style: TextStyle(fontSize: 18)),
+        title: const Text("Settings", style: TextStyle(fontSize: 24)),
       ),
       body: Column(
         children: [

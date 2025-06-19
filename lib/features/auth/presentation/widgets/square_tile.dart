@@ -6,10 +6,12 @@ class CustomSquareTile extends StatelessWidget {
     required this.onTap,
     required this.img,
     required this.title,
+    this.color,
   });
   final String img;
   final void Function()? onTap;
   final String title;
+  final Color? color;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -27,7 +29,7 @@ class CustomSquareTile extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(img, height: 45),
+            Image.asset(img, height: 45, color: color),
             const SizedBox(width: 20),
             Text(
               "Sign in with $title",

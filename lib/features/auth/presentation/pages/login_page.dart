@@ -89,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 10),
 
             CustomSquareTile(
+              color: Theme.of(context).colorScheme.inversePrimary,
               title: "Github",
               onTap: () {
                 context.read<AuthCubit>().signInWithGitHub();
