@@ -27,7 +27,6 @@ class PostHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ...your header UI code here...
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -52,7 +51,6 @@ class PostHeader extends StatelessWidget {
             ),
           ),
         ),
-        // Show blocked indicator
         if (isUserBlocked)
           Container(
             margin: const EdgeInsets.only(left: 8),
@@ -75,12 +73,12 @@ class PostHeader extends StatelessWidget {
         GestureDetector(
           onTap: () => showOptions(context),
           child: Icon(
-            isOwnPost ? Icons.delete : Icons.more_vert,
+            Icons.more_vert,
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ],
-    ); // Replace with actual header code
+    );
   }
 
   Widget _buildProfileImage(BuildContext context) {
@@ -143,109 +141,79 @@ class PostHeader extends StatelessWidget {
   }
 
   void showOptions(BuildContext context) {
-    if (isOwnPost) {
-      // Show delete dialog for own posts
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            "Delete Post ?",
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.inversePrimary,
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                "Cancel",
+            if (isOwnPost)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text(
+                  'Delete Post',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (onDeletePressed != null) {
+                    onDeletePressed!();
+                  }
+                },
+              ),
+            if (!isOwnPost && !isUserBlocked)
+              ListTile(
+                leading: const Icon(Icons.block, color: Colors.red),
+                title: Text(
+                  'Block ${post.userName}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (onBlockPressed != null) {
+                    onBlockPressed!();
+                  }
+                },
+              ),
+            if (!isOwnPost && isUserBlocked)
+              ListTile(
+                leading: const Icon(Icons.lock_open, color: Colors.green),
+                title: Text(
+                  'Unblock ${post.userName}',
+                  style: const TextStyle(color: Colors.green),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (onUnblockPressed != null) {
+                    onUnblockPressed!();
+                  }
+                },
+              ),
+            ListTile(
+              leading: Icon(
+                Icons.cancel,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+              title: Text(
+                'Cancel',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.inversePrimary,
                 ),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                if (onDeletePressed != null) {
-                  onDeletePressed!();
-                }
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                "Delete",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
-              ),
+              onTap: () => Navigator.pop(context),
             ),
           ],
         ),
-      );
-    } else {
-      // Show block/unblock options for other users
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              if (!isUserBlocked)
-                ListTile(
-                  leading: const Icon(Icons.block, color: Colors.red),
-                  title: Text(
-                    'Block ${post.userName}',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    if (onBlockPressed != null) {
-                      onBlockPressed!();
-                    }
-                  },
-                )
-              else
-                ListTile(
-                  leading: const Icon(Icons.lock_open, color: Colors.green),
-                  title: Text(
-                    'Unblock ${post.userName}',
-                    style: const TextStyle(color: Colors.green),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    if (onUnblockPressed != null) {
-                      onUnblockPressed!();
-                    }
-                  },
-                ),
-              ListTile(
-                leading: Icon(
-                  Icons.cancel,
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
-                title: Text(
-                  'Cancel',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+      ),
+    );
   }
 }

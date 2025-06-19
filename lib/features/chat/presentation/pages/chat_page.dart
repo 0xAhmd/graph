@@ -230,7 +230,7 @@ class _ChatPageState extends State<ChatPage> {
                     SnackBar(
                       content: Text(
                         state.message,
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ),
                       backgroundColor: Colors.red,
                     ),

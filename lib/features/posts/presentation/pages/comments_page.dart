@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/core/utils/text_bomb_detector.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
 
 import '../../domain/entities/comment.dart';
 import '../../domain/entities/post_entity.dart';
@@ -108,7 +109,7 @@ class _CommentsPageState extends State<CommentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ConstrainedScaffold(
       appBar: AppBar(
         title: const Text('Comments'),
         backgroundColor: Theme.of(context).colorScheme.surface,
