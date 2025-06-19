@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
 import '../../domain/entities/post_entity.dart';
 import '../../../profile/domain/entities/profile_user.dart';
@@ -140,6 +141,7 @@ class PostHeader extends StatelessWidget {
     }
   }
 
+  // ...existing code...
   void showOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -156,6 +158,26 @@ class PostHeader extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
+            // ...inside showOptions...
+            if (!isOwnPost) // Only allow reporting others' posts
+              ListTile(
+                leading: const Icon(Icons.report, color: Colors.orange),
+                title: const Text(
+                  'Report Post',
+                  style: TextStyle(color: Colors.orange),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await Future.delayed(const Duration(seconds: 2));
+                  Fluttertoast.showToast(
+                    msg: "Post Reported",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                  );
+                },
+              ),
             if (isOwnPost)
               ListTile(
                 leading: const Icon(Icons.delete, color: Colors.red),

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:google_fonts/google_fonts.dart';
+import 'package:ig_mate/core/themes/dark_mode.dart';
+import 'package:ig_mate/core/themes/light_mode.dart';
 import 'package:ig_mate/core/themes/theme_cubit.dart';
 import 'package:ig_mate/features/auth/presentation/pages/login_page.dart';
 import 'package:ig_mate/features/chat/data/chat_repo.dart';
@@ -47,45 +48,48 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
       ],
-      child: BlocBuilder<ThemeCubit, ThemeData>(
-        builder: (context, themeState) => MaterialApp(
-          // In your main.dart or app router
-          routes: {
-            '/login': (context) => const LoginPage(onTap: null),
-            // ... other routes
-          },
-          debugShowCheckedModeBanner: false,
-          theme: themeState.copyWith(textTheme: GoogleFonts.latoTextTheme()),
-          home: BlocConsumer<AuthCubit, AuthState>(
-            builder: (context, state) {
-              debugPrint(state.toString());
-              if (state is UnAuthenticated) {
-                return const AuthPage();
-              } else if (state is Authenticated) {
-                return const HomePage();
-              } else if (state is AuthLoading) {
-                return const ConstrainedScaffold(
-                  body: Center(child: CupertinoActivityIndicator()),
-                );
-              } else {
-                return const ConstrainedScaffold(
-                  body: Center(child: CupertinoActivityIndicator()),
-                );
-              }
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) {
+          return MaterialApp(
+            routes: {
+              '/login': (context) => const LoginPage(onTap: null),
+              // ... other routes
             },
-            listener: (context, state) {
-              if (state is AuthError) {
-                Fluttertoast.showToast(
-                  msg: state.errMessage,
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.BOTTOM,
-                  backgroundColor: Colors.red, // or Colors.green, etc.
-                  textColor: Colors.white,
-                );
-              }
-            },
-          ),
-        ),
+            debugShowCheckedModeBanner: false,
+            themeMode: themeMode,
+            theme: lightMode,
+            darkTheme: darkMode,
+            home: BlocConsumer<AuthCubit, AuthState>(
+              builder: (context, state) {
+                debugPrint(state.toString());
+                if (state is UnAuthenticated) {
+                  return const AuthPage();
+                } else if (state is Authenticated) {
+                  return const HomePage();
+                } else if (state is AuthLoading) {
+                  return const ConstrainedScaffold(
+                    body: Center(child: CupertinoActivityIndicator()),
+                  );
+                } else {
+                  return const ConstrainedScaffold(
+                    body: Center(child: CupertinoActivityIndicator()),
+                  );
+                }
+              },
+              listener: (context, state) {
+                if (state is AuthError) {
+                  Fluttertoast.showToast(
+                    msg: state.errMessage,
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                  );
+                }
+              },
+            ),
+          );
+        },
       ),
     );
   }

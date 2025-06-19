@@ -237,8 +237,10 @@ class _CommentTileState extends State<CommentTile> {
             Navigator.pop(context);
             _showDeleteConfirmation();
           },
-          onReport: () {
+          onReport: () async {
             Navigator.pop(context);
+            // add delay 2 seconds
+            await Future.delayed(const Duration(seconds: 2));
             Fluttertoast.showToast(
               msg: "Comment Reported",
               toastLength: Toast.LENGTH_SHORT,
