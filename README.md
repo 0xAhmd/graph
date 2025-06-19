@@ -1,6 +1,9 @@
 
 # 📱 Graph — Super Simple Social App
 
+![Cover](https://github.com/user-attachments/assets/7d58765b-bbbc-4779-84cc-bb40f5b07db6)
+
+
 Graph is a minimalist, modern social media app built with **Flutter**, featuring authentication, user profiles, post feeds, comments, messaging, and more. Designed with a focus on clean UI/UX, real-time updates, and responsive behavior for both mobile and web.
 
 ---
@@ -139,12 +142,6 @@ flutter_launcher_icons:
 * Robust block/unblock logic reflected throughout the app
 * Offline-aware and optimized for real-time UX
 * Clean architecture with clear separation of concerns
-
----
-
-## 📷 Screenshots
-
-*Add screenshots of login, feed, profile, chat, etc. here*
 
 ---
 
