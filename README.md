@@ -1,8 +1,4 @@
-Here’s a professional and clear `README.md` file tailored for your **Graph** project—a super simple social app built with Flutter and Firebase:
 
----
-
-````markdown
 # 📱 Graph — Super Simple Social App
 
 Graph is a minimalist, modern social media app built with **Flutter**, featuring authentication, user profiles, post feeds, comments, messaging, and more. Designed with a focus on clean UI/UX, real-time updates, and responsive behavior for both mobile and web.
@@ -179,14 +175,3 @@ flutter_launcher_icons:
 **Ahmed Hesham** — [GitHub @0xAhmd](https://github.com/0xAhmd)
 
 ---
-
-## 📜 License
-
-This project is licensed under the MIT License. See [`LICENSE`](LICENSE) for details.
-
----
-
-```
-
-Let me know if you want to include screenshots, a demo GIF, or setup instructions for Firebase and Supabase. I can tailor it even more!
-```
