@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/core/utils/text_bomb_detector.dart';
+import '../../../../../core/utils/text_bomb_detector.dart';
 
-import 'package:ig_mate/features/posts/domain/entities/comment.dart';
-import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
+import '../../../domain/entities/comment.dart';
+import '../../cubit/post_cubit.dart';
 
 import 'comment_avatar.dart';
 import 'comment_bubble.dart';

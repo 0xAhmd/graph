@@ -1,7 +1,8 @@
 import 'package:bloc/bloc.dart';
+import 'package:meta/meta.dart';
+
 import '../../../profile/domain/entities/profile_user.dart';
 import '../../data/repo/search_repo.dart';
-import 'package:meta/meta.dart';
 
 part 'search_state.dart';
 

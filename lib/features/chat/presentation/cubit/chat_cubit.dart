@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:ig_mate/features/chat/domain/entities/chat_convo.dart';
-import 'package:ig_mate/features/chat/domain/entities/chat_message.dart';
-import 'package:ig_mate/features/chat/domain/entities/chat_user.dart';
-import 'package:ig_mate/features/chat/domain/repo/chat_repo_contract.dart';
+import '../../domain/entities/chat_convo.dart';
+import '../../domain/entities/chat_message.dart';
+import '../../domain/entities/chat_user.dart';
+import '../../domain/repo/chat_repo_contract.dart';
 
 part 'chat_state.dart';
 

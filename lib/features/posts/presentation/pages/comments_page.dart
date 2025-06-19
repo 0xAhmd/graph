@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/core/utils/text_bomb_detector.dart';
-import 'package:ig_mate/layout/constrained_scaffold.dart';
+import '../../../../core/utils/text_bomb_detector.dart';
+import '../../../../layout/constrained_scaffold.dart';
 
 import '../../domain/entities/comment.dart';
 import '../../domain/entities/post_entity.dart';

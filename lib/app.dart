@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import 'package:ig_mate/core/themes/dark_mode.dart';
-import 'package:ig_mate/core/themes/light_mode.dart';
-import 'package:ig_mate/core/themes/theme_cubit.dart';
-import 'package:ig_mate/features/auth/presentation/pages/login_page.dart';
-import 'package:ig_mate/features/chat/data/chat_repo.dart';
-import 'package:ig_mate/features/chat/presentation/cubit/chat_cubit.dart';
-import 'package:ig_mate/features/search/data/repo/search_repo.dart';
-import 'package:ig_mate/features/search/presentation/cubit/search_cubit.dart';
-import 'package:ig_mate/layout/constrained_scaffold.dart';
+import 'core/themes/dark_mode.dart';
+import 'core/themes/light_mode.dart';
+import 'core/themes/theme_cubit.dart';
+import 'features/auth/presentation/pages/login_page.dart';
+import 'features/chat/data/chat_repo.dart';
+import 'features/chat/presentation/cubit/chat_cubit.dart';
+import 'features/search/data/repo/search_repo.dart';
+import 'features/search/presentation/cubit/search_cubit.dart';
+import 'layout/constrained_scaffold.dart';
 import 'features/auth/data/repo/firebase_auth_repo.dart';
 import 'features/auth/presentation/cubit/cubit/auth_cubit.dart';
 

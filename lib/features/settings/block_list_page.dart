@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
-import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
-import 'package:ig_mate/layout/constrained_scaffold.dart';
+import '../auth/presentation/cubit/cubit/auth_cubit.dart';
+import '../profile/presentation/cubit/cubit/profile_cubit.dart';
+import '../profile/domain/entities/profile_user.dart';
+import '../../layout/constrained_scaffold.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
 
