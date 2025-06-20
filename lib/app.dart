@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/features/comments/data/repo/comment_repo.dart';
+import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
 
 import 'core/themes/dark_mode.dart';
 import 'core/themes/light_mode.dart';
@@ -28,7 +30,7 @@ class MyApp extends StatelessWidget {
   final postRepo = PostRepo();
   final searchRepo = SearchRepo();
   final chatRepo = FirebaseChatRepo();
-
+  final commentRepo = CommentRepo();
   MyApp({super.key});
 
   @override
@@ -36,6 +38,10 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<ChatCubit>(create: (context) => ChatCubit(chatRepo)),
+        BlocProvider<CommentCubit>(
+          create: (context) => CommentCubit(commentRepo: commentRepo),
+        ),
+
         BlocProvider<AuthCubit>(
           create: (context) => AuthCubit(authRepo)..checkAuth(),
         ),

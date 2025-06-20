@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../widgets/index.dart';
-import '../pages/comments_page.dart';
+import '../../../comments/presentation/pages/comments_page.dart';
+import '../../../comments/presentation/cubit/comment_cubit.dart';
+import '../../../comments/domain/entities/comment.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../domain/entities/post_entity.dart';
@@ -35,15 +37,20 @@ class PostTile extends StatefulWidget {
 class _PostTileState extends State<PostTile> {
   late final postCubit = context.read<PostCubit>();
   late final profileCubit = context.read<ProfileCubit>();
+  late final commentCubit = context.read<CommentCubit>();
+
   AppUser? currentUser;
   bool isOwnPost = false;
   ProfileUserEntity? postUser;
   bool isCaptionExpanded = false;
+  List<Comment> postComments = [];
+  int commentCount = 0;
 
   @override
   void initState() {
     getCurrentUser();
     fetchPostUser();
+    loadComments();
     super.initState();
   }
 
@@ -62,10 +69,24 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
+  Future<void> loadComments() async {
+    try {
+      await commentCubit.fetchComments(widget.post.id);
+    } catch (e) {
+      // Handle error silently for now
+      debugPrint('Error loading comments: $e');
+    }
+  }
+
   void openCommentsPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CommentsPage(post: widget.post)),
+      MaterialPageRoute(
+        builder: (context) => CommentsPage(
+          postId: widget.post.id,
+          postUserId: widget.post.userId,
+        ),
+      ),
     );
   }
 
@@ -101,13 +122,13 @@ class _PostTileState extends State<PostTile> {
     });
   }
 
-  Widget _buildLatestComment(Post currentPost) {
-    if (currentPost.comments.isEmpty) {
+  Widget _buildLatestComment(List<Comment> comments) {
+    if (comments.isEmpty) {
       return const SizedBox();
     }
 
     // Get the latest comment (last in the list)
-    final latestComment = currentPost.comments.last;
+    final latestComment = comments.last;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -164,7 +185,6 @@ class _PostTileState extends State<PostTile> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       RichText(
                         text: TextSpan(
@@ -227,6 +247,30 @@ class _PostTileState extends State<PostTile> {
     );
   }
 
+  Widget _buildViewCommentsButton(int commentCount) {
+    if (commentCount == 0) {
+      return const SizedBox();
+    }
+
+    return GestureDetector(
+      onTap: openCommentsPage,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(
+          commentCount == 1
+              ? 'View comment'
+              : 'View all $commentCount comments',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
   String _getTimeAgo(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
@@ -272,83 +316,64 @@ class _PostTileState extends State<PostTile> {
             isLiked: widget.post.likes.contains(currentUser!.uid),
           ),
 
-          // buttons + time
-          PostActions(
-            post: widget.post,
-            isLiked: widget.post.likes.contains(currentUser!.uid),
-            likeCount: widget.post.likes.length,
-            commentCount: widget.post.comments.length,
-            onLike: like,
-            onComment:
-                openCommentsPage, // Navigate to comments page instead of opening modal
-            timeStamp: widget.post.timeStamp,
-          ),
-
-          PostCaption(
-            userName: widget.post.userName,
-            text: widget.post.text,
-            isExpanded: isCaptionExpanded,
-            onToggleExpand: () {
-              setState(() {
-                isCaptionExpanded = !isCaptionExpanded;
-              });
-            },
-          ),
-          const SizedBox(height: 15),
-          // Show latest comment only
-          BlocBuilder<PostCubit, PostState>(
-            builder: (context, state) {
-              if (state is PostLoaded) {
-                final currentPost = state.posts.firstWhere(
-                  (post) => post.id == widget.post.id,
-                  orElse: () => widget.post,
-                );
-
-                return _buildLatestComment(currentPost);
+          // Listen to comment state changes
+          BlocListener<CommentCubit, CommentState>(
+            listener: (context, state) {
+              if (state is CommentLoaded) {
+                setState(() {
+                  postComments = state.comments;
+                  commentCount = state.comments.length;
+                });
               }
-              return const SizedBox();
             },
-          ),
+            child: BlocBuilder<CommentCubit, CommentState>(
+              builder: (context, commentState) {
+                // Get current comment count
+                int currentCommentCount = 0;
+                List<Comment> currentComments = [];
 
-          // View all comments button (if there are comments)
-          BlocBuilder<PostCubit, PostState>(
-            builder: (context, state) {
-              if (state is PostLoaded) {
-                final currentPost = state.posts.firstWhere(
-                  (post) => post.id == widget.post.id,
-                  orElse: () => widget.post,
-                );
-
-                if (currentPost.comments.isNotEmpty) {
-                  return GestureDetector(
-                    onTap: openCommentsPage,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Text(
-                        currentPost.comments.length == 1
-                            ? 'View comment'
-                            : 'View all ${currentPost.comments.length} comments',
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.6),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  );
+                if (commentState is CommentLoaded) {
+                  currentComments = commentState.comments;
+                  currentCommentCount = commentState.comments.length;
                 }
-              }
-              return const SizedBox();
-            },
-          ),
 
-          const SizedBox(height: 8),
+                return Column(
+                  children: [
+                    // buttons + time
+                    PostActions(
+                      post: widget.post,
+                      isLiked: widget.post.likes.contains(currentUser!.uid),
+                      likeCount: widget.post.likes.length,
+                      commentCount: currentCommentCount,
+                      onLike: like,
+                      onComment: openCommentsPage,
+                      timeStamp: widget.post.timeStamp,
+                    ),
+
+                    PostCaption(
+                      userName: widget.post.userName,
+                      text: widget.post.text,
+                      isExpanded: isCaptionExpanded,
+                      onToggleExpand: () {
+                        setState(() {
+                          isCaptionExpanded = !isCaptionExpanded;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 15),
+
+                    // Show latest comment
+                    _buildLatestComment(currentComments),
+
+                    // View all comments button
+                    _buildViewCommentsButton(currentCommentCount),
+
+                    const SizedBox(height: 8),
+                  ],
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
