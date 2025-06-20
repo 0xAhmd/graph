@@ -66,8 +66,8 @@ Graph is a minimalist, modern social media app built with **Flutter**, featuring
 ## 🛠️ Tech Stack
 
 - **Flutter**
-- **Firebase**: Auth, Firestore, Storage
-- **Supabase**
+- **Firebase**: Auth, Firestore
+- **Supabase**: storage
 - `flutter_bloc` (state management)
 - `get_it` (dependency injection)
 - `shared_preferences`, `cached_network_image`
