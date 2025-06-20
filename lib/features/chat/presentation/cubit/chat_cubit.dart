@@ -14,11 +14,25 @@ class ChatCubit extends Cubit<ChatState> {
   final ChatRepoContract chatRepo;
   StreamSubscription<List<ChatMessage>>? _messagesSubscription;
   StreamSubscription<ChatConversation>? _conversationSubscription;
+
+  // Cache the loaded users to avoid refetching
+  List<ChatUser>? _cachedUsers;
+
   // Load available users to chat with
-  Future<void> loadAvailableUsers(String currentUserId) async {
+  Future<void> loadAvailableUsers(
+    String currentUserId, {
+    bool forceRefresh = false,
+  }) async {
     try {
+      // If users are already cached and we don't need to force refresh, use cached data
+      if (_cachedUsers != null && !forceRefresh) {
+        emit(ChatUsersLoaded(_cachedUsers!));
+        return;
+      }
+
       emit(ChatLoading());
       final users = await chatRepo.getAvailableUsers(currentUserId);
+      _cachedUsers = users; // Cache the users
       emit(ChatUsersLoaded(users));
     } catch (e) {
       emit(ChatError(e.toString()));
@@ -39,7 +53,11 @@ class ChatCubit extends Cubit<ChatState> {
   // Start a conversation
   Future<void> startConversation(String userId1, String userId2) async {
     try {
-      emit(ChatLoading());
+      // Don't emit loading if we already have users loaded
+      if (state is! ChatUsersLoaded) {
+        emit(ChatLoading());
+      }
+
       final conversation = await chatRepo.getOrCreateConversation(
         userId1,
         userId2,
@@ -47,6 +65,13 @@ class ChatCubit extends Cubit<ChatState> {
       emit(ChatConversationCreated(conversation));
     } catch (e) {
       emit(ChatError(e.toString()));
+    }
+  }
+
+  // Method to return to users list without refetching
+  void returnToUsersList() {
+    if (_cachedUsers != null) {
+      emit(ChatUsersLoaded(_cachedUsers!));
     }
   }
 
@@ -157,6 +182,11 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (e) {
       debugPrint('Error updating online status: $e');
     }
+  }
+
+  // Clear cached users (call this when you want to force refresh)
+  void clearUsersCache() {
+    _cachedUsers = null;
   }
 
   @override

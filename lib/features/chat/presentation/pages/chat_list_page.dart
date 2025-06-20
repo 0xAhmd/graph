@@ -1,4 +1,6 @@
 // lib/features/chat/presentation/pages/chat_list_page.dart
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,13 +22,28 @@ class _ChatListPageState extends State<ChatListPage> {
   @override
   void initState() {
     super.initState();
-    _loadAvailableUsers();
+    _initializeUsers();
   }
 
-  void _loadAvailableUsers() {
+  void _initializeUsers() {
     final currentUser = context.read<AuthCubit>().currentUser;
     if (currentUser != null) {
-      context.read<ChatCubit>().loadAvailableUsers(currentUser.uid);
+      final chatState = context.read<ChatCubit>().state;
+
+      // Only load users if they're not already loaded
+      if (chatState is! ChatUsersLoaded) {
+        context.read<ChatCubit>().loadAvailableUsers(currentUser.uid);
+      }
+    }
+  }
+
+  void _loadAvailableUsers({bool forceRefresh = false}) {
+    final currentUser = context.read<AuthCubit>().currentUser;
+    if (currentUser != null) {
+      context.read<ChatCubit>().loadAvailableUsers(
+        currentUser.uid,
+        forceRefresh: forceRefresh,
+      );
     }
   }
 
@@ -54,6 +71,15 @@ class _ChatListPageState extends State<ChatListPage> {
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.refresh,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () => _loadAvailableUsers(forceRefresh: true),
+          ),
+        ],
       ),
       body: BlocConsumer<ChatCubit, ChatState>(
         listener: (context, state) {
@@ -72,7 +98,10 @@ class _ChatListPageState extends State<ChatListPage> {
                 builder: (context) =>
                     ChatPage(conversation: state.conversation),
               ),
-            );
+            ).then((_) {
+              // When returning from chat page, restore the users list
+              context.read<ChatCubit>().returnToUsersList();
+            });
           }
         },
         builder: (context, state) {
@@ -119,7 +148,7 @@ class _ChatListPageState extends State<ChatListPage> {
             }
 
             return RefreshIndicator(
-              onRefresh: () async => _loadAvailableUsers(),
+              onRefresh: () async => _loadAvailableUsers(forceRefresh: true),
               child: ListView.builder(
                 padding: const EdgeInsets.all(8),
                 itemCount: state.users.length,
@@ -165,12 +194,18 @@ class _ChatListPageState extends State<ChatListPage> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _loadAvailableUsers,
+                    onPressed: () => _loadAvailableUsers(forceRefresh: true),
                     child: const Text('Try Again'),
                   ),
                 ],
               ),
             );
+          }
+
+          // Handle ChatConversationCreated state - show users while navigating
+          if (state is ChatConversationCreated) {
+            // This will briefly show while navigation is happening
+            return const Center(child: CupertinoActivityIndicator());
           }
 
           // Initial state or unknown state
