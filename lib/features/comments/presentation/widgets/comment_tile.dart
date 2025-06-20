@@ -31,7 +31,8 @@ class CommentTile extends StatefulWidget {
   State<CommentTile> createState() => _CommentTileState();
 }
 
-class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin {
+class _CommentTileState extends State<CommentTile>
+    with TickerProviderStateMixin {
   bool isExpanded = false;
   bool isReplying = false;
   bool isMarkdownMode = false;
@@ -82,7 +83,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
     setState(() {
       isReplying = !isReplying;
     });
-    
+
     if (isReplying) {
       _replyAnimationController.forward();
       _replyFocusNode.requestFocus();
@@ -95,7 +96,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
 
   void _postReply() async {
     final replyText = _replyController.text.trim();
-    
+
     if (replyText.isEmpty) {
       Fluttertoast.showToast(
         msg: "Reply cannot be empty",
@@ -139,7 +140,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
         widget.comment.id,
         newReply,
       );
-      
+
       _replyController.clear();
       _toggleReply();
       setState(() {
@@ -182,7 +183,9 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
           child: Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -219,9 +222,11 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                         Icon(
                           Icons.text_format,
                           size: 16,
-                          color: editMarkdownMode 
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          color: editMarkdownMode
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.6),
                         ),
                         const SizedBox(width: 4),
                         Switch(
@@ -231,7 +236,8 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                               editMarkdownMode = value;
                             });
                           },
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
                       ],
                     ),
@@ -249,9 +255,9 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                   minLines: 2,
                   maxLength: 700,
                   decoration: InputDecoration(
-                    hintText: editMarkdownMode 
-                      ? 'Edit your comment... (Markdown supported)'
-                      : 'Edit your comment...',
+                    hintText: editMarkdownMode
+                        ? 'Edit your comment... (Markdown supported)'
+                        : 'Edit your comment...',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -265,18 +271,20 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                   ),
                   autofocus: true,
                 ),
-                
+
                 if (editMarkdownMode) ...[
                   const SizedBox(height: 8),
                   Text(
                     'Markdown: **bold**, *italic*, `code`, [link](url)',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
                     ),
                   ),
                 ],
-                
+
                 const SizedBox(height: 16),
 
                 // Action buttons
@@ -329,7 +337,8 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
       return;
     }
 
-    if (newText == widget.comment.text && isMarkdown == widget.comment.isMarkdown) {
+    if (newText == widget.comment.text &&
+        isMarkdown == widget.comment.isMarkdown) {
       Navigator.pop(context);
       return;
     }
@@ -361,9 +370,9 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         content: Text(
-          widget.comment.hasReplies 
-            ? 'This will delete the comment and all its replies. Are you sure?'
-            : 'Are you sure you want to delete this comment?',
+          widget.comment.hasReplies
+              ? 'This will delete the comment and all its replies. Are you sure?'
+              : 'Are you sure you want to delete this comment?',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         actions: [
@@ -374,7 +383,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.read<CommentCubit>().deleteComment(
+              context.read<CommentCubit>().deleteCommentSafe(
                 widget.comment.postId,
                 widget.comment.id,
               );
@@ -528,25 +537,32 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
           // Content
           if (widget.comment.isMarkdown)
             MarkdownBody(
-              data: isExpanded ? text : (showSeeMore && !isExpanded ? '${text.substring(0, 100)}...' : text),
-              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                p: TextStyle(
-                  color: theme.onSurface,
-                  fontSize: 15,
-                ),
-                code: TextStyle(
-                  backgroundColor: theme.surfaceContainerHighest,
-                  color: theme.primary,
-                ),
-              ),
+              data: isExpanded
+                  ? text
+                  : (showSeeMore && !isExpanded
+                        ? (text.length > 100
+                              ? '${text.substring(0, 100)}...'
+                              : text)
+                        : text),
+              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context))
+                  .copyWith(
+                    p: TextStyle(color: theme.onSurface, fontSize: 15),
+                    code: TextStyle(
+                      backgroundColor: theme.surfaceContainerHighest,
+                      color: theme.primary,
+                    ),
+                  ),
             )
           else
             Text(
-              isExpanded ? text : (showSeeMore && !isExpanded ? '${text.substring(0, 100)}...' : text),
-              style: TextStyle(
-                color: theme.onSurface,
-                fontSize: 15,
-              ),
+              isExpanded
+                  ? text
+                  : (showSeeMore && !isExpanded
+                        ? (text.length > 100
+                              ? '${text.substring(0, 100)}...'
+                              : text)
+                        : text),
+              style: TextStyle(color: theme.onSurface, fontSize: 15),
             ),
 
           // See more/less button
@@ -571,10 +587,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
               if (widget.comment.canHaveReplies)
                 TextButton.icon(
                   onPressed: _toggleReply,
-                  icon: Icon(
-                    isReplying ? Icons.close : Icons.reply,
-                    size: 16,
-                  ),
+                  icon: Icon(isReplying ? Icons.close : Icons.reply, size: 16),
                   label: Text(
                     isReplying ? 'Cancel' : 'Reply',
                     style: const TextStyle(fontSize: 13),
@@ -603,7 +616,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
 
   Widget _buildReplyInput() {
     final theme = Theme.of(context).colorScheme;
-    
+
     return SizeTransition(
       sizeFactor: _replyAnimation,
       child: Container(
@@ -612,9 +625,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
         decoration: BoxDecoration(
           color: theme.surfaceContainerHighest.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: theme.outline.withOpacity(0.2),
-          ),
+          border: Border.all(color: theme.outline.withOpacity(0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,9 +647,9 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                     Icon(
                       Icons.text_format,
                       size: 14,
-                      color: isMarkdownMode 
-                        ? theme.primary
-                        : theme.onSurface.withOpacity(0.6),
+                      color: isMarkdownMode
+                          ? theme.primary
+                          : theme.onSurface.withOpacity(0.6),
                     ),
                     const SizedBox(width: 4),
                     Switch(
@@ -655,7 +666,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
               ],
             ),
             const SizedBox(height: 8),
-            
+
             // Text field
             TextField(
               controller: _replyController,
@@ -664,9 +675,9 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
               minLines: 2,
               maxLength: 500,
               decoration: InputDecoration(
-                hintText: isMarkdownMode 
-                  ? 'Write a reply... (Markdown supported)'
-                  : 'Write a reply...',
+                hintText: isMarkdownMode
+                    ? 'Write a reply... (Markdown supported)'
+                    : 'Write a reply...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
@@ -677,7 +688,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                 counterText: '',
               ),
             ),
-            
+
             if (isMarkdownMode) ...[
               const SizedBox(height: 4),
               Text(
@@ -688,9 +699,9 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 12),
-            
+
             // Action buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -715,7 +726,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
-    
+
     return Container(
       margin: EdgeInsets.only(
         left: widget.comment.depth * 24.0,
@@ -725,7 +736,10 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -746,7 +760,7 @@ class _CommentTileState extends State<CommentTile> with TickerProviderStateMixin
               ],
             ),
           ),
-          
+
           // Add a subtle line for nested comments
           if (widget.comment.depth > 0)
             Container(

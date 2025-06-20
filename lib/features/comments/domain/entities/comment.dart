@@ -3,6 +3,7 @@ part 'comment.g.dart';
 
 @JsonSerializable()
 class Comment {
+  @JsonKey(fromJson: _stringFromAny)
   final String id;
   final String postId;
   final String userId;
@@ -11,7 +12,8 @@ class Comment {
   final DateTime timestamp;
   final String? parentCommentId; // For nested comments
   final List<String> childCommentIds; // Track child comments
-  final int depth; // Track nesting depth (0 = root, 1 = first level reply, etc.)
+  final int
+  depth; // Track nesting depth (0 = root, 1 = first level reply, etc.)
   final bool isMarkdown; // Whether the text contains markdown
 
   Comment({
@@ -57,7 +59,9 @@ class Comment {
   bool get isRootComment => parentCommentId == null;
   bool get hasReplies => childCommentIds.isNotEmpty;
   bool get canHaveReplies => depth < 3; // Limit nesting to 3 levels
+  static String _stringFromAny(dynamic value) => value.toString();
 
-  factory Comment.fromJson(Map<String, dynamic> json) => _$CommentFromJson(json);
+  factory Comment.fromJson(Map<String, dynamic> json) =>
+      _$CommentFromJson(json);
   Map<String, dynamic> toJson() => _$CommentToJson(this);
 }
