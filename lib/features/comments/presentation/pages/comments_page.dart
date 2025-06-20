@@ -121,6 +121,36 @@ class _CommentsPageState extends State<CommentsPage> {
     commentCubit.editComment(widget.postId, commentId, newText);
   }
 
+  // Helper method to determine if we should show loading
+  bool _shouldShowLoading(CommentState state) {
+    if (state is CommentLoading && state.postId == widget.postId) {
+      return true;
+    }
+    // Show loading if we're in initial state and haven't loaded this post yet
+    if (state is CommentInitial) {
+      return true;
+    }
+    // Show loading if we're in loaded state but don't have comments for this post
+    if (state is CommentLoaded &&
+        !state.commentsByPost.containsKey(widget.postId)) {
+      return true;
+    }
+    return false;
+  }
+
+  // Helper method to get comments for current post
+  List<Comment> _getCommentsForCurrentPost(CommentState state) {
+    if (state is CommentLoaded) {
+      return state.getCommentsForPost(widget.postId);
+    }
+    return [];
+  }
+
+  // Helper method to check if current post has error
+  bool _hasErrorForCurrentPost(CommentState state) {
+    return state is CommentError && state.postId == widget.postId;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ConstrainedScaffold(
@@ -136,9 +166,10 @@ class _CommentsPageState extends State<CommentsPage> {
           Expanded(
             child: BlocConsumer<CommentCubit, CommentState>(
               listener: (context, state) {
-                if (state is CommentError) {
+                if (_hasErrorForCurrentPost(state)) {
+                  final errorState = state as CommentError;
                   Fluttertoast.showToast(
-                    msg: state.errMessage,
+                    msg: errorState.errMessage,
                     toastLength: Toast.LENGTH_SHORT,
                     gravity: ToastGravity.BOTTOM,
                     backgroundColor: Colors.red,
@@ -147,60 +178,14 @@ class _CommentsPageState extends State<CommentsPage> {
                 }
               },
               builder: (context, state) {
-                if (state is CommentLoading) {
+                // Show loading indicator
+                if (_shouldShowLoading(state)) {
                   return const Center(child: CupertinoActivityIndicator());
-                } else if (state is CommentLoaded) {
-                  if (state.comments.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.chat_bubble_outline,
-                            size: 64,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.5),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No comments yet',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Be the first to comment!',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: state.comments.length,
-                    itemBuilder: (context, index) {
-                      final comment = state.comments[index];
-                      return CommentTile(
-                        comment: comment,
-                        currentUserId: currentUser!.uid,
-                        onDeleteComment: () => _deleteComment(comment.id),
-                        onEditComment: _editComment,
-                      );
-                    },
-                  );
-                } else if (state is CommentError) {
+                // Show error state
+                if (_hasErrorForCurrentPost(state)) {
+                  final errorState = state as CommentError;
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -220,7 +205,7 @@ class _CommentsPageState extends State<CommentsPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          state.errMessage,
+                          errorState.errMessage,
                           style: TextStyle(
                             fontSize: 14,
                             color: Theme.of(
@@ -239,7 +224,62 @@ class _CommentsPageState extends State<CommentsPage> {
                     ),
                   );
                 }
-                return const SizedBox();
+
+                // Get comments for current post
+                final comments = _getCommentsForCurrentPost(state);
+
+                // Show empty state
+                if (comments.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No comments yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Be the first to comment!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Show comments list
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+                    return CommentTile(
+                      comment: comment,
+                      currentUserId: currentUser!.uid,
+                      onDeleteComment: () => _deleteComment(comment.id),
+                      onEditComment: _editComment,
+                    );
+                  },
+                );
               },
             ),
           ),

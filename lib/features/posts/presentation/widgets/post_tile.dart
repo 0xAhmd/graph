@@ -320,21 +320,26 @@ class _PostTileState extends State<PostTile> {
           BlocListener<CommentCubit, CommentState>(
             listener: (context, state) {
               if (state is CommentLoaded) {
+                final commentsForThisPost = state.getCommentsForPost(
+                  widget.post.id,
+                );
                 setState(() {
-                  postComments = state.comments;
-                  commentCount = state.comments.length;
+                  postComments = commentsForThisPost;
+                  commentCount = commentsForThisPost.length;
                 });
               }
             },
             child: BlocBuilder<CommentCubit, CommentState>(
               builder: (context, commentState) {
-                // Get current comment count
+                // Get current comment count for THIS post only
                 int currentCommentCount = 0;
                 List<Comment> currentComments = [];
 
                 if (commentState is CommentLoaded) {
-                  currentComments = commentState.comments;
-                  currentCommentCount = commentState.comments.length;
+                  currentComments = commentState.getCommentsForPost(
+                    widget.post.id,
+                  );
+                  currentCommentCount = currentComments.length;
                 }
 
                 return Column(

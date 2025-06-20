@@ -11,28 +11,60 @@ class CommentCubit extends Cubit<CommentState> {
   CommentCubit({required this.commentRepo}) : super(CommentInitial());
 
   Future<void> fetchComments(String postId) async {
-    emit(CommentLoading());
+    final currentState = state;
+    Map<String, List<Comment>> currentComments = {};
+
+    // If we already have comments loaded, preserve them
+    if (currentState is CommentLoaded) {
+      currentComments = Map.from(currentState.commentsByPost);
+      // If we already have comments for this post, don't show loading
+      if (currentComments.containsKey(postId)) {
+        return;
+      }
+    }
+
+    // Show loading only if we don't already have comments for this post
+    emit(CommentLoading(postId: postId));
+
     try {
       final comments = await commentRepo.fetchCommentsByPostId(postId);
-      emit(CommentLoaded(comments: comments));
+      currentComments[postId] = comments;
+      emit(CommentLoaded(commentsByPost: currentComments));
     } catch (e) {
-      emit(CommentError(errMessage: "Failed to load comments: $e"));
+      emit(
+        CommentError(errMessage: "Failed to load comments: $e", postId: postId),
+      );
     }
   }
 
   Future<void> addComment(String postId, Comment comment) async {
     final currentState = state;
     if (currentState is CommentLoaded) {
+      final currentComments = Map<String, List<Comment>>.from(
+        currentState.commentsByPost,
+      );
+      final postComments = List<Comment>.from(currentComments[postId] ?? []);
+
       // Optimistic update
-      final updatedComments = [...currentState.comments, comment];
-      emit(CommentLoaded(comments: updatedComments));
+      postComments.add(comment);
+      currentComments[postId] = postComments;
+      emit(CommentLoaded(commentsByPost: currentComments));
 
       try {
         await commentRepo.addComment(postId, comment);
       } catch (e) {
-        // Revert on error
-        emit(CommentLoaded(comments: currentState.comments));
-        emit(CommentError(errMessage: e.toString()));
+        // Revert on error - remove the comment we just added
+        postComments.removeLast();
+        currentComments[postId] = postComments;
+        emit(CommentLoaded(commentsByPost: currentComments));
+        emit(CommentError(errMessage: e.toString(), postId: postId));
+      }
+    } else {
+      // If no comments are loaded yet, we need to fetch them first
+      await fetchComments(postId);
+      // Try adding the comment again after fetching
+      if (state is CommentLoaded) {
+        await addComment(postId, comment);
       }
     }
   }
@@ -40,24 +72,36 @@ class CommentCubit extends Cubit<CommentState> {
   Future<void> deleteComment(String postId, String commentId) async {
     final currentState = state;
     if (currentState is CommentLoaded) {
-      final deletedComment = currentState.comments.firstWhere(
-        (comment) => comment.id == commentId,
-        orElse: () => throw Exception('Comment not found'),
+      final currentComments = Map<String, List<Comment>>.from(
+        currentState.commentsByPost,
       );
+      final postComments = List<Comment>.from(currentComments[postId] ?? []);
+
+      final deletedCommentIndex = postComments.indexWhere(
+        (comment) => comment.id == commentId,
+      );
+      if (deletedCommentIndex == -1) return;
+
+      final deletedComment = postComments[deletedCommentIndex];
 
       // Optimistic update
-      final updatedComments = currentState.comments
-          .where((comment) => comment.id != commentId)
-          .toList();
-      emit(CommentLoaded(comments: updatedComments));
+      postComments.removeAt(deletedCommentIndex);
+      currentComments[postId] = postComments;
+      emit(CommentLoaded(commentsByPost: currentComments));
 
       try {
         await commentRepo.deleteComment(postId, commentId);
       } catch (e) {
         // Revert on error
-        final revertedComments = [...updatedComments, deletedComment];
-        emit(CommentLoaded(comments: revertedComments));
-        emit(CommentError(errMessage: 'Error deleting comment: $e'));
+        postComments.insert(deletedCommentIndex, deletedComment);
+        currentComments[postId] = postComments;
+        emit(CommentLoaded(commentsByPost: currentComments));
+        emit(
+          CommentError(
+            errMessage: 'Error deleting comment: $e',
+            postId: postId,
+          ),
+        );
       }
     }
   }
@@ -69,32 +113,82 @@ class CommentCubit extends Cubit<CommentState> {
   ) async {
     final currentState = state;
     if (currentState is CommentLoaded) {
-      final commentIndex = currentState.comments.indexWhere(
+      final currentComments = Map<String, List<Comment>>.from(
+        currentState.commentsByPost,
+      );
+      final postComments = List<Comment>.from(currentComments[postId] ?? []);
+
+      final commentIndex = postComments.indexWhere(
         (comment) => comment.id == commentId,
       );
+      if (commentIndex == -1) return;
 
-      if (commentIndex != -1) {
-        final oldComment = currentState.comments[commentIndex];
-        final updatedComment = oldComment.copyWith(
-          text: newText,
-          timestamp: DateTime.now(),
-        );
+      final oldComment = postComments[commentIndex];
+      final updatedComment = oldComment.copyWith(
+        text: newText,
+        timestamp: DateTime.now(),
+      );
 
-        // Optimistic update
-        final updatedComments = List<Comment>.from(currentState.comments);
-        updatedComments[commentIndex] = updatedComment;
-        emit(CommentLoaded(comments: updatedComments));
+      // Optimistic update
+      postComments[commentIndex] = updatedComment;
+      currentComments[postId] = postComments;
+      emit(CommentLoaded(commentsByPost: currentComments));
 
-        try {
-          await commentRepo.editComment(postId, commentId, newText);
-        } catch (e) {
-          // Revert on error
-          final revertedComments = List<Comment>.from(updatedComments);
-          revertedComments[commentIndex] = oldComment;
-          emit(CommentLoaded(comments: revertedComments));
-          emit(CommentError(errMessage: e.toString()));
-        }
+      try {
+        await commentRepo.editComment(postId, commentId, newText);
+      } catch (e) {
+        // Revert on error
+        postComments[commentIndex] = oldComment;
+        currentComments[postId] = postComments;
+        emit(CommentLoaded(commentsByPost: currentComments));
+        emit(CommentError(errMessage: e.toString(), postId: postId));
       }
+    }
+  }
+
+  // Helper method to get comments for a specific post
+  List<Comment> getCommentsForPost(String postId) {
+    final currentState = state;
+    if (currentState is CommentLoaded) {
+      return currentState.getCommentsForPost(postId);
+    }
+    return [];
+  }
+
+  // Method to refresh comments for a specific post
+  Future<void> refreshComments(String postId) async {
+    final currentState = state;
+    Map<String, List<Comment>> currentComments = {};
+
+    if (currentState is CommentLoaded) {
+      currentComments = Map.from(currentState.commentsByPost);
+    }
+
+    emit(CommentLoading(postId: postId));
+
+    try {
+      final comments = await commentRepo.fetchCommentsByPostId(postId);
+      currentComments[postId] = comments;
+      emit(CommentLoaded(commentsByPost: currentComments));
+    } catch (e) {
+      emit(
+        CommentError(
+          errMessage: "Failed to refresh comments: $e",
+          postId: postId,
+        ),
+      );
+    }
+  }
+
+  // Method to clear comments for a specific post (useful for memory management)
+  void clearCommentsForPost(String postId) {
+    final currentState = state;
+    if (currentState is CommentLoaded) {
+      final currentComments = Map<String, List<Comment>>.from(
+        currentState.commentsByPost,
+      );
+      currentComments.remove(postId);
+      emit(CommentLoaded(commentsByPost: currentComments));
     }
   }
 }
