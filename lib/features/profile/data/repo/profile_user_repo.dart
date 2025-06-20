@@ -96,6 +96,42 @@ class ProfileUserRepo implements ProfileUserRepoContract {
   }
 
   @override
+  Future<bool> deleteUserProfileImage({required String uid}) async {
+    try {
+      // Get current user profile to get the image URL
+      final userDoc = await _firestore.collection('users').doc(uid).get();
+      if (!userDoc.exists) return false;
+
+      final userData = userDoc.data();
+      final currentImageUrl = userData?['profileImgUrl'] as String?;
+
+      if (currentImageUrl != null && currentImageUrl.isNotEmpty) {
+        // Extract filename from URL to delete from storage
+        try {
+          final uri = Uri.parse(currentImageUrl);
+          final fileName = uri.pathSegments.last;
+
+          // Delete from Supabase storage
+          await _bucket.remove([fileName]);
+        } catch (e) {
+          debugPrint('Error deleting image from storage: $e');
+          // Continue to update Firestore even if storage deletion fails
+        }
+      }
+
+      // Update Firestore to remove profile image URL
+      await _firestore.collection('users').doc(uid).update({
+        'profileImgUrl': '',
+      });
+
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting profile image: $e');
+      return false;
+    }
+  }
+
+  @override
   Future<void> toggleFollow({
     required String currentUid,
     required String targetUid,

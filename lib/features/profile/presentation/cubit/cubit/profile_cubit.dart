@@ -71,6 +71,35 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
+  Future<void> deleteProfileImage({required String uid}) async {
+    if (_isUploading) return;
+
+    _isUploading = true;
+    emit(ProfileImageUploading());
+    try {
+      final success = await repo.deleteUserProfileImage(uid: uid);
+      if (!success) {
+        emit(ProfileError(errMessage: 'Failed to delete profile image'));
+        return;
+      }
+
+      final updatedUser = await repo.fetchUserProfile(uid);
+      if (updatedUser != null) {
+        emit(ProfileLoaded(profileUserEntity: updatedUser));
+      } else {
+        emit(
+          ProfileError(
+            errMessage: 'Failed to refresh profile after image deletion',
+          ),
+        );
+      }
+    } catch (e) {
+      emit(ProfileError(errMessage: 'Image deletion failed: $e'));
+    } finally {
+      _isUploading = false;
+    }
+  }
+
   // FIXED: Improved toggle follow method
   Future<void> toggleFollow(String currentUid, String targetUid) async {
     try {
