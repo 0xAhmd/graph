@@ -41,6 +41,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_chat_bubble: ^2.0.2
   flutter_dotenv: ^5.2.1
+  flutter_markdown: ^0.7.7+1
   fluttertoast: ^8.2.12
   google_fonts: ^6.2.1
   google_sign_in: ^6.3.0
