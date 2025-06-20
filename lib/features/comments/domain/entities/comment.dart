@@ -19,11 +19,24 @@ class Comment {
     required this.timestamp,
   });
 
+  Comment copyWith({
+    String? id,
+    String? postId,
+    String? userId,
+    String? userName,
+    String? text,
+    DateTime? timestamp,
+  }) {
+    return Comment(
+      id: id ?? this.id,
+      postId: postId ?? this.postId,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      text: text ?? this.text,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
 
-  // from and to json 
-factory Comment.fromJson(Map<String, dynamic> json) => _$CommentFromJson(json);
-
+  factory Comment.fromJson(Map<String, dynamic> json) => _$CommentFromJson(json);
   Map<String, dynamic> toJson() => _$CommentToJson(this);
-
-
 }
