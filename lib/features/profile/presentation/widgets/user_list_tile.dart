@@ -14,7 +14,7 @@ class UserListTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.symmetric(vertical: 5),
-      margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 6),
       child: ListTile(
         title: Text(profileUserEntity.name),
         subtitle: Text(profileUserEntity.email),
