@@ -139,7 +139,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return BlocConsumer<ProfileCubit, ProfileState>(
       listener: (context, state) {
         if (state is ProfileLoaded) {
-          Navigator.pop(context);
+          Fluttertoast.showToast(
+            
+            msg: "New changes Updated",
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
         } else if (state is ProfileError) {
           Fluttertoast.showToast(
             msg: state.errMessage,
