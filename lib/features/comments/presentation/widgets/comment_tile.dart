@@ -155,13 +155,7 @@ class _CommentTileState extends State<CommentTile>
         textColor: Colors.white,
       );
     } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Failed to post reply",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
+      debugPrint(e.toString());
     }
   }
 

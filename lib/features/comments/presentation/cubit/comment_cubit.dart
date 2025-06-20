@@ -68,9 +68,15 @@ class CommentCubit extends Cubit<CommentState> {
     emit(CommentLoading(postId: postId));
     try {
       await commentRepo.addReply(postId, parentCommentId, reply);
-      await fetchComments(postId);
     } catch (e) {
       emit(CommentError(errMessage: e.toString(), postId: postId));
+      rethrow; // <--- this is critical
+    }
+
+    try {
+      await fetchComments(postId);
+    } catch (e) {
+      print('⚠️ Error in fetchComments after reply: $e');
     }
   }
 
