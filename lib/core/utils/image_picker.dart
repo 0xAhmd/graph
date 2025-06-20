@@ -276,6 +276,7 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
   Rect _cropRect = const Rect.fromLTWH(50, 50, 200, 200);
   Size _imageSize = Size.zero;
   double? _aspectRatio;
+  late Offset _imageOffset = Offset.zero;
 
   void setAspectRatio(double? ratio) {
     setState(() {
@@ -287,7 +288,10 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
   void _updateCropRect() {
     if (_imageSize == Size.zero) return;
 
-    final center = Offset(_imageSize.width / 2, _imageSize.height / 2);
+    final center = Offset(
+      _imageOffset.dx + _imageSize.width / 2,
+      _imageOffset.dy + _imageSize.height / 2,
+    );
     final maxSize = min(_imageSize.width, _imageSize.height) * 0.8;
 
     double width, height;
@@ -295,10 +299,10 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
     if (_aspectRatio != null) {
       if (_aspectRatio! > 1) {
         width = maxSize;
-        height = maxSize / _aspectRatio!;
+        height = width / _aspectRatio!;
       } else {
         height = maxSize;
-        width = maxSize * _aspectRatio!;
+        width = height * _aspectRatio!;
       }
     } else {
       width = _cropRect.width;
@@ -306,7 +310,6 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
     }
 
     _cropRect = Rect.fromCenter(center: center, width: width, height: height);
-
     _constrainCropRect();
     widget.onCropRectChanged(_cropRect, _imageSize);
   }
@@ -317,24 +320,20 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
     double width = _cropRect.width;
     double height = _cropRect.height;
 
-    // Ensure crop rect stays within image bounds
-    if (left < 0) left = 0;
-    if (top < 0) top = 0;
-    if (left + width > _imageSize.width) {
-      if (_aspectRatio != null) {
-        width = _imageSize.width - left;
-        height = width / _aspectRatio!;
-      } else {
-        width = _imageSize.width - left;
-      }
+    final rightLimit = _imageOffset.dx + _imageSize.width;
+    final bottomLimit = _imageOffset.dy + _imageSize.height;
+
+    if (left < _imageOffset.dx) left = _imageOffset.dx;
+    if (top < _imageOffset.dy) top = _imageOffset.dy;
+
+    if (left + width > rightLimit) {
+      width = rightLimit - left;
+      if (_aspectRatio != null) height = width / _aspectRatio!;
     }
-    if (top + height > _imageSize.height) {
-      if (_aspectRatio != null) {
-        height = _imageSize.height - top;
-        width = height * _aspectRatio!;
-      } else {
-        height = _imageSize.height - top;
-      }
+
+    if (top + height > bottomLimit) {
+      height = bottomLimit - top;
+      if (_aspectRatio != null) width = height * _aspectRatio!;
     }
 
     _cropRect = Rect.fromLTWH(left, top, width, height);
@@ -377,17 +376,33 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
     );
   }
 
-  void _calculateImageSize(BoxConstraints constraints) {
-    // This is a simplified calculation - you might need to adjust based on your image's aspect ratio
+  void _calculateImageSize(BoxConstraints constraints) async {
     final containerSize = constraints.biggest;
 
-    // For now, assume the image fills the container proportionally
-    if (_imageSize == Size.zero) {
-      setState(() {
-        _imageSize = containerSize;
-        _updateCropRect();
-      });
+    final decodedImage = await decodeImageFromList(
+      widget.imageFile.readAsBytesSync(),
+    );
+    final imageAspectRatio = decodedImage.width / decodedImage.height;
+    final containerAspectRatio = containerSize.width / containerSize.height;
+
+    double displayWidth, displayHeight;
+
+    if (imageAspectRatio > containerAspectRatio) {
+      displayWidth = containerSize.width;
+      displayHeight = displayWidth / imageAspectRatio;
+    } else {
+      displayHeight = containerSize.height;
+      displayWidth = displayHeight * imageAspectRatio;
     }
+
+    final offsetX = (containerSize.width - displayWidth) / 2;
+    final offsetY = (containerSize.height - displayHeight) / 2;
+
+    setState(() {
+      _imageSize = Size(displayWidth, displayHeight);
+      _imageOffset = Offset(offsetX, offsetY);
+      _updateCropRect(); // Use this to reset the crop area based on new size
+    });
   }
 
   List<Widget> _buildCropHandles() {
