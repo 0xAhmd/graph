@@ -2,20 +2,24 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/features/comments/presentation/widgets/comment_tile.dart';
 import '../../../../core/utils/text_bomb_detector.dart';
 import '../../../../layout/constrained_scaffold.dart';
 
 import '../../domain/entities/comment.dart';
-import '../../domain/entities/post_entity.dart';
-import '../cubit/post_cubit.dart';
-import '../widgets/comments/comment_tile.dart';
+import '../cubit/comment_cubit.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../../auth/domain/entities/app_user.dart';
 
 class CommentsPage extends StatefulWidget {
-  final Post post;
+  final String postId;
+  final String postUserId; // Optional: if you want to show post owner info
 
-  const CommentsPage({super.key, required this.post});
+  const CommentsPage({
+    super.key,
+    required this.postId,
+    required this.postUserId,
+  });
 
   @override
   State<CommentsPage> createState() => _CommentsPageState();
@@ -24,15 +28,17 @@ class CommentsPage extends StatefulWidget {
 class _CommentsPageState extends State<CommentsPage> {
   final TextEditingController _commentController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  late final PostCubit postCubit;
+  late final CommentCubit commentCubit;
   AppUser? currentUser;
   bool _isPosting = false;
 
   @override
   void initState() {
     super.initState();
-    postCubit = context.read<PostCubit>();
+    commentCubit = context.read<CommentCubit>();
     currentUser = context.read<AuthCubit>().currentUser;
+    // Fetch comments when page loads
+    commentCubit.fetchComments(widget.postId);
   }
 
   @override
@@ -73,7 +79,7 @@ class _CommentsPageState extends State<CommentsPage> {
 
     final newComment = Comment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      postId: widget.post.id,
+      postId: widget.postId,
       userId: currentUser!.uid,
       userName: currentUser!.name,
       text: commentText,
@@ -81,7 +87,7 @@ class _CommentsPageState extends State<CommentsPage> {
     );
 
     try {
-      await postCubit.addComment(widget.post.id, newComment);
+      await commentCubit.addComment(widget.postId, newComment);
       _commentController.clear();
       _focusNode.unfocus();
 
@@ -107,6 +113,14 @@ class _CommentsPageState extends State<CommentsPage> {
     }
   }
 
+  void _deleteComment(String commentId) {
+    commentCubit.deleteComment(widget.postId, commentId);
+  }
+
+  void _editComment(String commentId, String newText) {
+    commentCubit.editComment(widget.postId, commentId, newText);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ConstrainedScaffold(
@@ -120,17 +134,23 @@ class _CommentsPageState extends State<CommentsPage> {
         children: [
           // Comments list
           Expanded(
-            child: BlocBuilder<PostCubit, PostState>(
-              builder: (context, state) {
-                if (state is PostLoading) {
-                  return const Center(child: CupertinoActivityIndicator());
-                } else if (state is PostLoaded) {
-                  final currentPost = state.posts.firstWhere(
-                    (post) => post.id == widget.post.id,
-                    orElse: () => widget.post,
+            child: BlocConsumer<CommentCubit, CommentState>(
+              listener: (context, state) {
+                if (state is CommentError) {
+                  Fluttertoast.showToast(
+                    msg: state.errMessage,
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
                   );
-
-                  if (currentPost.comments.isEmpty) {
+                }
+              },
+              builder: (context, state) {
+                if (state is CommentLoading) {
+                  return const Center(child: CupertinoActivityIndicator());
+                } else if (state is CommentLoaded) {
+                  if (state.comments.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -169,19 +189,18 @@ class _CommentsPageState extends State<CommentsPage> {
 
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: currentPost.comments.length,
+                    itemCount: state.comments.length,
                     itemBuilder: (context, index) {
-                      final comment = currentPost.comments[index];
+                      final comment = state.comments[index];
                       return CommentTile(
                         comment: comment,
                         currentUserId: currentUser!.uid,
-                        onDeleteComment: () {
-                          postCubit.deleteComment(widget.post.id, comment.id);
-                        },
+                        onDeleteComment: () => _deleteComment(comment.id),
+                        onEditComment: _editComment,
                       );
                     },
                   );
-                } else if (state is PostError) {
+                } else if (state is CommentError) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -209,6 +228,12 @@ class _CommentsPageState extends State<CommentsPage> {
                             ).colorScheme.onSurface.withOpacity(0.7),
                           ),
                           textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () =>
+                              commentCubit.fetchComments(widget.postId),
+                          child: const Text('Retry'),
                         ),
                       ],
                     ),
@@ -239,7 +264,6 @@ class _CommentsPageState extends State<CommentsPage> {
             child: SafeArea(
               child: Row(
                 children: [
-
                   // Text field
                   Expanded(
                     child: TextField(
@@ -319,7 +343,7 @@ class _CommentsPageState extends State<CommentsPage> {
                           : Icon(
                               Icons.send,
                               size: 18,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                     ),
                   ),

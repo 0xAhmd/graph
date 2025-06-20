@@ -1,28 +1,30 @@
+// ignore_for_file: unnecessary_null_comparison
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:fluttertoast/fluttertoast.dart';
-import '../../../../../core/utils/text_bomb_detector.dart';
-
-import '../../../domain/entities/comment.dart';
-import '../../cubit/post_cubit.dart';
+import 'package:ig_mate/features/comments/domain/entities/comment.dart';
+import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
+import '../../../../core/utils/text_bomb_detector.dart';
 
 import 'comment_avatar.dart';
 import 'comment_bubble.dart';
 import 'comment_menu.dart';
 
 class CommentTile extends StatefulWidget {
+  final Comment comment;
+  final String currentUserId;
+  final VoidCallback onDeleteComment;
+  final Function(String commentId, String newText)? onEditComment;
+
   const CommentTile({
     super.key,
     required this.comment,
     required this.currentUserId,
-    this.onDeleteComment,
+    required this.onDeleteComment,
+    this.onEditComment,
   });
-
-  final Comment comment;
-  final String currentUserId;
-  final VoidCallback? onDeleteComment;
-
   @override
   State<CommentTile> createState() => _CommentTileState();
 }
@@ -163,7 +165,7 @@ class _CommentTileState extends State<CommentTile> {
 
     // Call the cubit method to edit comment
     // Replace 'postCubit' with your actual cubit instance
-    context.read<PostCubit>().editComment(
+    context.read<CommentCubit>().editComment(
       widget.comment.postId,
       widget.comment.id,
       newText,
@@ -200,13 +202,13 @@ class _CommentTileState extends State<CommentTile> {
             onPressed: () {
               Navigator.of(context).pop();
               // Call the cubit to delete the comment
-              context.read<PostCubit>().deleteComment(
+              context.read<CommentCubit>().deleteComment(
                 widget.comment.postId,
                 widget.comment.id,
               );
               // Optionally call the callback
               if (widget.onDeleteComment != null) {
-                widget.onDeleteComment!();
+                widget.onDeleteComment();
               }
               Fluttertoast.showToast(
                 msg: "Comment deleted",
