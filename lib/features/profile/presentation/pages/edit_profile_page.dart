@@ -63,12 +63,41 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void updateImage() async {
     final profileCubit = context.read<ProfileCubit>();
-    final imageFile = await ImageHelper.pickImage();
+    final imageFile = await ImageHelper.pickAndCropImage(context);
     if (imageFile != null) {
       await profileCubit.uploadProfileImage(
         image: imageFile,
         uid: widget.profileUserEntity.uid,
       );
+    }
+  }
+
+  void deleteProfileImage() async {
+    // Show confirmation dialog
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Profile Image'),
+        content: const Text(
+          'Are you sure you want to delete your profile image?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      final profileCubit = context.read<ProfileCubit>();
+      await profileCubit.deleteProfileImage(uid: widget.profileUserEntity.uid);
     }
   }
 
@@ -90,6 +119,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     } else {
       _canUpdateEmail = true; // First time updating email
     }
+  }
+
+  bool _hasProfileImage(ProfileUserEntity profile) {
+    return profile.profileImgUrl.isNotEmpty &&
+        profile.profileImgUrl != 'default_profile_image_url';
   }
 
   @override
@@ -187,6 +221,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                   ),
+                  // Delete button - only show if user has a profile image
+                  if (_hasProfileImage(profile))
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: deleteProfileImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
