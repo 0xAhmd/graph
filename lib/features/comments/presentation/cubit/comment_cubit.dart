@@ -1,8 +1,8 @@
-import 'dart:math' as Math;
+import 'dart:math' as math;
 
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:ig_mate/features/comments/domain/repo/comment_repo_interface.dart';
-import 'package:meta/meta.dart';
 import '../../domain/entities/comment.dart';
 
 part 'comment_state.dart';
@@ -13,22 +13,22 @@ class CommentCubit extends Cubit<CommentState> {
   CommentCubit({required this.commentRepo}) : super(CommentInitial());
 
   Future<void> fetchComments(String postId) async {
-    print('🔍 Fetching comments for postId: $postId');
+    debugPrint('🔍 Fetching comments for postId: $postId');
 
     emit(CommentLoading(postId: postId));
     try {
-      print('📡 Calling repository to fetch comments...');
+      debugPrint('📡 Calling repository to fetch comments...');
       final comments = await commentRepo.fetchCommentsByPostId(postId);
-      print('📝 Received ${comments.length} comments from repository');
+      debugPrint('📝 Received ${comments.length} comments from repository');
 
       for (var comment in comments) {
-        print(
-          '  Comment: ${comment.id} - ${comment.text.substring(0, Math.min(20, comment.text.length))}...',
+        debugPrint(
+          '  Comment: ${comment.id} - ${comment.text.substring(0, math.min(20, comment.text.length))}...',
         );
       }
 
       final organizedComments = _organizeComments(comments);
-      print('🏗️ Organized ${organizedComments.length} comments');
+      debugPrint('🏗️ Organized ${organizedComments.length} comments');
 
       final currentState = state;
       if (currentState is CommentLoaded) {
@@ -40,10 +40,10 @@ class CommentCubit extends Cubit<CommentState> {
       } else {
         emit(CommentLoaded(commentsByPost: {postId: organizedComments}));
       }
-      print('✅ Comments loaded successfully for postId: $postId');
+      debugPrint('✅ Comments loaded successfully for postId: $postId');
     } catch (e, stackTrace) {
-      print('❌ Error fetching comments: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error fetching comments: $e');
+      debugPrint('Stack trace: $stackTrace');
       emit(
         CommentError(errMessage: "Failed to load comments: $e", postId: postId),
       );
@@ -76,22 +76,24 @@ class CommentCubit extends Cubit<CommentState> {
     try {
       await fetchComments(postId);
     } catch (e) {
-      print('⚠️ Error in fetchComments after reply: $e');
+      debugPrint('⚠️ Error in fetchComments after reply: $e');
     }
   }
 
   Future<void> deleteCommentSafe(String postId, String commentId) async {
-    print('🗑️ Attempting to delete comment: $commentId from post: $postId');
+    debugPrint(
+      '🗑️ Attempting to delete comment: $commentId from post: $postId',
+    );
     emit(CommentLoading(postId: postId));
 
     try {
-      print('📡 Calling repository to delete comment...');
+      debugPrint('📡 Calling repository to delete comment...');
       await commentRepo.deleteComment(postId, commentId);
-      print('✅ Comment deleted successfully from server');
+      debugPrint('✅ Comment deleted successfully from server');
       await fetchComments(postId);
     } catch (e, stackTrace) {
-      print('❌ Error deleting comment from server: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('❌ Error deleting comment from server: $e');
+      debugPrint('Stack trace: $stackTrace');
 
       emit(
         CommentError(
@@ -123,7 +125,7 @@ class CommentCubit extends Cubit<CommentState> {
   }
 
   List<Comment> _organizeComments(List<Comment> flatComments) {
-    print('🏗️ Organizing ${flatComments.length} comments...');
+    debugPrint('🏗️ Organizing ${flatComments.length} comments...');
     final organized = <Comment>[];
     final commentMap = <String, Comment>{};
 
@@ -131,17 +133,17 @@ class CommentCubit extends Cubit<CommentState> {
       commentMap[comment.id] = comment;
     }
 
-    print('📋 Created comment map with ${commentMap.length} entries');
+    debugPrint('📋 Created comment map with ${commentMap.length} entries');
 
     final rootComments = flatComments.where((c) => c.isRootComment).toList();
-    print('🌳 Found ${rootComments.length} root comments');
+    debugPrint('🌳 Found ${rootComments.length} root comments');
 
     for (final comment in rootComments) {
       organized.add(comment);
       _addChildComments(comment, commentMap, organized);
     }
 
-    print('✅ Organized into ${organized.length} comments');
+    debugPrint('✅ Organized into ${organized.length} comments');
     return organized;
   }
 
