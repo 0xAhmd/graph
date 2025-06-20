@@ -45,6 +45,7 @@ class _PostTileState extends State<PostTile> {
   bool isCaptionExpanded = false;
   List<Comment> postComments = [];
   int commentCount = 0;
+  bool commentsLoaded = false;
 
   @override
   void initState() {
@@ -70,12 +71,43 @@ class _PostTileState extends State<PostTile> {
   }
 
   Future<void> loadComments() async {
+    if (commentsLoaded) return;
+
     try {
+      final cached = commentCubit.getCommentsForPost(widget.post.id);
+      if (cached.isNotEmpty) {
+        setState(() {
+          postComments = cached;
+          commentCount = cached.length;
+          commentsLoaded = true;
+        });
+        return;
+      }
+
       await commentCubit.fetchComments(widget.post.id);
+
+      final currentState = commentCubit.state;
+      if (currentState is CommentLoaded) {
+        final commentsForThisPost = currentState.getCommentsForPost(
+          widget.post.id,
+        );
+        setState(() {
+          postComments = commentsForThisPost;
+          commentCount = commentsForThisPost.length;
+          commentsLoaded = true;
+        });
+      }
     } catch (e) {
-      // Handle error silently for now
       debugPrint('Error loading comments: $e');
     }
+  }
+
+  // Add this method to force reload comments when needed
+  Future<void> reloadComments() async {
+    setState(() {
+      commentsLoaded = false;
+    });
+    await loadComments();
   }
 
   void openCommentsPage() {
@@ -87,7 +119,10 @@ class _PostTileState extends State<PostTile> {
           postUserId: widget.post.userId,
         ),
       ),
-    );
+    ).then((_) {
+      // Reload comments when returning from comments page
+      reloadComments();
+    });
   }
 
   bool showHeart = false;
@@ -319,64 +354,51 @@ class _PostTileState extends State<PostTile> {
           // Listen to comment state changes
           BlocListener<CommentCubit, CommentState>(
             listener: (context, state) {
-              if (state is CommentLoaded) {
+              if (state is CommentLoaded &&
+                  state.commentsByPost.containsKey(widget.post.id)) {
                 final commentsForThisPost = state.getCommentsForPost(
                   widget.post.id,
                 );
                 setState(() {
                   postComments = commentsForThisPost;
                   commentCount = commentsForThisPost.length;
+                  commentsLoaded = true;
                 });
               }
             },
-            child: BlocBuilder<CommentCubit, CommentState>(
-              builder: (context, commentState) {
-                // Get current comment count for THIS post only
-                int currentCommentCount = 0;
-                List<Comment> currentComments = [];
+            child: Column(
+              children: [
+                // buttons + time
+                PostActions(
+                  post: widget.post,
+                  isLiked: widget.post.likes.contains(currentUser!.uid),
+                  likeCount: widget.post.likes.length,
+                  commentCount: commentCount, // Use local state
+                  onLike: like,
+                  onComment: openCommentsPage,
+                  timeStamp: widget.post.timeStamp,
+                ),
 
-                if (commentState is CommentLoaded) {
-                  currentComments = commentState.getCommentsForPost(
-                    widget.post.id,
-                  );
-                  currentCommentCount = currentComments.length;
-                }
+                PostCaption(
+                  userName: widget.post.userName,
+                  text: widget.post.text,
+                  isExpanded: isCaptionExpanded,
+                  onToggleExpand: () {
+                    setState(() {
+                      isCaptionExpanded = !isCaptionExpanded;
+                    });
+                  },
+                ),
+                const SizedBox(height: 15),
 
-                return Column(
-                  children: [
-                    // buttons + time
-                    PostActions(
-                      post: widget.post,
-                      isLiked: widget.post.likes.contains(currentUser!.uid),
-                      likeCount: widget.post.likes.length,
-                      commentCount: currentCommentCount,
-                      onLike: like,
-                      onComment: openCommentsPage,
-                      timeStamp: widget.post.timeStamp,
-                    ),
+                // Show latest comment using local state
+                _buildLatestComment(postComments),
 
-                    PostCaption(
-                      userName: widget.post.userName,
-                      text: widget.post.text,
-                      isExpanded: isCaptionExpanded,
-                      onToggleExpand: () {
-                        setState(() {
-                          isCaptionExpanded = !isCaptionExpanded;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 15),
+                // View all comments button using local state
+                _buildViewCommentsButton(commentCount),
 
-                    // Show latest comment
-                    _buildLatestComment(currentComments),
-
-                    // View all comments button
-                    _buildViewCommentsButton(currentCommentCount),
-
-                    const SizedBox(height: 8),
-                  ],
-                );
-              },
+                const SizedBox(height: 8),
+              ],
             ),
           ),
         ],

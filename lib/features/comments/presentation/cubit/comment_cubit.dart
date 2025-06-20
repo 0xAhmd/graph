@@ -30,7 +30,16 @@ class CommentCubit extends Cubit<CommentState> {
       final organizedComments = _organizeComments(comments);
       print('🏗️ Organized ${organizedComments.length} comments');
 
-      emit(CommentLoaded(commentsByPost: {postId: organizedComments}));
+      final currentState = state;
+      if (currentState is CommentLoaded) {
+        final currentComments = Map<String, List<Comment>>.from(
+          currentState.commentsByPost,
+        );
+        currentComments[postId] = organizedComments;
+        emit(CommentLoaded(commentsByPost: currentComments));
+      } else {
+        emit(CommentLoaded(commentsByPost: {postId: organizedComments}));
+      }
       print('✅ Comments loaded successfully for postId: $postId');
     } catch (e, stackTrace) {
       print('❌ Error fetching comments: $e');

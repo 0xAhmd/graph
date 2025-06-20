@@ -11,6 +11,7 @@ import '../../../posts/presentation/pages/upload_post_page.dart';
 import '../../../posts/presentation/widgets/post_tile.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../../profile/presentation/cubit/cubit/profile_cubit.dart';
+import '../../../comments/presentation/cubit/comment_cubit.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage>
   late final postCubit = context.read<PostCubit>();
   late final authCubit = context.read<AuthCubit>();
   late final profileCubit = context.read<ProfileCubit>();
+  late final commentCubit = context.read<CommentCubit>();
   late TabController _tabController;
 
   List<String> followingUserIds = [];
@@ -67,10 +69,32 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  // Load comments for all visible posts
+  Future<void> loadCommentsForPosts(List<dynamic> posts) async {
+    try {
+      // Load comments for each post
+      for (final post in posts) {
+        await commentCubit.fetchComments(post.id);
+      }
+    } catch (e) {
+      debugPrint('Error loading comments for posts: $e');
+    }
+  }
+
   Future<void> refreshData() async {
     fetchAllPosts();
     await fetchCurrentUserFollowing();
     await loadBlockedUsers();
+
+    // Wait a bit for posts to load, then load comments
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Get current posts and load their comments
+    final currentState = postCubit.state;
+    if (currentState is PostLoaded) {
+      final filteredPosts = filterBlockedUserPosts(currentState.posts);
+      await loadCommentsForPosts(filteredPosts);
+    }
   }
 
   void deletePost(String postId) async {
@@ -189,6 +213,7 @@ class _HomePageState extends State<HomePage>
           final isUserBlocked = profileCubit.isUserBlocked(post.userId);
 
           return PostTile(
+            key: ValueKey(post.id), // ✅ important
             post: post,
             onDeletePressed: () => deletePost(post.id),
             onBlockPressed: isCurrentUserPost
@@ -244,6 +269,11 @@ class _HomePageState extends State<HomePage>
               } else if (state is PostLoaded) {
                 final allPosts = state.posts;
 
+                // Load comments for all posts when posts are loaded
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  loadCommentsForPosts(filterBlockedUserPosts(allPosts));
+                });
+
                 // Filter posts for following tab (also filter out blocked users)
                 final followingPosts = filterBlockedUserPosts(
                   allPosts
@@ -289,6 +319,9 @@ class _HomePageState extends State<HomePage>
                               itemBuilder: (context, index) {
                                 final post = followingPosts[index];
                                 return PostTile(
+                                  key: ValueKey(
+                                    post.id,
+                                  ), // Add key for better rebuild handling
                                   post: post,
                                   onDeletePressed: () => deletePost(post.id),
                                 );
