@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/core/utils/comment_organizer.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/comment_tile.dart';
 import '../../../../core/utils/text_bomb_detector.dart';
 import '../../../../layout/constrained_scaffold.dart';
@@ -552,7 +553,11 @@ class _CommentsPageState extends State<CommentsPage>
                                 ),
                               ),
                             )
-                          : Icon(Icons.send, size: 18, color: theme.onPrimary),
+                          : Icon(
+                              Icons.send,
+                              size: 18,
+                              color: theme.inversePrimary,
+                            ),
                     ),
                   ),
                 ),
@@ -699,16 +704,30 @@ class _CommentsPageState extends State<CommentsPage>
                   children: [
                     _buildCommentStats(comments),
                     Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: comments.length,
-                        itemBuilder: (context, index) {
-                          final comment = comments[index];
-                          return CommentTile(
-                            comment: comment,
-                            currentUserId: currentUser!.uid,
-                            onDeleteComment: () => _deleteComment(comment.id),
-                            onEditComment: _editComment,
+                      child: Builder(
+                        builder: (context) {
+                          // Organize comments into parent-child structure
+                          final parentComments = getParentComments(comments);
+                          final repliesMap = organizeComments(comments);
+
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: parentComments.length,
+                            itemBuilder: (context, index) {
+                              final comment = parentComments[index];
+                              final replies = repliesMap[comment.id] ?? [];
+
+                              return CommentTile(
+                                comment: comment,
+                                currentUserId: currentUser!.uid,
+                                onDeleteComment: () =>
+                                    _deleteComment(comment.id),
+                                onEditComment: _editComment,
+                                replies:
+                                    replies, // Pass the replies for this comment
+                                showReplies: true, // Allow showing replies
+                              );
+                            },
                           );
                         },
                       ),

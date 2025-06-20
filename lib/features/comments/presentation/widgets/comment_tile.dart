@@ -17,6 +17,7 @@ class CommentTile extends StatefulWidget {
   final VoidCallback onDeleteComment;
   final Function(String commentId, String newText)? onEditComment;
   final bool showReplies;
+  final List<Comment>? replies; // Add replies list
 
   const CommentTile({
     super.key,
@@ -25,6 +26,7 @@ class CommentTile extends StatefulWidget {
     required this.onDeleteComment,
     this.onEditComment,
     this.showReplies = true,
+    this.replies, // Add replies parameter
   });
 
   @override
@@ -36,10 +38,13 @@ class _CommentTileState extends State<CommentTile>
   bool isExpanded = false;
   bool isReplying = false;
   bool isMarkdownMode = false;
+  bool showReplies = false; // Add state for showing replies
   final TextEditingController _replyController = TextEditingController();
   final FocusNode _replyFocusNode = FocusNode();
   late AnimationController _replyAnimationController;
   late Animation<double> _replyAnimation;
+  late AnimationController _repliesAnimationController; // Add animation controller for replies
+  late Animation<double> _repliesAnimation;
 
   @override
   void initState() {
@@ -52,6 +57,16 @@ class _CommentTileState extends State<CommentTile>
       parent: _replyAnimationController,
       curve: Curves.easeInOut,
     );
+    
+    // Initialize replies animation controller
+    _repliesAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _repliesAnimation = CurvedAnimation(
+      parent: _repliesAnimationController,
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -59,6 +74,7 @@ class _CommentTileState extends State<CommentTile>
     _replyController.dispose();
     _replyFocusNode.dispose();
     _replyAnimationController.dispose();
+    _repliesAnimationController.dispose(); // Dispose replies animation controller
     super.dispose();
   }
 
@@ -91,6 +107,19 @@ class _CommentTileState extends State<CommentTile>
       _replyAnimationController.reverse();
       _replyFocusNode.unfocus();
       _replyController.clear();
+    }
+  }
+
+  // Add method to toggle replies visibility
+  void _toggleReplies() {
+    setState(() {
+      showReplies = !showReplies;
+    });
+
+    if (showReplies) {
+      _repliesAnimationController.forward();
+    } else {
+      _repliesAnimationController.reverse();
     }
   }
 
@@ -591,14 +620,23 @@ class _CommentTileState extends State<CommentTile>
                     minimumSize: const Size(0, 32),
                   ),
                 ),
-              if (widget.comment.hasReplies)
-                TextButton(
-                  onPressed: () {
-                    // This could toggle showing/hiding replies
-                  },
-                  child: Text(
-                    '${widget.comment.childCommentIds.length} ${widget.comment.childCommentIds.length == 1 ? 'reply' : 'replies'}',
+              // Modified replies button
+              if (widget.comment.hasReplies && widget.replies != null && widget.replies!.isNotEmpty)
+                TextButton.icon(
+                  onPressed: _toggleReplies,
+                  icon: Icon(
+                    showReplies ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    size: 16,
+                  ),
+                  label: Text(
+                    showReplies 
+                      ? 'Hide replies' 
+                      : '${widget.replies!.length} ${widget.replies!.length == 1 ? 'reply' : 'replies'}',
                     style: const TextStyle(fontSize: 13),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 32),
                   ),
                 ),
             ],
@@ -717,6 +755,28 @@ class _CommentTileState extends State<CommentTile>
     );
   }
 
+  // Add method to build replies list
+  Widget _buildRepliesList() {
+    if (widget.replies == null || widget.replies!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return SizeTransition(
+      sizeFactor: _repliesAnimation,
+      child: Column(
+        children: widget.replies!.map((reply) {
+          return CommentTile(
+            comment: reply,
+            currentUserId: widget.currentUserId,
+            onDeleteComment: widget.onDeleteComment,
+            onEditComment: widget.onEditComment,
+            showReplies: false, // Don't show nested replies by default
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).colorScheme;
@@ -754,6 +814,9 @@ class _CommentTileState extends State<CommentTile>
               ],
             ),
           ),
+
+          // Add replies list
+          if (showReplies) _buildRepliesList(),
 
           // Add a subtle line for nested comments
           if (widget.comment.depth > 0)
