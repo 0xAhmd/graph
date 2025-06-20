@@ -1,4 +1,5 @@
 // lib/features/chat/presentation/pages/chat_list_page.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../layout/constrained_scaffold.dart';
@@ -76,7 +77,7 @@ class _ChatListPageState extends State<ChatListPage> {
         },
         builder: (context, state) {
           if (state is ChatLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CupertinoActivityIndicator());
           }
 
           if (state is ChatUsersLoaded) {
@@ -173,7 +174,7 @@ class _ChatListPageState extends State<ChatListPage> {
           }
 
           // Initial state or unknown state
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CupertinoActivityIndicator());
         },
       ),
     );

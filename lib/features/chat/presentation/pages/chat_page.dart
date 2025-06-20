@@ -1,4 +1,5 @@
 // lib/features/chat/presentation/pages/chat_page.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/chat/presentation/widgets/chat_bubble.dart';
@@ -239,7 +240,7 @@ class _ChatPageState extends State<ChatPage> {
               },
               builder: (context, state) {
                 if (state is ChatLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CupertinoActivityIndicator());
                 }
 
                 if (state is ChatMessagesLoaded) {
@@ -354,7 +355,7 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 }
 
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CupertinoActivityIndicator());
               },
             ),
           ),
