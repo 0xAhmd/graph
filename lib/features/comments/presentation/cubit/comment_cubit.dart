@@ -28,7 +28,8 @@ class CommentCubit extends Cubit<CommentState> {
 
     try {
       final comments = await commentRepo.fetchCommentsByPostId(postId);
-      currentComments[postId] = comments;
+      final organizedComments = _organizeComments(comments);
+      currentComments[postId] = organizedComments;
       emit(CommentLoaded(commentsByPost: currentComments));
     } catch (e) {
       emit(
@@ -47,7 +48,8 @@ class CommentCubit extends Cubit<CommentState> {
 
       // Optimistic update
       postComments.add(comment);
-      currentComments[postId] = postComments;
+      final organizedComments = _organizeComments(postComments);
+      currentComments[postId] = organizedComments;
       emit(CommentLoaded(commentsByPost: currentComments));
 
       try {
@@ -55,7 +57,8 @@ class CommentCubit extends Cubit<CommentState> {
       } catch (e) {
         // Revert on error - remove the comment we just added
         postComments.removeLast();
-        currentComments[postId] = postComments;
+        final revertedComments = _organizeComments(postComments);
+        currentComments[postId] = revertedComments;
         emit(CommentLoaded(commentsByPost: currentComments));
         emit(CommentError(errMessage: e.toString(), postId: postId));
       }
@@ -69,6 +72,59 @@ class CommentCubit extends Cubit<CommentState> {
     }
   }
 
+  Future<void> addReply(
+    String postId,
+    String parentCommentId,
+    Comment reply,
+  ) async {
+    final currentState = state;
+    if (currentState is CommentLoaded) {
+      final currentComments = Map<String, List<Comment>>.from(
+        currentState.commentsByPost,
+      );
+      final postComments = List<Comment>.from(currentComments[postId] ?? []);
+
+      // Find parent comment to set proper depth
+      final parentComment = postComments.firstWhere(
+        (c) => c.id == parentCommentId,
+        orElse: () => throw Exception('Parent comment not found'),
+      );
+
+      // Create reply with proper nesting
+      final replyWithParent = reply.copyWith(
+        parentCommentId: parentCommentId,
+        depth: parentComment.depth + 1,
+      );
+
+      // Optimistic update
+      postComments.add(replyWithParent);
+
+      // Update parent's child IDs
+      final parentIndex = postComments.indexWhere(
+        (c) => c.id == parentCommentId,
+      );
+      if (parentIndex != -1) {
+        final updatedChildIds = List<String>.from(parentComment.childCommentIds)
+          ..add(reply.id);
+        postComments[parentIndex] = parentComment.copyWith(
+          childCommentIds: updatedChildIds,
+        );
+      }
+
+      final organizedComments = _organizeComments(postComments);
+      currentComments[postId] = organizedComments;
+      emit(CommentLoaded(commentsByPost: currentComments));
+
+      try {
+        await commentRepo.addReply(postId, parentCommentId, replyWithParent);
+      } catch (e) {
+        // Revert on error
+        await fetchComments(postId); // Refresh from server
+        emit(CommentError(errMessage: e.toString(), postId: postId));
+      }
+    }
+  }
+
   Future<void> deleteComment(String postId, String commentId) async {
     final currentState = state;
     if (currentState is CommentLoaded) {
@@ -77,24 +133,47 @@ class CommentCubit extends Cubit<CommentState> {
       );
       final postComments = List<Comment>.from(currentComments[postId] ?? []);
 
-      final deletedCommentIndex = postComments.indexWhere(
-        (comment) => comment.id == commentId,
+      // Store original state for rollback
+      final originalComments = List<Comment>.from(postComments);
+
+      // Find comment to delete and collect all its children
+      final commentsToDelete = <String>{commentId};
+      _collectChildComments(postComments, commentId, commentsToDelete);
+
+      // Optimistic update - remove all comments that should be deleted
+      postComments.removeWhere((c) => commentsToDelete.contains(c.id));
+
+      // Update parent's childCommentIds if the deleted comment was a reply
+      final deletedComment = originalComments.firstWhere(
+        (c) => c.id == commentId,
+        orElse: () => throw Exception('Comment not found'),
       );
-      if (deletedCommentIndex == -1) return;
 
-      final deletedComment = postComments[deletedCommentIndex];
+      if (deletedComment.parentCommentId != null) {
+        final parentIndex = postComments.indexWhere(
+          (c) => c.id == deletedComment.parentCommentId,
+        );
+        if (parentIndex != -1) {
+          final parentComment = postComments[parentIndex];
+          final updatedChildIds = List<String>.from(
+            parentComment.childCommentIds,
+          )..remove(commentId);
+          postComments[parentIndex] = parentComment.copyWith(
+            childCommentIds: updatedChildIds,
+          );
+        }
+      }
 
-      // Optimistic update
-      postComments.removeAt(deletedCommentIndex);
-      currentComments[postId] = postComments;
+      final organizedComments = _organizeComments(postComments);
+      currentComments[postId] = organizedComments;
       emit(CommentLoaded(commentsByPost: currentComments));
 
       try {
         await commentRepo.deleteComment(postId, commentId);
       } catch (e) {
         // Revert on error
-        postComments.insert(deletedCommentIndex, deletedComment);
-        currentComments[postId] = postComments;
+        final revertedComments = _organizeComments(originalComments);
+        currentComments[postId] = revertedComments;
         emit(CommentLoaded(commentsByPost: currentComments));
         emit(
           CommentError(
@@ -109,8 +188,9 @@ class CommentCubit extends Cubit<CommentState> {
   Future<void> editComment(
     String postId,
     String commentId,
-    String newText,
-  ) async {
+    String newText, {
+    bool? isMarkdown,
+  }) async {
     final currentState = state;
     if (currentState is CommentLoaded) {
       final currentComments = Map<String, List<Comment>>.from(
@@ -127,22 +207,81 @@ class CommentCubit extends Cubit<CommentState> {
       final updatedComment = oldComment.copyWith(
         text: newText,
         timestamp: DateTime.now(),
+        isMarkdown: isMarkdown ?? oldComment.isMarkdown,
       );
 
       // Optimistic update
       postComments[commentIndex] = updatedComment;
-      currentComments[postId] = postComments;
+      final organizedComments = _organizeComments(postComments);
+      currentComments[postId] = organizedComments;
       emit(CommentLoaded(commentsByPost: currentComments));
 
       try {
-        await commentRepo.editComment(postId, commentId, newText);
+        await commentRepo.editComment(
+          postId,
+          commentId,
+          newText,
+          isMarkdown: isMarkdown,
+        );
       } catch (e) {
         // Revert on error
         postComments[commentIndex] = oldComment;
-        currentComments[postId] = postComments;
+        final revertedComments = _organizeComments(postComments);
+        currentComments[postId] = revertedComments;
         emit(CommentLoaded(commentsByPost: currentComments));
         emit(CommentError(errMessage: e.toString(), postId: postId));
       }
+    }
+  }
+
+  // Helper method to organize comments in a tree structure
+  List<Comment> _organizeComments(List<Comment> flatComments) {
+    final organized = <Comment>[];
+    final commentMap = <String, Comment>{};
+
+    // Create a map for quick lookup
+    for (final comment in flatComments) {
+      commentMap[comment.id] = comment;
+    }
+
+    // Add root comments first
+    for (final comment in flatComments) {
+      if (comment.isRootComment) {
+        organized.add(comment);
+        // Add its children recursively
+        _addChildComments(comment, commentMap, organized);
+      }
+    }
+
+    return organized;
+  }
+
+  // Helper method to add child comments in order
+  void _addChildComments(
+    Comment parent,
+    Map<String, Comment> commentMap,
+    List<Comment> organized,
+  ) {
+    for (final childId in parent.childCommentIds) {
+      final child = commentMap[childId];
+      if (child != null) {
+        organized.add(child);
+        // Recursively add children of this child
+        _addChildComments(child, commentMap, organized);
+      }
+    }
+  }
+
+  // Helper method to collect all child comments recursively
+  void _collectChildComments(
+    List<Comment> allComments,
+    String parentId,
+    Set<String> toDelete,
+  ) {
+    final children = allComments.where((c) => c.parentCommentId == parentId);
+    for (final child in children) {
+      toDelete.add(child.id);
+      _collectChildComments(allComments, child.id, toDelete);
     }
   }
 
@@ -168,7 +307,8 @@ class CommentCubit extends Cubit<CommentState> {
 
     try {
       final comments = await commentRepo.fetchCommentsByPostId(postId);
-      currentComments[postId] = comments;
+      final organizedComments = _organizeComments(comments);
+      currentComments[postId] = organizedComments;
       emit(CommentLoaded(commentsByPost: currentComments));
     } catch (e) {
       emit(

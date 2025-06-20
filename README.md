@@ -1,4 +1,4 @@
-
+<!-- cspell:disable -->
 # 📱 Graph — Super Simple Social App
 
 ![Cover](https://github.com/user-attachments/assets/7d58765b-bbbc-4779-84cc-bb40f5b07db6)

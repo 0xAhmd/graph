@@ -38,6 +38,22 @@ class CommentRepo implements CommentRepoContract {
 
         comments.add(comment);
 
+        // If this is a reply, update parent's childCommentIds
+        if (comment.parentCommentId != null) {
+          final parentIndex = comments.indexWhere(
+            (c) => c.id == comment.parentCommentId,
+          );
+          if (parentIndex != -1) {
+            final parentComment = comments[parentIndex];
+            final updatedChildIds = List<String>.from(
+              parentComment.childCommentIds,
+            )..add(comment.id);
+            comments[parentIndex] = parentComment.copyWith(
+              childCommentIds: updatedChildIds,
+            );
+          }
+        }
+
         await postCollection.doc(postId).update({
           'comments': comments.map((c) => c.toJson()).toList(),
         });
@@ -59,7 +75,33 @@ class CommentRepo implements CommentRepoContract {
             .map((e) => Comment.fromJson(e as Map<String, dynamic>))
             .toList();
 
-        comments.removeWhere((comment) => comment.id == commentId);
+        final commentToDelete = comments.firstWhere(
+          (c) => c.id == commentId,
+          orElse: () => throw Exception('Comment not found'),
+        );
+
+        // If deleting a parent comment, also delete all its children
+        final commentsToDelete = <String>{commentId};
+        _collectChildComments(comments, commentId, commentsToDelete);
+
+        // Remove all comments that should be deleted
+        comments.removeWhere((c) => commentsToDelete.contains(c.id));
+
+        // If the deleted comment was a reply, remove it from parent's childCommentIds
+        if (commentToDelete.parentCommentId != null) {
+          final parentIndex = comments.indexWhere(
+            (c) => c.id == commentToDelete.parentCommentId,
+          );
+          if (parentIndex != -1) {
+            final parentComment = comments[parentIndex];
+            final updatedChildIds = List<String>.from(
+              parentComment.childCommentIds,
+            )..remove(commentId);
+            comments[parentIndex] = parentComment.copyWith(
+              childCommentIds: updatedChildIds,
+            );
+          }
+        }
 
         await postCollection.doc(postId).update({
           'comments': comments.map((c) => c.toJson()).toList(),
@@ -76,8 +118,9 @@ class CommentRepo implements CommentRepoContract {
   Future<void> editComment(
     String postId,
     String commentId,
-    String newText,
-  ) async {
+    String newText, {
+    bool? isMarkdown,
+  }) async {
     try {
       final postDoc = await postCollection.doc(postId).get();
       if (postDoc.exists) {
@@ -89,13 +132,10 @@ class CommentRepo implements CommentRepoContract {
         final commentIndex = comments.indexWhere((c) => c.id == commentId);
         if (commentIndex != -1) {
           final oldComment = comments[commentIndex];
-          final updatedComment = Comment(
-            postId: postId,
-            id: oldComment.id,
-            userId: oldComment.userId,
-            userName: oldComment.userName,
+          final updatedComment = oldComment.copyWith(
             text: newText,
             timestamp: DateTime.now(),
+            isMarkdown: isMarkdown ?? oldComment.isMarkdown,
           );
           comments[commentIndex] = updatedComment;
 
@@ -110,6 +150,70 @@ class CommentRepo implements CommentRepoContract {
       }
     } catch (e) {
       throw Exception("Error editing comment: $e");
+    }
+  }
+
+  // Helper method to collect all child comments recursively
+  void _collectChildComments(
+    List<Comment> allComments,
+    String parentId,
+    Set<String> toDelete,
+  ) {
+    final children = allComments.where((c) => c.parentCommentId == parentId);
+    for (final child in children) {
+      toDelete.add(child.id);
+      _collectChildComments(allComments, child.id, toDelete);
+    }
+  }
+
+  // New method to add a reply to a specific comment
+  @override
+  Future<void> addReply(
+    String postId,
+    String parentCommentId,
+    Comment reply,
+  ) async {
+    try {
+      final postDoc = await postCollection.doc(postId).get();
+      if (postDoc.exists) {
+        final data = postDoc.data() as Map<String, dynamic>;
+        final comments = (data['comments'] as List<dynamic>? ?? [])
+            .map((e) => Comment.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        // Find parent comment to determine depth
+        final parentComment = comments.firstWhere(
+          (c) => c.id == parentCommentId,
+          orElse: () => throw Exception('Parent comment not found'),
+        );
+
+        // Create reply with proper depth and parent reference
+        final replyWithParent = reply.copyWith(
+          parentCommentId: parentCommentId,
+          depth: parentComment.depth + 1,
+        );
+
+        comments.add(replyWithParent);
+
+        // Update parent's childCommentIds
+        final parentIndex = comments.indexWhere((c) => c.id == parentCommentId);
+        if (parentIndex != -1) {
+          final updatedChildIds = List<String>.from(
+            parentComment.childCommentIds,
+          )..add(reply.id);
+          comments[parentIndex] = parentComment.copyWith(
+            childCommentIds: updatedChildIds,
+          );
+        }
+
+        await postCollection.doc(postId).update({
+          'comments': comments.map((c) => c.toJson()).toList(),
+        });
+      } else {
+        throw Exception('Post not found');
+      }
+    } catch (e) {
+      throw Exception("Error adding reply: $e");
     }
   }
 }
