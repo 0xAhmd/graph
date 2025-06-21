@@ -1,5 +1,4 @@
 // lib/features/stories/presentation/pages/story_viewer_page.dart
-// cspell:disable
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/stories/domain/entities/story.dart';
@@ -29,11 +28,11 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     with TickerProviderStateMixin {
   late PageController _pageController;
   late AnimationController _progressController;
-  Timer? _storyTimer; // Make nullable
+  Timer? _storyTimer;
 
   int _currentStoryIndex = 0;
   bool _isPaused = false;
-  bool _isLongPressing = false;
+  bool _showPauseIcon = false;
 
   static const Duration _storyDuration = Duration(seconds: 5);
 
@@ -53,25 +52,23 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   @override
   void dispose() {
-    _storyTimer?.cancel(); // Use null-aware operator
+    _storyTimer?.cancel();
     _progressController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
   void _startStoryTimer() {
-    // Check if widget is still mounted before proceeding
     if (!mounted) return;
-    
+
     _progressController.reset();
     _progressController.forward();
 
-    _storyTimer?.cancel(); // Cancel existing timer
+    _storyTimer?.cancel();
     _storyTimer = Timer(_storyDuration, () {
-      // Check if widget is still mounted before accessing context or state
       if (!mounted) return;
-      
-      if (!_isPaused && !_isLongPressing) {
+
+      if (!_isPaused) {
         _nextStory();
       }
     });
@@ -79,29 +76,58 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _pauseStory() {
     if (!mounted || _isPaused) return;
-    
+
     setState(() {
       _isPaused = true;
+      _showPauseIcon = true;
     });
     _storyTimer?.cancel();
     _progressController.stop();
+
+    // Hide pause icon after 1 second
+    Timer(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _showPauseIcon = false;
+        });
+      }
+    });
   }
 
   void _resumeStory() {
     if (!mounted || !_isPaused) return;
-    
+
     setState(() {
       _isPaused = false;
+      _showPauseIcon = true;
     });
     _startStoryTimer();
+
+    // Hide play icon after 1 second
+    Timer(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _showPauseIcon = false;
+        });
+      }
+    });
+  }
+
+  void _togglePlayPause() {
+    if (_isPaused) {
+      _resumeStory();
+    } else {
+      _pauseStory();
+    }
   }
 
   void _nextStory() {
     if (!mounted) return;
-    
+
     if (_currentStoryIndex < widget.stories.length - 1) {
       setState(() {
         _currentStoryIndex++;
+        _isPaused = false;
       });
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -118,10 +144,11 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _previousStory() {
     if (!mounted) return;
-    
+
     if (_currentStoryIndex > 0) {
       setState(() {
         _currentStoryIndex--;
+        _isPaused = false;
       });
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
@@ -134,7 +161,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _markCurrentStoryAsViewed() {
     if (!mounted) return;
-    
+
     final currentUser = context.read<AuthCubit>().currentUser;
     if (currentUser != null) {
       final currentStory = widget.stories[_currentStoryIndex];
@@ -149,26 +176,36 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _onStoryTap(TapDownDetails details) {
     if (!mounted) return;
-    
+
     final screenWidth = MediaQuery.of(context).size.width;
     final tapPosition = details.globalPosition.dx;
 
-    if (tapPosition < screenWidth * 0.3) {
+    if (tapPosition < screenWidth * 0.2) {
       // Tap on left side - previous story
       _storyTimer?.cancel();
       _previousStory();
-    } else if (tapPosition > screenWidth * 0.7) {
+    } else if (tapPosition > screenWidth * 0.8) {
       // Tap on right side - next story
       _storyTimer?.cancel();
       _nextStory();
+    } else {
+      // Middle tap - toggle play/pause
+      _togglePlayPause();
     }
-    // Middle tap is handled by long press for pause/resume
   }
 
   void _showStoryOptions() {
     if (!mounted) return;
-    
-    _pauseStory();
+
+    // Pause the story when showing options
+    final wasPaused = _isPaused;
+    if (!_isPaused) {
+      _storyTimer?.cancel();
+      _progressController.stop();
+      setState(() {
+        _isPaused = true;
+      });
+    }
 
     showModalBottomSheet(
       context: context,
@@ -223,16 +260,19 @@ class _StoryViewerPageState extends State<StoryViewerPage>
         ),
       ),
     ).then((_) {
-      // Check if still mounted before resuming
-      if (mounted) {
-        _resumeStory();
+      // Resume story if it wasn't paused before
+      if (mounted && !wasPaused) {
+        setState(() {
+          _isPaused = false;
+        });
+        _startStoryTimer();
       }
     });
   }
 
   bool _canDeleteCurrentStory() {
     if (!mounted) return false;
-    
+
     final currentUser = context.read<AuthCubit>().currentUser;
     return currentUser != null &&
         widget.stories[_currentStoryIndex].userId == currentUser.uid;
@@ -240,7 +280,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _deleteStory() {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -268,8 +308,16 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _showViewersList() {
     if (!mounted) return;
-    
-    _pauseStory();
+
+    // Pause the story when showing viewers list
+    final wasPaused = _isPaused;
+    if (!_isPaused) {
+      _storyTimer?.cancel();
+      _progressController.stop();
+      setState(() {
+        _isPaused = true;
+      });
+    }
 
     showModalBottomSheet(
       context: context,
@@ -331,9 +379,12 @@ class _StoryViewerPageState extends State<StoryViewerPage>
         ),
       ),
     ).then((_) {
-      // Check if still mounted before resuming
-      if (mounted) {
-        _resumeStory();
+      // Resume story if it wasn't paused before
+      if (mounted && !wasPaused) {
+        setState(() {
+          _isPaused = false;
+        });
+        _startStoryTimer();
       }
     });
   }
@@ -348,20 +399,6 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTapDown: _onStoryTap,
-        onLongPressStart: (_) {
-          if (!mounted) return;
-          setState(() {
-            _isLongPressing = true;
-          });
-          _pauseStory();
-        },
-        onLongPressEnd: (_) {
-          if (!mounted) return;
-          setState(() {
-            _isLongPressing = false;
-          });
-          _resumeStory();
-        },
         child: Stack(
           children: [
             // Story content
@@ -371,6 +408,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                 if (!mounted) return;
                 setState(() {
                   _currentStoryIndex = index;
+                  _isPaused = false;
                 });
                 _startStoryTimer();
                 _markCurrentStoryAsViewed();
@@ -416,31 +454,39 @@ class _StoryViewerPageState extends State<StoryViewerPage>
               ),
             ),
 
-            // Pause indicator
-            if (_isPaused || _isLongPressing)
-              const Positioned.fill(
+            // Play/Pause indicator
+            if (_showPauseIcon)
+              Positioned.fill(
                 child: Center(
-                  child: Icon(
-                    Icons.pause_circle_filled,
-                    color: Colors.white,
-                    size: 80,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _isPaused ? Icons.play_arrow : Icons.pause,
+                      color: Colors.white,
+                      size: 40,
+                    ),
                   ),
                 ),
               ),
 
-            // Navigation areas (invisible)
+            // Invisible tap areas for navigation hints
             Positioned(
               left: 0,
               top: 0,
               bottom: 0,
-              width: MediaQuery.of(context).size.width * 0.3,
+              width: MediaQuery.of(context).size.width * 0.2,
               child: Container(color: Colors.transparent),
             ),
             Positioned(
               right: 0,
               top: 0,
               bottom: 0,
-              width: MediaQuery.of(context).size.width * 0.3,
+              width: MediaQuery.of(context).size.width * 0.2,
               child: Container(color: Colors.transparent),
             ),
           ],
