@@ -28,12 +28,7 @@ class CommentInputSection extends StatelessWidget {
 
     return AnimatedContainer(
       duration: CommentConstants.inputAnimationDuration,
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 12,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
-      ),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 12),
       decoration: BoxDecoration(
         color: theme.surface,
         border: Border(

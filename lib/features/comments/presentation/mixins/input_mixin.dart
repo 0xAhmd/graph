@@ -30,6 +30,12 @@ mixin CommentInputMixin<T extends StatefulWidget>
     commentController = TextEditingController();
     commentFocusNode = FocusNode();
 
+    commentFocusNode.addListener(() {
+      if (!commentFocusNode.hasFocus) {
+        _commentCubit.fetchComments(_postId);
+      }
+    });
+
     inputAnimationController = AnimationController(
       duration: CommentConstants.inputAnimationDuration,
       vsync: this,
