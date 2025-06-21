@@ -7,6 +7,7 @@ import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
 import 'package:ig_mate/features/stories/presentation/pages/story_page.dart';
 import 'package:ig_mate/features/stories/presentation/pages/story_viewer_page.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_ring.dart';
+import 'package:ig_mate/features/stories/domain/entities/story.dart'; // Add this import
 import '../../../../core/utils/app_updater.dart';
 import '../../../../layout/constrained_scaffold.dart';
 
@@ -44,9 +45,9 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     fetchCurrentUserFollowing();
     loadBlockedUsers();
-    loadCurrentUserProfile(); // Add this line
+    loadCurrentUserProfile();
 
-    // Add this line to load stories
+    // Load stories
     context.read<StoriesCubit>().fetchStories();
 
     AppUpdater();
@@ -74,7 +75,6 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  // Add this new method to load current user's profile
   Future<void> loadCurrentUserProfile() async {
     final currentUser = authCubit.currentUser;
     if (currentUser != null) {
@@ -84,9 +84,7 @@ class _HomePageState extends State<HomePage>
           currentUserProfileImage = userProfile.profileImgUrl;
           currentUsername = userProfile.name.isNotEmpty
               ? userProfile.name
-              : currentUser.email.split(
-                  '@',
-                )[0]; // Fallback to email prefix if name is empty
+              : currentUser.email.split('@')[0];
         });
       }
     }
@@ -102,7 +100,6 @@ class _HomePageState extends State<HomePage>
   // Load comments for all visible posts
   Future<void> loadCommentsForPosts(List<dynamic> posts) async {
     try {
-      // Load comments for each post
       for (final post in posts) {
         await commentCubit.fetchComments(post.id);
       }
@@ -115,13 +112,11 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     await fetchCurrentUserFollowing();
     await loadBlockedUsers();
-    await loadCurrentUserProfile(); // Add this line
+    await loadCurrentUserProfile();
     context.read<StoriesCubit>().fetchStories();
 
-    // Wait a bit for posts to load, then load comments
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Get current posts and load their comments
     final currentState = postCubit.state;
     if (currentState is PostLoaded) {
       final filteredPosts = filterBlockedUserPosts(currentState.posts);
@@ -142,7 +137,6 @@ class _HomePageState extends State<HomePage>
   void blockUser(String userId) async {
     final currentUser = authCubit.currentUser;
     if (currentUser != null) {
-      // Show confirmation dialog
       final shouldBlock = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -154,7 +148,6 @@ class _HomePageState extends State<HomePage>
           ),
           content: Text(
             'Are you sure you want to block this user? You won\'t see their posts anymore.',
-
             style: TextStyle(
               color: Theme.of(context).colorScheme.inversePrimary,
             ),
@@ -174,16 +167,14 @@ class _HomePageState extends State<HomePage>
 
       if (shouldBlock == true) {
         await profileCubit.blockUser(currentUser.uid, userId);
-        // Refresh posts to remove blocked user's posts
         fetchAllPosts();
 
-        // Show success message
         if (mounted) {
           Fluttertoast.showToast(
             msg: "User Blocked!",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.BOTTOM,
-            backgroundColor: Colors.green, // or Colors.green, etc.
+            backgroundColor: Colors.green,
             textColor: Colors.white,
           );
         }
@@ -195,16 +186,14 @@ class _HomePageState extends State<HomePage>
     final currentUser = authCubit.currentUser;
     if (currentUser != null) {
       await profileCubit.unBlockUser(currentUser.uid, userId);
-      // Refresh posts to show unblocked user's posts
       fetchAllPosts();
 
-      // Show success message
       if (mounted) {
         Fluttertoast.showToast(
           msg: "User unblocked!",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.green, // or Colors.green, etc.
+          backgroundColor: Colors.green,
           textColor: Colors.white,
         );
       }
@@ -218,8 +207,27 @@ class _HomePageState extends State<HomePage>
         .toList();
   }
 
+  // Filter stories to show only from followed users
+  Map<String, List<StoryEntity>> filterFollowingStories(
+    Map<String, List<StoryEntity>> allStories,
+  ) {
+    final filteredStories = <String, List<StoryEntity>>{};
+
+    for (final entry in allStories.entries) {
+      final userId = entry.key;
+      final userStories = entry.value;
+
+      // Include stories only from users we follow (not blocked)
+      if (followingUserIds.contains(userId) &&
+          !profileCubit.isUserBlocked(userId)) {
+        filteredStories[userId] = userStories;
+      }
+    }
+
+    return filteredStories;
+  }
+
   Widget buildPostsList(List<dynamic> posts, {bool showEmptyMessage = true}) {
-    // Filter out blocked users' posts
     final filteredPosts = filterBlockedUserPosts(posts);
 
     if (filteredPosts.isEmpty && showEmptyMessage) {
@@ -245,7 +253,7 @@ class _HomePageState extends State<HomePage>
           final isUserBlocked = profileCubit.isUserBlocked(post.userId);
 
           return PostTile(
-            key: ValueKey(post.id), // ✅ important
+            key: ValueKey(post.id),
             post: post,
             onDeletePressed: () => deletePost(post.id),
             onBlockPressed: isCurrentUserPost
@@ -288,7 +296,7 @@ class _HomePageState extends State<HomePage>
                         image: NetworkImage(currentUserProfileImage!),
                         fit: BoxFit.cover,
                       )
-                    : null, 
+                    : null,
                 color:
                     currentUserProfileImage == null ||
                         currentUserProfileImage!.isEmpty
@@ -297,7 +305,6 @@ class _HomePageState extends State<HomePage>
               ),
               child: Stack(
                 children: [
-                  // User profile image
                   Container(
                     width: 70,
                     height: 70,
@@ -329,7 +336,6 @@ class _HomePageState extends State<HomePage>
                           )
                         : null,
                   ),
-                  // Plus icon overlay
                   Positioned(
                     bottom: 0,
                     right: 0,
@@ -365,6 +371,87 @@ class _HomePageState extends State<HomePage>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildStoriesSection() {
+    return Container(
+      height: 120,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: BlocBuilder<StoriesCubit, StoriesState>(
+        builder: (context, state) {
+          debugPrint('Stories state: $state');
+
+          if (state is StoriesLoading) {
+            return const Center(child: CupertinoActivityIndicator());
+          } else if (state is StoriesLoaded) {
+            final currentUser = authCubit.currentUser;
+
+            // Filter stories to show only from followed users
+            final filteredStories = filterFollowingStories(
+              state.groupedStories,
+            );
+
+            debugPrint('Filtered stories count: ${filteredStories.length}');
+
+            if (filteredStories.isEmpty) {
+              return Center(
+                child: Text(
+                  'No stories from people you follow',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            }
+
+            return ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount:
+                  filteredStories.length + 1, // +1 for "Add Story" button
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return buildAddStoryButton();
+                }
+
+                final userId = filteredStories.keys.elementAt(index - 1);
+                final stories = filteredStories[userId]!;
+                final hasUnviewed = stories.any(
+                  (story) =>
+                      currentUser != null &&
+                      !story.viewers.contains(currentUser.uid),
+                );
+
+                return StoryRing(
+                  userStories: stories,
+                  hasUnviewedStories: hasUnviewed,
+                  profileImageUrl: stories.first.userProfileImageUrl,
+                  username: stories.first.username,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          StoryViewerPage(stories: stories, initialIndex: 0),
+                    ),
+                  ),
+                );
+              },
+            );
+          } else if (state is StoriesError) {
+            debugPrint('Stories error: ${state.message}');
+            return Center(
+              child: Text(
+                'Error loading stories',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            );
+          }
+
+          return const SizedBox(height: 120);
+        },
       ),
     );
   }
@@ -408,12 +495,10 @@ class _HomePageState extends State<HomePage>
               } else if (state is PostLoaded) {
                 final allPosts = state.posts;
 
-                // Load comments for all posts when posts are loaded
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   loadCommentsForPosts(filterBlockedUserPosts(allPosts));
                 });
 
-                // Filter posts for following tab (also filter out blocked users)
                 final followingPosts = filterBlockedUserPosts(
                   allPosts
                       .where((post) => followingUserIds.contains(post.userId))
@@ -423,136 +508,60 @@ class _HomePageState extends State<HomePage>
                 return TabBarView(
                   controller: _tabController,
                   children: [
-                    // For You Tab - All Posts (filtered) with Stories
+                    // For You Tab - All Posts (filtered) without Stories
+                    buildPostsList(allPosts),
+
+                    // Following Tab - Posts from followed users with Stories
                     Column(
                       children: [
                         const SizedBox(height: 10),
-                        // Stories Section
-                        Container(
-                          height: 120,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: BlocBuilder<StoriesCubit, StoriesState>(
-                            builder: (context, state) {
-                              debugPrint('Stories state: $state');
-
-                              if (state is StoriesLoading) {
-                                return const Center(
-                                  child: CupertinoActivityIndicator(),
-                                );
-                              } else if (state is StoriesLoaded) {
-                                final currentUser = authCubit.currentUser;
-                                final userStories = state.groupedStories;
-
-                                debugPrint(
-                                  'User stories count: ${userStories.length}',
-                                );
-
-                                return ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  itemCount:
-                                      userStories.length +
-                                      1, // +1 for "Add Story" button
-                                  itemBuilder: (context, index) {
-                                    if (index == 0) {
-                                      // Add Story button with current user's profile
-                                      return buildAddStoryButton();
-                                    }
-
-                                    final userId = userStories.keys.elementAt(
-                                      index - 1,
-                                    );
-                                    final stories = userStories[userId]!;
-                                    final hasUnviewed = stories.any(
-                                      (story) =>
-                                          currentUser != null &&
-                                          !story.viewers.contains(
-                                            currentUser.uid,
-                                          ),
-                                    );
-
-                                    return StoryRing(
-                                      userStories: stories,
-                                      hasUnviewedStories: hasUnviewed,
-                                      profileImageUrl:
-                                          stories.first.userProfileImageUrl,
-                                      username: stories.first.username,
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => StoryViewerPage(
-                                            stories: stories,
-                                            initialIndex: 0,
+                        // Stories Section - Only in Following tab
+                        buildStoriesSection(),
+                        // Posts List
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: refreshData,
+                            displacement: 40,
+                            color: Theme.of(context).colorScheme.primary,
+                            child: followingPosts.isEmpty
+                                ? ListView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 32.0,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            "No posts from people you follow.",
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.inversePrimary,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                );
-                              } else if (state is StoriesError) {
-                                debugPrint('Stories error: ${state.message}');
-                                return Center(
-                                  child: Text(
-                                    'Error loading stories',
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.error,
-                                    ),
+                                    ],
+                                  )
+                                : ListView.builder(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    itemCount: followingPosts.length,
+                                    itemBuilder: (context, index) {
+                                      final post = followingPosts[index];
+                                      return PostTile(
+                                        key: ValueKey(post.id),
+                                        post: post,
+                                        onDeletePressed: () =>
+                                            deletePost(post.id),
+                                      );
+                                    },
                                   ),
-                                );
-                              }
-
-                              return const SizedBox(height: 120);
-                            },
                           ),
                         ),
-
-                        // Posts List
-                        Expanded(child: buildPostsList(allPosts)),
                       ],
-                    ),
-
-                    // Following Tab - Only posts from users you follow (filtered) with RefreshIndicator
-                    RefreshIndicator(
-                      onRefresh: refreshData,
-                      displacement: 40,
-                      color: Theme.of(context).colorScheme.primary,
-                      child: followingPosts.isEmpty
-                          ? ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 32.0,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      "No posts from people you follow.",
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.inversePrimary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : ListView.builder(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              itemCount: followingPosts.length,
-                              itemBuilder: (context, index) {
-                                final post = followingPosts[index];
-                                return PostTile(
-                                  key: ValueKey(post.id),
-                                  post: post,
-                                  onDeletePressed: () => deletePost(post.id),
-                                );
-                              },
-                            ),
                     ),
                   ],
                 );

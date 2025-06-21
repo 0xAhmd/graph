@@ -1,6 +1,7 @@
 // lib/features/stories/presentation/pages/story_viewer_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/auth/data/repo/firebase_auth_repo.dart';
 import 'package:ig_mate/features/stories/domain/entities/story.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_content.dart';
@@ -29,7 +30,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   late PageController _pageController;
   late AnimationController _progressController;
   Timer? _storyTimer;
-
+  final currentUser = AuthCubit(FirebaseAuthRepo()).currentUser;
   int _currentStoryIndex = 0;
   bool _isPaused = false;
   bool _showPauseIcon = false;
@@ -445,6 +446,8 @@ class _StoryViewerPageState extends State<StoryViewerPage>
               right: 16,
               child: StoryHeader(
                 story: widget.stories[_currentStoryIndex],
+
+                currentUserId: currentUser!.uid,
                 onMorePressed: _showStoryOptions,
                 onClosePressed: () {
                   if (mounted) {

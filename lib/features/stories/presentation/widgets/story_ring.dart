@@ -28,8 +28,8 @@ class StoryRing extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              width: 70,
-              height: 70,
+              width: 74,
+              height: 74,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: hasUnviewedStories
@@ -39,39 +39,94 @@ class StoryRing extends StatelessWidget {
                         end: Alignment.bottomRight,
                       )
                     : null,
-                border: hasUnviewedStories
-                    ? null
-                    : Border.all(
-                        color: Theme.of(context).colorScheme.outline,
+                border: !hasUnviewedStories
+                    ? Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withOpacity(0.3),
                         width: 2,
-                      ),
+                      )
+                    : null,
               ),
-              child: Container(
-                margin: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Theme.of(context).colorScheme.surface,
-                ),
+              child: Padding(
+                padding: const EdgeInsets.all(3),
                 child: Container(
-                  margin: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    image: profileImageUrl != null
-                        ? DecorationImage(
-                            image: NetworkImage(profileImageUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                    color: profileImageUrl == null
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 2,
+                    ),
                   ),
-                  child: profileImageUrl == null
-                      ? Icon(
-                          Icons.person,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        )
-                      : null,
+                  child: ClipOval(
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color:
+                            profileImageUrl == null || profileImageUrl!.isEmpty
+                            ? Theme.of(context).colorScheme.surfaceVariant
+                            : null,
+                      ),
+                      child:
+                          profileImageUrl != null && profileImageUrl!.isNotEmpty
+                          ? Image.network(
+                              profileImageUrl!,
+                              fit: BoxFit.cover,
+                              width: 64,
+                              height: 64,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceVariant,
+                                  ),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                    size: 32,
+                                  ),
+                                );
+                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceVariant,
+                                      ),
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                            )
+                          : Icon(
+                              Icons.person,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              size: 32,
+                            ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -83,8 +138,11 @@ class StoryRing extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
