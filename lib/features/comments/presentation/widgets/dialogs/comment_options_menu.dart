@@ -6,7 +6,6 @@ import 'package:ig_mate/features/comments/presentation/widgets/dialogs/comment_d
 import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_constants.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_helpers.dart';
 
-
 class CommentOptionsMenu {
   static void show({
     required BuildContext context,
@@ -38,9 +37,7 @@ class CommentOptionsMenu {
       leading: const Icon(Icons.edit),
       title: Text(
         'Edit comment',
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       ),
       onTap: () {
         Navigator.pop(context);
@@ -54,22 +51,20 @@ class CommentOptionsMenu {
     Comment comment,
     VoidCallback onDelete,
   ) {
+    // Store the cubit reference before showing the dialog
+    final commentCubit = context.read<CommentCubit>();
+
     return ListTile(
       leading: const Icon(Icons.delete, color: Colors.red),
-      title: const Text(
-        'Delete comment',
-        style: TextStyle(color: Colors.red),
-      ),
+      title: const Text('Delete comment', style: TextStyle(color: Colors.red)),
       onTap: () {
         Navigator.pop(context);
         CommentDeleteDialog.show(
           context: context,
           comment: comment,
           onConfirm: () {
-            context.read<CommentCubit>().deleteCommentSafe(
-              comment.postId,
-              comment.id,
-            );
+            // Use the stored cubit reference instead of context.read
+            commentCubit.deleteCommentSafe(comment.postId, comment.id);
             onDelete();
             CommentHelpers.showToast(
               CommentConstants.commentDeletedMessage,
