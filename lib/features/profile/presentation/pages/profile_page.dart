@@ -173,9 +173,9 @@ class _ProfilePageState extends State<ProfilePage>
                                   width: 170,
                                   height: 170,
                                   decoration: userStories.isNotEmpty
-                                      ? BoxDecoration(
+                                      ? const BoxDecoration(
                                           shape: BoxShape.circle,
-                                          gradient: const LinearGradient(
+                                          gradient:  LinearGradient(
                                             colors: [
                                               Color(0xFFF58529),
                                               Color(0xFFDD2A7B),
