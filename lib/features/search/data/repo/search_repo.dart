@@ -7,14 +7,16 @@ class SearchRepo implements SearchRepoContract {
   @override
   Future<List<ProfileUserEntity>> filter(String query) async {
     try {
-      final result = await FirebaseFirestore.instance
-          .collection('users')
-          .where('name', isGreaterThanOrEqualTo: query)
-          .where('name', isLessThanOrEqualTo: '$query\uf8ff')
-          .get();
+      final lowerQuery = query.toLowerCase();
+
+      // Fetch a broader range (you can adjust limit as needed)
+      final result = await FirebaseFirestore.instance.collection('users').get();
 
       return result.docs
           .map((doc) => ProfileUserEntity.fromJson(doc.data()))
+          .where(
+            (user) => user.name.toLowerCase().contains(lowerQuery),
+          ) // client-side filtering
           .toList();
     } catch (e) {
       throw Exception("Error: $e");
