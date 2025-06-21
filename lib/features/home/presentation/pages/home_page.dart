@@ -402,7 +402,7 @@ class _HomePageState extends State<HomePage>
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: BlocBuilder<StoriesCubit, StoriesState>(
                             builder: (context, state) {
-                              print('Stories state: $state'); // Debug print
+                              debugPrint('Stories state: $state'); // Debug print
 
                               if (state is StoriesLoading) {
                                 return const Center(
@@ -412,7 +412,7 @@ class _HomePageState extends State<HomePage>
                                 final currentUser = authCubit.currentUser;
                                 final userStories = state.groupedStories;
 
-                                print(
+                                debugPrint(
                                   'User stories count: ${userStories.length}',
                                 ); // Debug print
 
@@ -429,7 +429,7 @@ class _HomePageState extends State<HomePage>
                                       // Add Story button
                                       return GestureDetector(
                                         onTap: () {
-                                          print(
+                                          debugPrint(
                                             'Add story tapped',
                                           ); // Debug print
                                           Navigator.push(
@@ -518,7 +518,7 @@ class _HomePageState extends State<HomePage>
                                   },
                                 );
                               } else if (state is StoriesError) {
-                                print(
+                                debugPrint(
                                   'Stories error: ${state.message}',
                                 ); // Debug print
                                 return Center(
