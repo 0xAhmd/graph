@@ -1,4 +1,5 @@
 // lib/features/stories/presentation/pages/story_viewer_page.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/stories/domain/entities/story.dart';
@@ -71,6 +72,18 @@ class _StoryViewerPageState extends State<StoryViewerPage>
         _nextStory();
       }
     });
+  }
+
+  Future<String> _getUserName(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      return doc.data()?['name'] ?? 'Unknown';
+    } catch (e) {
+      return 'Unknown';
+    }
   }
 
   void _pauseStory() {
@@ -167,7 +180,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       if (!currentStory.viewers.contains(currentUser.uid)) {
         context.read<StoriesCubit>().markStoryAsViewed(
           currentStory.id,
-          currentUser.uid,
+          currentUser.name,
         );
       }
     }
@@ -359,17 +372,28 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                   itemBuilder: (context, index) {
                     final viewerId =
                         widget.stories[_currentStoryIndex].viewers[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        child: Text(
-                          viewerId.substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimary,
+
+                    return FutureBuilder<String>(
+                      future: _getUserName(viewerId),
+                      builder: (context, snapshot) {
+                        final viewerName = snapshot.data ?? '...';
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            child: Text(
+                              viewerName.isNotEmpty
+                                  ? viewerName[0].toUpperCase()
+                                  : '?',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      title: Text(viewerId), // You might want to fetch username
+                          title: Text(viewerName),
+                        );
+                      },
                     );
                   },
                 ),
