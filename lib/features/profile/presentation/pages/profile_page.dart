@@ -1,25 +1,11 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
-import 'dart:ui';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/features/auth/domain/entities/app_user.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
-import 'package:ig_mate/features/posts/presentation/cubit/post_cubit.dart';
-import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
-import 'package:ig_mate/features/profile/presentation/pages/edit_profile_page.dart';
-import 'package:ig_mate/features/profile/presentation/pages/follower_page.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/bio_box.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/follow_button.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/preview_page.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/profile_grid.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/profile_stats.dart';
-import 'package:ig_mate/layout/constrained_scaffold.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/profile_image_viewer.dart';
+import '../pages/index.dart';
 
 class ProfilePage extends StatefulWidget {
   final String uid;
@@ -149,106 +135,10 @@ class _ProfilePageState extends State<ProfilePage>
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const SizedBox(height: 20),
-                          GestureDetector(
-                            onLongPress: () {
-                              if (user.profileImgUrl.isNotEmpty) {
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: true,
-                                  barrierColor: Colors.black.withOpacity(0.5),
-                                  builder: (context) {
-                                    return GestureDetector(
-                                      onTap: () => Navigator.of(context).pop(),
-                                      child: Stack(
-                                        children: [
-                                          BackdropFilter(
-                                            filter: ImageFilter.blur(
-                                              sigmaX: 10,
-                                              sigmaY: 10,
-                                            ),
-                                            child: Container(
-                                              color: Colors.black.withOpacity(
-                                                0.3,
-                                              ),
-                                            ),
-                                          ),
-                                          Center(
-                                            child: Hero(
-                                              tag: 'profile-image',
-                                              child: ClipOval(
-                                                child: CachedNetworkImage(
-                                                  imageUrl: user.profileImgUrl,
-                                                  width:
-                                                      MediaQuery.of(
-                                                        context,
-                                                      ).size.width *
-                                                      0.8,
-                                                  height:
-                                                      MediaQuery.of(
-                                                        context,
-                                                      ).size.width *
-                                                      0.8,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                            },
-                            child: Hero(
-                              tag: 'profile-image',
-                              child: CachedNetworkImage(
-                                imageUrl: user.profileImgUrl,
-                                imageBuilder: (context, imageProvider) =>
-                                    Container(
-                                      width: 160,
-                                      height: 160,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(
-                                          100,
-                                        ),
-                                        image: DecorationImage(
-                                          image: imageProvider,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                placeholder: (context, url) => Container(
-                                  width: 120,
-                                  height: 120,
-                                  padding: const EdgeInsets.all(25),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(100),
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                  ),
-                                  child: const CupertinoActivityIndicator(),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  width: 150,
-                                  height: 160,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(100),
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                  ),
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 70,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
+                          ProfileImageViewer(
+                            imageUrl: user.profileImgUrl,
+                            size: 160,
+                            heroTag: 'profile-image',
                           ),
                           const SizedBox(height: 24),
                           Text(
