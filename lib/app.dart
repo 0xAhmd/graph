@@ -1,9 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/comments/data/repo/comment_repo.dart';
 import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
+import 'package:ig_mate/features/stories/data/repo/store_repo_impl.dart';
+import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'core/themes/dark_mode.dart';
 import 'core/themes/light_mode.dart';
@@ -31,12 +35,19 @@ class MyApp extends StatelessWidget {
   final searchRepo = SearchRepo();
   final chatRepo = FirebaseChatRepo();
   final commentRepo = CommentRepo();
+  final storiesRepo = StoriesRepositoryImpl(
+    firestore: FirebaseFirestore.instance,
+    supabase: Supabase.instance.client,
+  );
   MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<StoriesCubit>(
+          create: (context) => StoriesCubit(repository: storiesRepo),
+        ),
         BlocProvider<ChatCubit>(create: (context) => ChatCubit(chatRepo)),
         BlocProvider<CommentCubit>(
           create: (context) => CommentCubit(commentRepo: commentRepo),
@@ -59,7 +70,6 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             routes: {
               '/login': (context) => const LoginPage(onTap: null),
-              // ... other routes
             },
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
