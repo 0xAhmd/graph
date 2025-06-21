@@ -84,6 +84,8 @@ class StoryHeader extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
+              // Only show view count if it's the current user's story
+              // Otherwise show time ago
               Text(
                 _isCurrentUserStory()
                     ? _formatViewsCount(story.viewCount)
@@ -97,11 +99,12 @@ class StoryHeader extends StatelessWidget {
           ),
         ),
 
-        // More options button
-        IconButton(
-          onPressed: onMorePressed,
-          icon: const Icon(Icons.more_vert, color: Colors.white, size: 24),
-        ),
+        // More options button (only show for current user's stories)
+        if (_isCurrentUserStory())
+          IconButton(
+            onPressed: onMorePressed,
+            icon: const Icon(Icons.more_vert, color: Colors.white, size: 24),
+          ),
 
         // Close button
         IconButton(

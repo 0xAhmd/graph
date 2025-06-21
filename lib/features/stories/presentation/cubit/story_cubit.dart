@@ -1,10 +1,11 @@
 // lib/features/stories/presentation/cubit/stories_cubit.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/stories/data/repo/store_repo_impl.dart';
 import 'package:ig_mate/features/stories/domain/entities/story.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 
-import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
-
+import 'story_state.dart';
 import '../../domain/repo/story_repo_interface.dart';
 
 class StoriesCubit extends Cubit<StoriesState> {
@@ -100,6 +101,54 @@ class StoriesCubit extends Cubit<StoriesState> {
       );
 
       final createdStory = await _repository.createStory(story);
+
+      emit(StoryCreated(createdStory));
+
+      // Refresh stories
+      fetchStories();
+    } catch (e) {
+      emit(StoriesError('Failed to create story: $e'));
+    }
+  }
+
+  // New method to create image story from XFile (better for image picker)
+  Future<void> createImageStoryFromXFile({
+    required String userId,
+    required String username,
+    String? userProfileImageUrl,
+    required XFile imageFile,
+    String? content,
+  }) async {
+    try {
+      emit(StoryCreating());
+
+      // Check if repository supports XFile upload
+      String imageUrl;
+      if (_repository is StoriesRepositoryImpl) {
+        final repo = _repository;
+        imageUrl = await repo.uploadStoryImageFromXFile(imageFile);
+      } else {
+        // Fallback to path-based upload
+        imageUrl = await _repository.uploadStoryImage(imageFile.path);
+      }
+
+      final now = DateTime.now();
+      final story = StoryEntity(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: userId,
+        username: username,
+        userProfileImageUrl: userProfileImageUrl,
+        content: content,
+        imageUrl: imageUrl,
+        createdAt: now,
+        expiresAt: now.add(const Duration(hours: 24)),
+        isActive: true,
+        viewers: [],
+        viewCount: 0,
+      );
+
+      final createdStory = await _repository.createStory(story);
+
       emit(StoryCreated(createdStory));
 
       // Refresh stories
