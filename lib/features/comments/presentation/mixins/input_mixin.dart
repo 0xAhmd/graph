@@ -93,6 +93,8 @@ mixin CommentInputMixin<T extends StatefulWidget>
       await _commentCubit.addComment(_postId, newComment);
       commentController.clear();
       commentFocusNode.unfocus();
+      await _commentCubit.fetchComments(_postId);
+
       setState(() {
         isMarkdownMode = false;
       });
