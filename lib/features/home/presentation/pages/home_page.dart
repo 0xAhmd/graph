@@ -34,7 +34,6 @@ class _HomePageState extends State<HomePage>
 
   List<String> followingUserIds = [];
   bool isDeleting = false;
-
   @override
   void initState() {
     super.initState();
@@ -42,6 +41,10 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     fetchCurrentUserFollowing();
     loadBlockedUsers();
+
+    // Add this line to load stories
+    context.read<StoriesCubit>().fetchStories();
+
     AppUpdater();
   }
 
@@ -90,6 +93,7 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     await fetchCurrentUserFollowing();
     await loadBlockedUsers();
+    context.read<StoriesCubit>().fetchStories();
 
     // Wait a bit for posts to load, then load comments
     await Future.delayed(const Duration(milliseconds: 500));
@@ -321,11 +325,9 @@ class _HomePageState extends State<HomePage>
                                       Container(
                                         width: 70,
                                         height: 70,
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
+                                          color: Colors.red,
                                         ),
                                         child: Icon(
                                           Icons.add,
@@ -342,7 +344,7 @@ class _HomePageState extends State<HomePage>
                                           fontSize: 12,
                                           color: Theme.of(
                                             context,
-                                          ).colorScheme.onSurface,
+                                          ).colorScheme.inversePrimary,
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
@@ -389,8 +391,157 @@ class _HomePageState extends State<HomePage>
                 return TabBarView(
                   controller: _tabController,
                   children: [
-                    // For You Tab - All Posts (filtered)
-                    buildPostsList(allPosts),
+                    // For You Tab - All Posts (filtered) with Stories
+                    Column(
+                      children: [
+                        // Add this import at the top
+                        const SizedBox(height: 10),
+                        // Replace the stories container in your TabBarView with this:
+                        Container(
+                          height: 120,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: BlocBuilder<StoriesCubit, StoriesState>(
+                            builder: (context, state) {
+                              print('Stories state: $state'); // Debug print
+
+                              if (state is StoriesLoading) {
+                                return const Center(
+                                  child: CupertinoActivityIndicator(),
+                                );
+                              } else if (state is StoriesLoaded) {
+                                final currentUser = authCubit.currentUser;
+                                final userStories = state.groupedStories;
+
+                                print(
+                                  'User stories count: ${userStories.length}',
+                                ); // Debug print
+
+                                return ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  itemCount:
+                                      userStories.length +
+                                      1, // +1 for "Add Story" button
+                                  itemBuilder: (context, index) {
+                                    if (index == 0) {
+                                      // Add Story button
+                                      return GestureDetector(
+                                        onTap: () {
+                                          print(
+                                            'Add story tapped',
+                                          ); // Debug print
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const CreateStoryPage(), // or CreateStoryPage()
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          width: 80,
+                                          margin: const EdgeInsets.only(
+                                            right: 12,
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              Container(
+                                                width: 70,
+                                                height: 70,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                  border: Border.all(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: Icon(
+                                                  Icons.add,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.onPrimary,
+                                                  size: 30,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Your Story',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.inversePrimary,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    final userId = userStories.keys.elementAt(
+                                      index - 1,
+                                    );
+                                    final stories = userStories[userId]!;
+                                    final hasUnviewed = stories.any(
+                                      (story) =>
+                                          currentUser != null &&
+                                          !story.viewers.contains(
+                                            currentUser.uid,
+                                          ),
+                                    );
+
+                                    return StoryRing(
+                                      userStories: stories,
+                                      hasUnviewedStories: hasUnviewed,
+                                      profileImageUrl:
+                                          stories.first.userProfileImageUrl,
+                                      username: stories.first.username,
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => StoryViewerPage(
+                                            stories: stories,
+                                            initialIndex: 0,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              } else if (state is StoriesError) {
+                                print(
+                                  'Stories error: ${state.message}',
+                                ); // Debug print
+                                return Center(
+                                  child: Text(
+                                    'Error loading stories',
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return const SizedBox(height: 120);
+                            },
+                          ),
+                        ),
+
+                        // Posts List
+                        Expanded(child: buildPostsList(allPosts)),
+                      ],
+                    ),
 
                     // Following Tab - Only posts from users you follow (filtered) with RefreshIndicator
                     RefreshIndicator(
@@ -424,9 +575,7 @@ class _HomePageState extends State<HomePage>
                               itemBuilder: (context, index) {
                                 final post = followingPosts[index];
                                 return PostTile(
-                                  key: ValueKey(
-                                    post.id,
-                                  ), // Add key for better rebuild handling
+                                  key: ValueKey(post.id),
                                   post: post,
                                   onDeletePressed: () => deletePost(post.id),
                                 );

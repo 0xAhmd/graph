@@ -140,9 +140,7 @@ class StoriesRepositoryImpl implements StoriesRepository {
       final file = File(imagePath);
       final fileName = 'story_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-      final _ = await _supabase.storage
-          .from('story-images')
-          .upload(fileName, file);
+      final _ = await _supabase.storage.from('images').upload(fileName, file);
 
       return _supabase.storage.from('story-images').getPublicUrl(fileName);
     } catch (e) {
