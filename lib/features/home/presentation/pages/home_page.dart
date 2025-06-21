@@ -307,50 +307,146 @@ class _HomePageState extends State<HomePage>
                               userStories.length +
                               1, // +1 for "Add Story" button
                           itemBuilder: (context, index) {
+                            // Replace the "Add Story" button section with this:
+                            // Replace the "Add Story" button section in your TabBarView with this:
                             if (index == 0) {
-                              // Add Story button
-                              return GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CreateStoryPage(),
-                                  ),
-                                ),
-                                child: Container(
-                                  width: 80,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        width: 70,
-                                        height: 70,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.red,
+                              // Add Story button with user profile image
+                              return BlocBuilder<ProfileCubit, ProfileState>(
+                                builder: (context, profileState) {
+                                  String? currentUserProfileImage;
+
+                                  // Get current user's profile image
+                                  if (profileState is ProfileLoaded) {
+                                    final currentUser = authCubit.currentUser;
+                                    if (currentUser != null) {
+                                      final userProfile =
+                                          profileState.profileUserEntity;
+                                      if (userProfile.uid == currentUser.uid) {
+                                        currentUserProfileImage =
+                                            userProfile.profileImgUrl;
+                                      }
+                                    }
+                                  }
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      debugPrint('Add story tapped');
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const CreateStoryPage(),
                                         ),
-                                        child: Icon(
-                                          Icons.add,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimary,
-                                          size: 30,
-                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      width: 80,
+                                      margin: const EdgeInsets.only(right: 12),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            width: 70,
+                                            height: 70,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                width: 2,
+                                              ),
+                                            ),
+                                            child: Stack(
+                                              children: [
+                                                // User profile image
+                                                Container(
+                                                  width: 70,
+                                                  height: 70,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    image:
+                                                        currentUserProfileImage !=
+                                                                null &&
+                                                            currentUserProfileImage
+                                                                .isNotEmpty
+                                                        ? DecorationImage(
+                                                            image: NetworkImage(
+                                                              currentUserProfileImage,
+                                                            ),
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                        : null,
+                                                    color:
+                                                        currentUserProfileImage ==
+                                                                null ||
+                                                            currentUserProfileImage
+                                                                .isEmpty
+                                                        ? Theme.of(context)
+                                                              .colorScheme
+                                                              .surfaceVariant
+                                                        : null,
+                                                  ),
+                                                  child:
+                                                      currentUserProfileImage ==
+                                                              null ||
+                                                          currentUserProfileImage
+                                                              .isEmpty
+                                                      ? Icon(
+                                                          Icons.person,
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
+                                                          size: 30,
+                                                        )
+                                                      : null,
+                                                ),
+                                                // Plus icon overlay
+                                                Positioned(
+                                                  bottom: 0,
+                                                  right: 0,
+                                                  child: Container(
+                                                    width: 24,
+                                                    height: 24,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary,
+                                                      border: Border.all(
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).colorScheme.surface,
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.add,
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).colorScheme.onPrimary,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Your Story',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.inversePrimary,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Your Story',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.inversePrimary,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                    ),
+                                  );
+                                },
                               );
                             }
 
@@ -402,7 +498,9 @@ class _HomePageState extends State<HomePage>
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: BlocBuilder<StoriesCubit, StoriesState>(
                             builder: (context, state) {
-                              debugPrint('Stories state: $state'); // Debug print
+                              debugPrint(
+                                'Stories state: $state',
+                              ); // Debug print
 
                               if (state is StoriesLoading) {
                                 return const Center(
