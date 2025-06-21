@@ -13,6 +13,7 @@ class ConstrainedScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: appBar,
       drawer: drawer,
       body: Center(
