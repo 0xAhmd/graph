@@ -11,7 +11,6 @@ import 'dart:async';
 
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 
-
 class StoryViewerPage extends StatefulWidget {
   final List<StoryEntity> stories;
   final int initialIndex;
@@ -30,7 +29,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     with TickerProviderStateMixin {
   late PageController _pageController;
   late AnimationController _progressController;
-  late Timer _storyTimer;
+  Timer? _storyTimer; // Make nullable
 
   int _currentStoryIndex = 0;
   bool _isPaused = false;
@@ -54,17 +53,24 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   @override
   void dispose() {
-    _storyTimer.cancel();
+    _storyTimer?.cancel(); // Use null-aware operator
     _progressController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
   void _startStoryTimer() {
+    // Check if widget is still mounted before proceeding
+    if (!mounted) return;
+    
     _progressController.reset();
     _progressController.forward();
 
+    _storyTimer?.cancel(); // Cancel existing timer
     _storyTimer = Timer(_storyDuration, () {
+      // Check if widget is still mounted before accessing context or state
+      if (!mounted) return;
+      
       if (!_isPaused && !_isLongPressing) {
         _nextStory();
       }
@@ -72,25 +78,27 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   }
 
   void _pauseStory() {
-    if (!_isPaused) {
-      setState(() {
-        _isPaused = true;
-      });
-      _storyTimer.cancel();
-      _progressController.stop();
-    }
+    if (!mounted || _isPaused) return;
+    
+    setState(() {
+      _isPaused = true;
+    });
+    _storyTimer?.cancel();
+    _progressController.stop();
   }
 
   void _resumeStory() {
-    if (_isPaused) {
-      setState(() {
-        _isPaused = false;
-      });
-      _startStoryTimer();
-    }
+    if (!mounted || !_isPaused) return;
+    
+    setState(() {
+      _isPaused = false;
+    });
+    _startStoryTimer();
   }
 
   void _nextStory() {
+    if (!mounted) return;
+    
     if (_currentStoryIndex < widget.stories.length - 1) {
       setState(() {
         _currentStoryIndex++;
@@ -102,11 +110,15 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       _startStoryTimer();
       _markCurrentStoryAsViewed();
     } else {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
     }
   }
 
   void _previousStory() {
+    if (!mounted) return;
+    
     if (_currentStoryIndex > 0) {
       setState(() {
         _currentStoryIndex--;
@@ -121,6 +133,8 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   }
 
   void _markCurrentStoryAsViewed() {
+    if (!mounted) return;
+    
     final currentUser = context.read<AuthCubit>().currentUser;
     if (currentUser != null) {
       final currentStory = widget.stories[_currentStoryIndex];
@@ -134,22 +148,26 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   }
 
   void _onStoryTap(TapDownDetails details) {
+    if (!mounted) return;
+    
     final screenWidth = MediaQuery.of(context).size.width;
     final tapPosition = details.globalPosition.dx;
 
     if (tapPosition < screenWidth * 0.3) {
       // Tap on left side - previous story
-      _storyTimer.cancel();
+      _storyTimer?.cancel();
       _previousStory();
     } else if (tapPosition > screenWidth * 0.7) {
       // Tap on right side - next story
-      _storyTimer.cancel();
+      _storyTimer?.cancel();
       _nextStory();
     }
     // Middle tap is handled by long press for pause/resume
   }
 
   void _showStoryOptions() {
+    if (!mounted) return;
+    
     _pauseStory();
 
     showModalBottomSheet(
@@ -204,16 +222,25 @@ class _StoryViewerPageState extends State<StoryViewerPage>
           ],
         ),
       ),
-    ).then((_) => _resumeStory());
+    ).then((_) {
+      // Check if still mounted before resuming
+      if (mounted) {
+        _resumeStory();
+      }
+    });
   }
 
   bool _canDeleteCurrentStory() {
+    if (!mounted) return false;
+    
     final currentUser = context.read<AuthCubit>().currentUser;
     return currentUser != null &&
         widget.stories[_currentStoryIndex].userId == currentUser.uid;
   }
 
   void _deleteStory() {
+    if (!mounted) return;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -240,6 +267,8 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   }
 
   void _showViewersList() {
+    if (!mounted) return;
+    
     _pauseStory();
 
     showModalBottomSheet(
@@ -301,7 +330,12 @@ class _StoryViewerPageState extends State<StoryViewerPage>
           ),
         ),
       ),
-    ).then((_) => _resumeStory());
+    ).then((_) {
+      // Check if still mounted before resuming
+      if (mounted) {
+        _resumeStory();
+      }
+    });
   }
 
   Color _getColorFromHex(String hexColor) {
@@ -315,12 +349,14 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       body: GestureDetector(
         onTapDown: _onStoryTap,
         onLongPressStart: (_) {
+          if (!mounted) return;
           setState(() {
             _isLongPressing = true;
           });
           _pauseStory();
         },
         onLongPressEnd: (_) {
+          if (!mounted) return;
           setState(() {
             _isLongPressing = false;
           });
@@ -332,6 +368,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
             PageView.builder(
               controller: _pageController,
               onPageChanged: (index) {
+                if (!mounted) return;
                 setState(() {
                   _currentStoryIndex = index;
                 });
@@ -371,7 +408,11 @@ class _StoryViewerPageState extends State<StoryViewerPage>
               child: StoryHeader(
                 story: widget.stories[_currentStoryIndex],
                 onMorePressed: _showStoryOptions,
-                onClosePressed: () => Navigator.pop(context),
+                onClosePressed: () {
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                },
               ),
             ),
 

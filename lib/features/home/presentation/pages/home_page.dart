@@ -34,6 +34,9 @@ class _HomePageState extends State<HomePage>
 
   List<String> followingUserIds = [];
   bool isDeleting = false;
+  String? currentUserProfileImage;
+  String? currentUsername;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +44,7 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     fetchCurrentUserFollowing();
     loadBlockedUsers();
+    loadCurrentUserProfile(); // Add this line
 
     // Add this line to load stories
     context.read<StoriesCubit>().fetchStories();
@@ -70,6 +74,24 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  // Add this new method to load current user's profile
+  Future<void> loadCurrentUserProfile() async {
+    final currentUser = authCubit.currentUser;
+    if (currentUser != null) {
+      final userProfile = await profileCubit.getUserProfile(currentUser.uid);
+      if (userProfile != null) {
+        setState(() {
+          currentUserProfileImage = userProfile.profileImgUrl;
+          currentUsername = userProfile.name.isNotEmpty
+              ? userProfile.name
+              : currentUser.email.split(
+                  '@',
+                )[0]; // Fallback to email prefix if name is empty
+        });
+      }
+    }
+  }
+
   Future<void> loadBlockedUsers() async {
     final currentUser = authCubit.currentUser;
     if (currentUser != null) {
@@ -93,6 +115,7 @@ class _HomePageState extends State<HomePage>
     fetchAllPosts();
     await fetchCurrentUserFollowing();
     await loadBlockedUsers();
+    await loadCurrentUserProfile(); // Add this line
     context.read<StoriesCubit>().fetchStories();
 
     // Wait a bit for posts to load, then load comments
@@ -239,6 +262,113 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  Widget buildAddStoryButton() {
+    return GestureDetector(
+      onTap: () {
+        debugPrint('Add story tapped');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CreateStoryPage()),
+        );
+      },
+      child: Container(
+        width: 80,
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          children: [
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image:
+                    currentUserProfileImage != null &&
+                        currentUserProfileImage!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(currentUserProfileImage!),
+                        fit: BoxFit.cover,
+                      )
+                    : null, 
+                color:
+                    currentUserProfileImage == null ||
+                        currentUserProfileImage!.isEmpty
+                    ? Theme.of(context).colorScheme.surfaceVariant
+                    : null,
+              ),
+              child: Stack(
+                children: [
+                  // User profile image
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image:
+                          currentUserProfileImage != null &&
+                              currentUserProfileImage!.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(currentUserProfileImage!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      color:
+                          currentUserProfileImage == null ||
+                              currentUserProfileImage!.isEmpty
+                          ? Theme.of(context).colorScheme.surfaceVariant
+                          : null,
+                    ),
+                    child:
+                        currentUserProfileImage == null ||
+                            currentUserProfileImage!.isEmpty
+                        ? Icon(
+                            Icons.person,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            size: 30,
+                          )
+                        : null,
+                  ),
+                  // Plus icon overlay
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(context).colorScheme.primary,
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.surface,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Your Story',
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ConstrainedScaffold(
@@ -290,217 +420,20 @@ class _HomePageState extends State<HomePage>
                       .toList(),
                 );
 
-                // Add to HomePage after the AppBar and before the TabBarView
-                Container(
-                  height: 120,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: BlocBuilder<StoriesCubit, StoriesState>(
-                    builder: (context, state) {
-                      if (state is StoriesLoaded) {
-                        final currentUser = authCubit.currentUser;
-                        final userStories = state.groupedStories;
-
-                        return ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount:
-                              userStories.length +
-                              1, // +1 for "Add Story" button
-                          itemBuilder: (context, index) {
-                            // Replace the "Add Story" button section with this:
-                            // Replace the "Add Story" button section in your TabBarView with this:
-                            if (index == 0) {
-                              // Add Story button with user profile image
-                              return BlocBuilder<ProfileCubit, ProfileState>(
-                                builder: (context, profileState) {
-                                  String? currentUserProfileImage;
-
-                                  // Get current user's profile image
-                                  if (profileState is ProfileLoaded) {
-                                    final currentUser = authCubit.currentUser;
-                                    if (currentUser != null) {
-                                      final userProfile =
-                                          profileState.profileUserEntity;
-                                      if (userProfile.uid == currentUser.uid) {
-                                        currentUserProfileImage =
-                                            userProfile.profileImgUrl;
-                                      }
-                                    }
-                                  }
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      debugPrint('Add story tapped');
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const CreateStoryPage(),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      width: 80,
-                                      margin: const EdgeInsets.only(right: 12),
-                                      child: Column(
-                                        children: [
-                                          Container(
-                                            width: 70,
-                                            height: 70,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                                width: 2,
-                                              ),
-                                            ),
-                                            child: Stack(
-                                              children: [
-                                                // User profile image
-                                                Container(
-                                                  width: 70,
-                                                  height: 70,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    image:
-                                                        currentUserProfileImage !=
-                                                                null &&
-                                                            currentUserProfileImage
-                                                                .isNotEmpty
-                                                        ? DecorationImage(
-                                                            image: NetworkImage(
-                                                              currentUserProfileImage,
-                                                            ),
-                                                            fit: BoxFit.cover,
-                                                          )
-                                                        : null,
-                                                    color:
-                                                        currentUserProfileImage ==
-                                                                null ||
-                                                            currentUserProfileImage
-                                                                .isEmpty
-                                                        ? Theme.of(context)
-                                                              .colorScheme
-                                                              .surfaceVariant
-                                                        : null,
-                                                  ),
-                                                  child:
-                                                      currentUserProfileImage ==
-                                                              null ||
-                                                          currentUserProfileImage
-                                                              .isEmpty
-                                                      ? Icon(
-                                                          Icons.person,
-                                                          color: Theme.of(context)
-                                                              .colorScheme
-                                                              .onSurfaceVariant,
-                                                          size: 30,
-                                                        )
-                                                      : null,
-                                                ),
-                                                // Plus icon overlay
-                                                Positioned(
-                                                  bottom: 0,
-                                                  right: 0,
-                                                  child: Container(
-                                                    width: 24,
-                                                    height: 24,
-                                                    decoration: BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary,
-                                                      border: Border.all(
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).colorScheme.surface,
-                                                        width: 2,
-                                                      ),
-                                                    ),
-                                                    child: Icon(
-                                                      Icons.add,
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.onPrimary,
-                                                      size: 16,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Your Story',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.inversePrimary,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-
-                            final userId = userStories.keys.elementAt(
-                              index - 1,
-                            );
-                            final stories = userStories[userId]!;
-                            final hasUnviewed = stories.any(
-                              (story) =>
-                                  currentUser != null &&
-                                  !story.viewers.contains(currentUser.uid),
-                            );
-
-                            return StoryRing(
-                              userStories: stories,
-                              hasUnviewedStories: hasUnviewed,
-                              profileImageUrl:
-                                  stories.first.userProfileImageUrl,
-                              username: stories.first.username,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => StoryViewerPage(
-                                    stories: stories,
-                                    initialIndex: 0,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      return const SizedBox(height: 120);
-                    },
-                  ),
-                );
-
                 return TabBarView(
                   controller: _tabController,
                   children: [
                     // For You Tab - All Posts (filtered) with Stories
                     Column(
                       children: [
-                        // Add this import at the top
                         const SizedBox(height: 10),
-                        // Replace the stories container in your TabBarView with this:
+                        // Stories Section
                         Container(
                           height: 120,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: BlocBuilder<StoriesCubit, StoriesState>(
                             builder: (context, state) {
-                              debugPrint(
-                                'Stories state: $state',
-                              ); // Debug print
+                              debugPrint('Stories state: $state');
 
                               if (state is StoriesLoading) {
                                 return const Center(
@@ -512,7 +445,7 @@ class _HomePageState extends State<HomePage>
 
                                 debugPrint(
                                   'User stories count: ${userStories.length}',
-                                ); // Debug print
+                                );
 
                                 return ListView.builder(
                                   scrollDirection: Axis.horizontal,
@@ -524,65 +457,8 @@ class _HomePageState extends State<HomePage>
                                       1, // +1 for "Add Story" button
                                   itemBuilder: (context, index) {
                                     if (index == 0) {
-                                      // Add Story button
-                                      return GestureDetector(
-                                        onTap: () {
-                                          debugPrint(
-                                            'Add story tapped',
-                                          ); // Debug print
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const CreateStoryPage(), // or CreateStoryPage()
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          width: 80,
-                                          margin: const EdgeInsets.only(
-                                            right: 12,
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              Container(
-                                                width: 70,
-                                                height: 70,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                                  border: Border.all(
-                                                    color: Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary,
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                                child: Icon(
-                                                  Icons.add,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.onPrimary,
-                                                  size: 30,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Your Story',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).colorScheme.inversePrimary,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
+                                      // Add Story button with current user's profile
+                                      return buildAddStoryButton();
                                     }
 
                                     final userId = userStories.keys.elementAt(
@@ -616,9 +492,7 @@ class _HomePageState extends State<HomePage>
                                   },
                                 );
                               } else if (state is StoriesError) {
-                                debugPrint(
-                                  'Stories error: ${state.message}',
-                                ); // Debug print
+                                debugPrint('Stories error: ${state.message}');
                                 return Center(
                                   child: Text(
                                     'Error loading stories',

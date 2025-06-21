@@ -19,7 +19,7 @@ class StoryProgressIndicator extends StatelessWidget {
         return Expanded(
           child: Container(
             height: 3,
-            margin: EdgeInsets.symmetric(horizontal: 1),
+            margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.3),
               borderRadius: BorderRadius.circular(1.5),

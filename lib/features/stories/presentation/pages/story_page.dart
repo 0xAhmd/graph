@@ -96,7 +96,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
       // Create text story
       context.read<StoriesCubit>().createTextStory(
         userId: currentUser.uid,
-        username: currentUser.email.split('@')[0],
+        username: currentUser.name,
         userProfileImageUrl: profileImageUrl,
         content: _textController.text.trim(),
         backgroundColor: _backgroundColor,
@@ -108,7 +108,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
       // Create image story
       context.read<StoriesCubit>().createImageStory(
         userId: currentUser.uid,
-        username: currentUser.email.split('@')[0],
+        username: currentUser.name,
         userProfileImageUrl: profileImageUrl,
         imagePath: _selectedImage!.path,
         content: _textController.text.trim().isEmpty
