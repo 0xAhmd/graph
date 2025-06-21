@@ -2,6 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
+import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
+import 'package:ig_mate/features/stories/presentation/pages/story_page.dart';
+import 'package:ig_mate/features/stories/presentation/pages/story_viewer_page.dart';
+import 'package:ig_mate/features/stories/presentation/widgets/story_ring.dart';
 import '../../../../core/utils/app_updater.dart';
 import '../../../../layout/constrained_scaffold.dart';
 
@@ -279,6 +284,106 @@ class _HomePageState extends State<HomePage>
                   allPosts
                       .where((post) => followingUserIds.contains(post.userId))
                       .toList(),
+                );
+
+                // Add to HomePage after the AppBar and before the TabBarView
+                Container(
+                  height: 120,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: BlocBuilder<StoriesCubit, StoriesState>(
+                    builder: (context, state) {
+                      if (state is StoriesLoaded) {
+                        final currentUser = authCubit.currentUser;
+                        final userStories = state.groupedStories;
+
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount:
+                              userStories.length +
+                              1, // +1 for "Add Story" button
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              // Add Story button
+                              return GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CreateStoryPage(),
+                                  ),
+                                ),
+                                child: Container(
+                                  width: 80,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        width: 70,
+                                        height: 70,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        child: Icon(
+                                          Icons.add,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary,
+                                          size: 30,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Your Story',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final userId = userStories.keys.elementAt(
+                              index - 1,
+                            );
+                            final stories = userStories[userId]!;
+                            final hasUnviewed = stories.any(
+                              (story) =>
+                                  currentUser != null &&
+                                  !story.viewers.contains(currentUser.uid),
+                            );
+
+                            return StoryRing(
+                              userStories: stories,
+                              hasUnviewedStories: hasUnviewed,
+                              profileImageUrl:
+                                  stories.first.userProfileImageUrl,
+                              username: stories.first.username,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StoryViewerPage(
+                                    stories: stories,
+                                    initialIndex: 0,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
+                      return const SizedBox(height: 120);
+                    },
+                  ),
                 );
 
                 return TabBarView(

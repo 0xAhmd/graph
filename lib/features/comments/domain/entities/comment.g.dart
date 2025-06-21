@@ -7,7 +7,7 @@ part of 'comment.dart';
 // **************************************************************************
 
 Comment _$CommentFromJson(Map<String, dynamic> json) => Comment(
-  id: json['id'] as String,
+  id: Comment._stringFromAny(json['id']),
   postId: json['postId'] as String,
   userId: json['userId'] as String,
   userName: json['userName'] as String,
