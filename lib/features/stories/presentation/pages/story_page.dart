@@ -22,6 +22,7 @@ class CreateStoryPage extends StatefulWidget {
 class _CreateStoryPageState extends State<CreateStoryPage> {
   final TextEditingController _textController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
+  final FocusNode _textFocusNode = FocusNode();
 
   File? _selectedImage;
   String _backgroundColor = '#000000';
@@ -31,9 +32,24 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
   bool _showTextOptions = false;
   bool _isTextStory = true;
 
+  // Text position and dragging state
+  Offset _textPosition = const Offset(0, 0);
+  bool _isTextFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _textFocusNode.addListener(() {
+      setState(() {
+        _isTextFocused = _textFocusNode.hasFocus;
+      });
+    });
+  }
+
   @override
   void dispose() {
     _textController.dispose();
+    _textFocusNode.dispose();
     super.dispose();
   }
 
@@ -50,6 +66,8 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
         setState(() {
           _selectedImage = File(image.path);
           _isTextStory = false;
+          // Reset text position when switching to image
+          _textPosition = const Offset(0, 0);
         });
       }
     } catch (e) {
@@ -72,6 +90,8 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
         setState(() {
           _selectedImage = File(image.path);
           _isTextStory = false;
+          // Reset text position when switching to camera
+          _textPosition = const Offset(0, 0);
         });
       }
     } catch (e) {
@@ -139,6 +159,23 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
     }
   }
 
+  void _onTextTap() {
+    if (!_isTextFocused) {
+      _textFocusNode.requestFocus();
+    }
+  }
+
+  void _onBackgroundTap() {
+    if (_isTextFocused) {
+      _textFocusNode.unfocus();
+    }
+    if (_showTextOptions) {
+      setState(() {
+        _showTextOptions = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<StoriesCubit, StoriesState>(
@@ -185,169 +222,349 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
             ),
           ],
         ),
-        body: Stack(
-          children: [
-            // Background/Image
-            if (_selectedImage != null)
-              Positioned.fill(
-                child: Image.file(_selectedImage!, fit: BoxFit.cover),
-              ),
-
-            // Text input area
-            Positioned.fill(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextField(
-                      controller: _textController,
-                      style: TextStyle(
-                        color: _isTextStory
-                            ? _getColorFromHex(_textColor)
-                            : Colors.white,
-                        fontSize: _fontSize,
-                        fontWeight: _getFontWeight(_fontWeight),
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: null,
-                      decoration: InputDecoration(
-                        hintText: _isTextStory
-                            ? 'Type your story...'
-                            : 'Add a caption...',
-                        hintStyle: TextStyle(
-                          color: _isTextStory
-                              ? _getColorFromHex(_textColor).withOpacity(0.7)
-                              : Colors.white.withOpacity(0.7),
-                          fontSize: _fontSize,
-                        ),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ],
+        body: GestureDetector(
+          onTap: _onBackgroundTap,
+          child: Stack(
+            children: [
+              // Background/Image
+              if (_selectedImage != null)
+                Positioned.fill(
+                  child: Image.file(_selectedImage!, fit: BoxFit.cover),
                 ),
-              ),
-            ),
 
-            // Text styling options
-            if (_showTextOptions && _isTextStory)
-              Positioned(
-                bottom: 100,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.8),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Background color picker
-                      const Text(
-                        'Background Color',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ColorPickerWidget(
-                        selectedColor: _backgroundColor,
-                        onColorSelected: (color) {
-                          setState(() {
-                            _backgroundColor = color;
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Text color picker
-                      const Text(
-                        'Text Color',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ColorPickerWidget(
-                        selectedColor: _textColor,
-                        onColorSelected: (color) {
-                          setState(() {
-                            _textColor = color;
-                          });
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Text style options
-                      TextStyleOptions(
-                        fontSize: _fontSize,
-                        fontWeight: _fontWeight,
-                        onFontSizeChanged: (size) {
-                          setState(() {
-                            _fontSize = size;
-                          });
-                        },
-                        onFontWeightChanged: (weight) {
-                          setState(() {
-                            _fontWeight = weight;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            // Create story button
-            Positioned(
-              bottom: 20,
-              left: 20,
-              right: 20,
-              child: BlocBuilder<StoriesCubit, StoriesState>(
-                builder: (context, state) {
-                  final isCreating = state is StoryCreating;
-
-                  return ElevatedButton(
-                    onPressed: isCreating ? null : _createStory,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: isCreating
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CupertinoActivityIndicator(
-                              radius:
-                                  10, 
-                              color:
-                                  Colors.white, 
-                            ),
-                          )
-                        : const Text(
-                            'Share Story',
+              // Draggable Text Input
+              if (_isTextStory)
+                // For text-only stories, text stays centered
+                Positioned.fill(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: _onTextTap,
+                          child: TextField(
+                            controller: _textController,
+                            focusNode: _textFocusNode,
                             style: TextStyle(
-                              fontSize: 16,
+                              color: _getColorFromHex(_textColor),
+                              fontSize: _fontSize,
+                              fontWeight: _getFontWeight(_fontWeight),
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: null,
+                            decoration: InputDecoration(
+                              hintText: 'Type your story...',
+                              hintStyle: TextStyle(
+                                color: _getColorFromHex(
+                                  _textColor,
+                                ).withOpacity(0.7),
+                                fontSize: _fontSize,
+                              ),
+                              border: InputBorder.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                // For image stories, text is draggable
+                Positioned(
+                  left: _textPosition.dx,
+                  top: _textPosition.dy,
+                  child: Draggable(
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width - 40,
+                        ),
+                        child: TextField(
+                          controller: _textController,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _fontSize,
+                            fontWeight: _getFontWeight(_fontWeight),
+                            shadows: [
+                              Shadow(
+                                offset: const Offset(1, 1),
+                                blurRadius: 3,
+                                color: Colors.black.withOpacity(0.8),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: null,
+                          enabled: false,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: Container(),
+                    onDragStarted: () {
+                      setState(() {
+                      });
+                      _textFocusNode.unfocus();
+                    },
+                    onDragEnd: (details) {
+                      setState(() {
+                        // Constrain the text position within screen bounds
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final screenHeight = MediaQuery.of(context).size.height;
+
+                        _textPosition = Offset(
+                          (details.offset.dx).clamp(0.0, screenWidth - 200),
+                          (details.offset.dy - kToolbarHeight).clamp(
+                            0.0,
+                            screenHeight - 200,
+                          ),
+                        );
+                      });
+                    },
+                    child: GestureDetector(
+                      onTap: _onTextTap,
+                      child: Container(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width - 40,
+                          minWidth: 200,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: _textController.text.isNotEmpty
+                            ? BoxDecoration(
+                                color: Colors.black.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(8),
+                              )
+                            : null,
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _textFocusNode,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _fontSize,
+                            fontWeight: _getFontWeight(_fontWeight),
+                            shadows: [
+                              Shadow(
+                                offset: const Offset(1, 1),
+                                blurRadius: 3,
+                                color: Colors.black.withOpacity(0.8),
+                              ),
+                            ],
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: 'Add a caption...',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: _fontSize,
+                            ),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Text styling options
+              if (_showTextOptions && _isTextStory)
+                Positioned(
+                  bottom: 100,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.8),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(30),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        color: Theme.of(context).colorScheme.tertiary,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header with close button
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Text Options',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _showTextOptions = false;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Background color picker
+                          const Text(
+                            'Background Color',
+                            style: TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                  );
-                },
+                          const SizedBox(height: 8),
+                          ColorPickerWidget(
+                            selectedColor: _backgroundColor,
+                            onColorSelected: (color) {
+                              setState(() {
+                                _backgroundColor = color;
+                              });
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Text color picker
+                          const Text(
+                            'Text Color',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ColorPickerWidget(
+                            selectedColor: _textColor,
+                            onColorSelected: (color) {
+                              setState(() {
+                                _textColor = color;
+                              });
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Text style options
+                          TextStyleOptions(
+                            fontSize: _fontSize,
+                            fontWeight: _fontWeight,
+                            onFontSizeChanged: (size) {
+                              setState(() {
+                                _fontSize = size;
+                              });
+                            },
+                            onFontWeightChanged: (weight) {
+                              setState(() {
+                                _fontWeight = weight;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Create story button
+              Positioned(
+                bottom: 20,
+                left: 20,
+                right: 20,
+                child: BlocBuilder<StoriesCubit, StoriesState>(
+                  builder: (context, state) {
+                    final isCreating = state is StoryCreating;
+
+                    return ElevatedButton(
+                      onPressed: isCreating ? null : _createStory,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isCreating
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CupertinoActivityIndicator(
+                                radius: 10,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'Share Story',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.inversePrimary,
+                              ),
+                            ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+
+              // Drag instruction hint
+              if (!_isTextStory &&
+                  _textController.text.isEmpty &&
+                  !_isTextFocused)
+                const Positioned(
+                  top: 100,
+                  left: 20,
+                  right: 20,
+                  child: Center(
+                    child: Text(
+                      'Tap to add text, then drag to position',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 3,
+                            color: Colors.black,
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
