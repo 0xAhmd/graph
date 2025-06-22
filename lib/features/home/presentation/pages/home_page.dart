@@ -7,7 +7,7 @@ import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
 import 'package:ig_mate/features/stories/presentation/pages/story_page.dart';
 import 'package:ig_mate/features/stories/presentation/pages/story_viewer_page.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_ring.dart';
-import 'package:ig_mate/features/stories/domain/entities/story.dart'; // Add this import
+import 'package:ig_mate/features/stories/domain/entities/story.dart';
 import '../../../../core/utils/app_updater.dart';
 import '../../../../layout/constrained_scaffold.dart';
 
@@ -395,18 +395,7 @@ class _HomePageState extends State<HomePage>
 
             debugPrint('Filtered stories count: ${filteredStories.length}');
 
-            if (filteredStories.isEmpty) {
-              return Center(
-                child: Text(
-                  'No stories from people you follow',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            }
-
+            // Always show the horizontal list with "Add Story" button
             return ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -450,7 +439,15 @@ class _HomePageState extends State<HomePage>
             );
           }
 
-          return const SizedBox(height: 120);
+          // For initial/empty state, still show the "Add Story" button
+          return ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 1, // Only "Add Story" button
+            itemBuilder: (context, index) {
+              return buildAddStoryButton();
+            },
+          );
         },
       ),
     );

@@ -1,4 +1,5 @@
 // lib/features/stories/presentation/pages/create_story_page.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
@@ -328,11 +329,11 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
+                            child: CupertinoActivityIndicator(
+                              radius:
+                                  10, 
+                              color:
+                                  Colors.white, 
                             ),
                           )
                         : const Text(
