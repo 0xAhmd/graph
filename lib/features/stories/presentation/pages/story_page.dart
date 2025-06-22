@@ -1,4 +1,5 @@
 // lib/features/stories/presentation/pages/create_story_page.dart
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,8 +33,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
   bool _showTextOptions = false;
   bool _isTextStory = true;
 
-  // Text position and dragging state
-  Offset _textPosition = const Offset(0, 0);
+  Offset _textPosition = const Offset(100, 300); // initial position
   bool _isTextFocused = false;
 
   @override
@@ -66,8 +66,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
         setState(() {
           _selectedImage = File(image.path);
           _isTextStory = false;
-          // Reset text position when switching to image
-          _textPosition = const Offset(0, 0);
+          _textPosition = const Offset(100, 300);
         });
       }
     } catch (e) {
@@ -90,8 +89,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
         setState(() {
           _selectedImage = File(image.path);
           _isTextStory = false;
-          // Reset text position when switching to camera
-          _textPosition = const Offset(0, 0);
+          _textPosition = const Offset(100, 300);
         });
       }
     } catch (e) {
@@ -114,7 +112,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
     }
 
     if (_isTextStory && _textController.text.trim().isNotEmpty) {
-      // Create text story
       context.read<StoriesCubit>().createTextStory(
         userId: currentUser.uid,
         username: currentUser.name,
@@ -126,7 +123,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
         fontWeight: _fontWeight,
       );
     } else if (!_isTextStory && _selectedImage != null) {
-      // Create image story
       context.read<StoriesCubit>().createImageStory(
         userId: currentUser.uid,
         username: currentUser.name,
@@ -140,7 +136,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add content to your story')),
       );
-      return;
     }
   }
 
@@ -226,15 +221,13 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
           onTap: _onBackgroundTap,
           child: Stack(
             children: [
-              // Background/Image
               if (_selectedImage != null)
                 Positioned.fill(
                   child: Image.file(_selectedImage!, fit: BoxFit.cover),
                 ),
 
-              // Draggable Text Input
+              // For text stories: centered editable text
               if (_isTextStory)
-                // For text-only stories, text stays centered
                 Positioned.fill(
                   child: Container(
                     padding: const EdgeInsets.all(20),
@@ -268,112 +261,72 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                       ],
                     ),
                   ),
-                )
-              else
-                // For image stories, text is draggable
+                ),
+
+              // For image stories: draggable text field
+              if (!_isTextStory)
                 Positioned(
                   left: _textPosition.dx,
                   top: _textPosition.dy,
-                  child: Draggable(
-                    feedback: Material(
-                      color: Colors.transparent,
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width - 40,
-                        ),
-                        child: TextField(
-                          controller: _textController,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: _fontSize,
-                            fontWeight: _getFontWeight(_fontWeight),
-                            shadows: [
-                              Shadow(
-                                offset: const Offset(1, 1),
-                                blurRadius: 3,
-                                color: Colors.black.withOpacity(0.8),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: null,
-                          enabled: false,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                    ),
-                    childWhenDragging: Container(),
-                    onDragStarted: () {
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
                       setState(() {
-                      });
-                      _textFocusNode.unfocus();
-                    },
-                    onDragEnd: (details) {
-                      setState(() {
-                        // Constrain the text position within screen bounds
                         final screenWidth = MediaQuery.of(context).size.width;
                         final screenHeight = MediaQuery.of(context).size.height;
 
+                        _textPosition += details.delta;
                         _textPosition = Offset(
-                          (details.offset.dx).clamp(0.0, screenWidth - 200),
-                          (details.offset.dy - kToolbarHeight).clamp(
-                            0.0,
-                            screenHeight - 200,
-                          ),
+                          _textPosition.dx.clamp(0.0, screenWidth - 200),
+                          _textPosition.dy.clamp(0.0, screenHeight - 200),
                         );
                       });
                     },
-                    child: GestureDetector(
-                      onTap: _onTextTap,
-                      child: Container(
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width - 40,
-                          minWidth: 200,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: _textController.text.isNotEmpty
-                            ? BoxDecoration(
-                                color: Colors.black.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(8),
-                              )
-                            : null,
-                        child: TextField(
-                          controller: _textController,
-                          focusNode: _textFocusNode,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: _fontSize,
-                            fontWeight: _getFontWeight(_fontWeight),
-                            shadows: [
-                              Shadow(
-                                offset: const Offset(1, 1),
-                                blurRadius: 3,
-                                color: Colors.black.withOpacity(0.8),
-                              ),
-                            ],
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: null,
-                          decoration: InputDecoration(
-                            hintText: 'Add a caption...',
-                            hintStyle: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: _fontSize,
+                    onTap: _onTextTap,
+                    child: Container(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.of(context).size.width - 40,
+                        minWidth: 200,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: _textController.text.isNotEmpty
+                          ? BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
+                            )
+                          : null,
+                      child: TextField(
+                        controller: _textController,
+                        focusNode: _textFocusNode,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: _fontSize,
+                          fontWeight: _getFontWeight(_fontWeight),
+                          shadows: [
+                            Shadow(
+                              offset: const Offset(1, 1),
+                              blurRadius: 3,
+                              color: Colors.black.withOpacity(0.8),
                             ),
-                            border: InputBorder.none,
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: null,
+                        decoration: InputDecoration(
+                          hintText: 'Add a caption...',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: _fontSize,
                           ),
+                          border: InputBorder.none,
                         ),
                       ),
                     ),
                   ),
                 ),
 
-              // Text styling options
               if (_showTextOptions && _isTextStory)
                 Positioned(
                   bottom: 100,
@@ -396,7 +349,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Header with close button
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -430,8 +382,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                             ],
                           ),
                           const SizedBox(height: 16),
-
-                          // Background color picker
                           const Text(
                             'Background Color',
                             style: TextStyle(
@@ -448,10 +398,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                               });
                             },
                           ),
-
                           const SizedBox(height: 16),
-
-                          // Text color picker
                           const Text(
                             'Text Color',
                             style: TextStyle(
@@ -468,10 +415,7 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                               });
                             },
                           ),
-
                           const SizedBox(height: 16),
-
-                          // Text style options
                           TextStyleOptions(
                             fontSize: _fontSize,
                             fontWeight: _fontWeight,
@@ -492,7 +436,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                   ),
                 ),
 
-              // Create story button
               Positioned(
                 bottom: 20,
                 left: 20,
@@ -536,33 +479,6 @@ class _CreateStoryPageState extends State<CreateStoryPage> {
                   },
                 ),
               ),
-
-              // Drag instruction hint
-              if (!_isTextStory &&
-                  _textController.text.isEmpty &&
-                  !_isTextFocused)
-                const Positioned(
-                  top: 100,
-                  left: 20,
-                  right: 20,
-                  child: Center(
-                    child: Text(
-                      'Tap to add text, then drag to position',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        shadows: [
-                          Shadow(
-                            offset: Offset(1, 1),
-                            blurRadius: 3,
-                            color: Colors.black,
-                          ),
-                        ],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
