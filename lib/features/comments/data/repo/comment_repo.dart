@@ -10,17 +10,35 @@ class CommentRepo implements CommentRepoContract {
   Future<List<Comment>> fetchCommentsByPostId(String postId) async {
     try {
       final postDoc = await postCollection.doc(postId).get();
-      if (postDoc.exists) {
-        final data = postDoc.data() as Map<String, dynamic>;
-        final commentsData = data['comments'] as List<dynamic>? ?? [];
-        return commentsData
-            .map(
-              (commentData) =>
-                  Comment.fromJson(commentData as Map<String, dynamic>),
-            )
-            .toList();
+      if (!postDoc.exists) return [];
+
+      final data = postDoc.data() as Map<String, dynamic>;
+      final commentsData = data['comments'] as List<dynamic>? ?? [];
+
+      List<Comment> comments = [];
+
+      for (var commentData in commentsData) {
+        final commentMap = commentData as Map<String, dynamic>;
+        final commenterId = commentMap['commenterId'] ?? commentMap['userId'];
+
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(commenterId)
+            .get();
+
+        String profileImageUrl = '';
+        if (userDoc.exists) {
+          final userData = userDoc.data()!;
+          profileImageUrl = userData['profileImgUrl'] as String? ?? '';
+        }
+
+        // Store it using the correct expected key for the Comment model
+        commentMap['userProfileImageUrl'] = profileImageUrl;
+
+        comments.add(Comment.fromJson(commentMap));
       }
-      return [];
+
+      return comments;
     } catch (e) {
       throw Exception("Error fetching comments: $e");
     }

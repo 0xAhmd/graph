@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 class CommentAvatar extends StatelessWidget {
   final String userName;
   final String userId;
-  final String? profileImageUrl; // Add profile image URL
+  final String? profileImageUrl;
   final Color color;
   final VoidCallback? onTap;
 
@@ -12,13 +12,18 @@ class CommentAvatar extends StatelessWidget {
     super.key,
     required this.userName,
     required this.userId,
-    this.profileImageUrl, // Add this parameter
+    this.profileImageUrl,
     required this.color,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Debug print to check if profileImageUrl is being passed
+    debugPrint(
+      '🖼️ CommentAvatar - userName: $userName, profileImageUrl: $profileImageUrl',
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: CircleAvatar(
@@ -36,7 +41,10 @@ class CommentAvatar extends StatelessWidget {
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
-                  errorWidget: (context, url, error) => _buildFallbackAvatar(),
+                  errorWidget: (context, url, error) {
+                    debugPrint('❌ Image load error for $userName: $error');
+                    return _buildFallbackAvatar();
+                  },
                 ),
               )
             : _buildFallbackAvatar(),

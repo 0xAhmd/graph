@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/comments/presentation/widgets/comment_avatar.dart';
 import '../widgets/index.dart';
 import '../../../comments/presentation/pages/comments_page.dart';
 import '../../../comments/presentation/cubit/comment_cubit.dart';
@@ -121,7 +122,6 @@ class _PostTileState extends State<PostTile> {
         ),
       ),
     ).then((_) {
-      // Reload comments when returning from comments page
       reloadComments();
     });
   }
@@ -200,19 +200,12 @@ class _PostTileState extends State<PostTile> {
                       ),
                     ],
                   ),
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    child: Text(
-                      latestComment.userName.isNotEmpty
-                          ? latestComment.userName[0].toUpperCase()
-                          : 'U',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
+                  child: CommentAvatar(
+                    userName: latestComment.userName,
+                    userId: latestComment.userId,
+                    profileImageUrl: latestComment.userProfileImageUrl,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: openCommentsPage,
                   ),
                 ),
                 const SizedBox(width: 12),

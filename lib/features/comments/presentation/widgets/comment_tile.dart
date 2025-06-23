@@ -194,11 +194,12 @@ class _CommentTileState extends State<CommentTile>
   }
 
   void _navigateToProfile() {
-    // Navigate to user profile page
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProfilePage(uid: widget.currentUserId),
+        builder: (context) => ProfilePage(
+          uid: widget.comment.userId,
+        ), 
       ),
     );
   }
