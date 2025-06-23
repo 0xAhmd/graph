@@ -505,60 +505,58 @@ class _HomePageState extends State<HomePage>
                 return TabBarView(
                   controller: _tabController,
                   children: [
-                    // For You Tab - All Posts (filtered) without Stories
-                    buildPostsList(allPosts),
-
-                    // Following Tab - Posts from followed users with Stories
-                    Column(
-                      children: [
-                        const SizedBox(height: 10),
-                        // Stories Section - Only in Following tab
-                        buildStoriesSection(),
-                        // Posts List
-                        Expanded(
-                          child: RefreshIndicator(
-                            onRefresh: refreshData,
-                            displacement: 40,
-                            color: Theme.of(context).colorScheme.primary,
-                            child: followingPosts.isEmpty
-                                ? ListView(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 32.0,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "No posts from people you follow.",
-                                            style: TextStyle(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.inversePrimary,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : ListView.builder(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
-                                    itemCount: followingPosts.length,
-                                    itemBuilder: (context, index) {
-                                      final post = followingPosts[index];
-                                      return PostTile(
-                                        key: ValueKey(post.id),
-                                        post: post,
-                                        onDeletePressed: () =>
-                                            deletePost(post.id),
-                                      );
-                                    },
-                                  ),
+                    /// Tab 1: For You (All posts)
+                    RefreshIndicator(
+                      onRefresh: refreshData,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          ...filterBlockedUserPosts(allPosts).map(
+                            (post) => PostTile(
+                              key: ValueKey(post.id),
+                              post: post,
+                              onDeletePressed: () => deletePost(post.id),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+
+                    /// Tab 2: Following (Stories + Posts)
+                    RefreshIndicator(
+                      onRefresh: refreshData,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: 10),
+                          buildStoriesSection(),
+                          const SizedBox(height: 8),
+                          if (followingPosts.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 32.0,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "No posts from people you follow.",
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.inversePrimary,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            ...followingPosts.map(
+                              (post) => PostTile(
+                                key: ValueKey(post.id),
+                                post: post,
+                                onDeletePressed: () => deletePost(post.id),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 );
