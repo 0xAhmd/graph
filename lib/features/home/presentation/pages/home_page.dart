@@ -511,13 +511,27 @@ class _HomePageState extends State<HomePage>
                       child: ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          ...filterBlockedUserPosts(allPosts).map(
-                            (post) => PostTile(
+                          ...filterBlockedUserPosts(allPosts).map((post) {
+                            final currentUser = authCubit.currentUser;
+                            final isCurrentUserPost =
+                                currentUser?.uid == post.userId;
+                            final isUserBlocked = profileCubit.isUserBlocked(
+                              post.userId,
+                            );
+
+                            return PostTile(
                               key: ValueKey(post.id),
                               post: post,
                               onDeletePressed: () => deletePost(post.id),
-                            ),
-                          ),
+                              onBlockPressed: isCurrentUserPost
+                                  ? null
+                                  : () => blockUser(post.userId),
+                              onUnblockPressed: isCurrentUserPost
+                                  ? null
+                                  : () => unBlockUser(post.userId),
+                              isUserBlocked: isUserBlocked,
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -548,13 +562,27 @@ class _HomePageState extends State<HomePage>
                               ),
                             )
                           else
-                            ...followingPosts.map(
-                              (post) => PostTile(
+                            ...followingPosts.map((post) {
+                              final currentUser = authCubit.currentUser;
+                              final isCurrentUserPost =
+                                  currentUser?.uid == post.userId;
+                              final isUserBlocked = profileCubit.isUserBlocked(
+                                post.userId,
+                              );
+
+                              return PostTile(
                                 key: ValueKey(post.id),
                                 post: post,
                                 onDeletePressed: () => deletePost(post.id),
-                              ),
-                            ),
+                                onBlockPressed: isCurrentUserPost
+                                    ? null
+                                    : () => blockUser(post.userId),
+                                onUnblockPressed: isCurrentUserPost
+                                    ? null
+                                    : () => unBlockUser(post.userId),
+                                isUserBlocked: isUserBlocked,
+                              );
+                            }),
                         ],
                       ),
                     ),
