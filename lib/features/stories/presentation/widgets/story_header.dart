@@ -7,9 +7,10 @@ class StoryHeader extends StatelessWidget {
   final VoidCallback onMorePressed;
   final VoidCallback onClosePressed;
   final String? currentUserId; // Add current user ID
-
+  final void Function()? onTap;
   const StoryHeader({
     super.key,
+    required this.onTap,
     required this.story,
     required this.onMorePressed,
     required this.onClosePressed,
@@ -47,71 +48,74 @@ class StoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Profile picture
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.grey,
-          backgroundImage: story.userProfileImageUrl != null
-              ? CachedNetworkImageProvider(story.userProfileImageUrl!)
-              : null,
-          child: story.userProfileImageUrl == null
-              ? Text(
-                  story.username.isNotEmpty
-                      ? story.username[0].toUpperCase()
-                      : 'U',
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          // Profile picture
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.grey,
+            backgroundImage: story.userProfileImageUrl != null
+                ? CachedNetworkImageProvider(story.userProfileImageUrl!)
+                : null,
+            child: story.userProfileImageUrl == null
+                ? Text(
+                    story.username.isNotEmpty
+                        ? story.username[0].toUpperCase()
+                        : 'U',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
+          ),
+
+          const SizedBox(width: 12),
+
+          // Username and time/views
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  story.username,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                )
-              : null,
-        ),
-
-        const SizedBox(width: 12),
-
-        // Username and time/views
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                story.username,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
                 ),
-              ),
-              // Only show view count if it's the current user's story
-              // Otherwise show time ago
-              Text(
-                _isCurrentUserStory()
-                    ? _formatViewsCount(story.viewCount)
-                    : _formatTimeAgo(story.createdAt),
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 12,
+                // Only show view count if it's the current user's story
+                // Otherwise show time ago
+                Text(
+                  _isCurrentUserStory()
+                      ? _formatViewsCount(story.viewCount)
+                      : _formatTimeAgo(story.createdAt),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        // More options button (only show for current user's stories)
-        if (_isCurrentUserStory())
+          // More options button (only show for current user's stories)
+          if (_isCurrentUserStory())
+            IconButton(
+              onPressed: onMorePressed,
+              icon: const Icon(Icons.more_vert, color: Colors.white, size: 24),
+            ),
+
+          // Close button
           IconButton(
-            onPressed: onMorePressed,
-            icon: const Icon(Icons.more_vert, color: Colors.white, size: 24),
+            onPressed: onClosePressed,
+            icon: const Icon(Icons.close, color: Colors.white, size: 24),
           ),
-
-        // Close button
-        IconButton(
-          onPressed: onClosePressed,
-          icon: const Icon(Icons.close, color: Colors.white, size: 24),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

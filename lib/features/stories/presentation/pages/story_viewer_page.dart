@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
 import 'package:ig_mate/features/stories/domain/entities/story.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_content.dart';
@@ -470,6 +471,17 @@ class _StoryViewerPageState extends State<StoryViewerPage>
               left: 16,
               right: 16,
               child: StoryHeader(
+                onTap: () {
+                  final storyOwnerId =
+                      widget.stories[_currentStoryIndex].userId;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfilePage(uid: storyOwnerId),
+                    ),
+                  );
+                },
                 story: widget.stories[_currentStoryIndex],
                 currentUserId: currentUser?.uid, // Safe null check
                 onMorePressed: _showStoryOptions,
