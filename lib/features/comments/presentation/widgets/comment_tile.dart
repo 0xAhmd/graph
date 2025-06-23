@@ -137,9 +137,12 @@ class _CommentTileState extends State<CommentTile>
               children: [
                 CommentAvatar(
                   userName: widget.comment.userName,
-                  userId: widget.comment.userId, // Add this line
+                  userId: widget.comment.userId,
+                  profileImageUrl: widget
+                      .comment
+                      .userProfileImageUrl, // Add this field to your Comment entity
                   color: avatarColor,
-                  onTap: _navigateToProfile, // Add this line
+                  onTap: _navigateToProfile,
                 ),
                 const SizedBox(width: CommentConstants.avatarSpacing),
                 Expanded(

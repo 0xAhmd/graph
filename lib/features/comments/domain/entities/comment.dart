@@ -8,6 +8,8 @@ class Comment {
   final String postId;
   final String userId;
   final String userName;
+  @JsonKey(defaultValue: '') // Add default value for backwards compatibility
+  final String userProfileImageUrl; // Add profile image URL field
   final String text;
   final DateTime timestamp;
   final String? parentCommentId; // For nested comments
@@ -21,6 +23,7 @@ class Comment {
     required this.postId,
     required this.userId,
     required this.userName,
+    this.userProfileImageUrl = '', // Add with default empty string
     required this.text,
     required this.timestamp,
     this.parentCommentId,
@@ -34,6 +37,7 @@ class Comment {
     String? postId,
     String? userId,
     String? userName,
+    String? userProfileImageUrl, // Add to copyWith method
     String? text,
     DateTime? timestamp,
     String? parentCommentId,
@@ -46,6 +50,8 @@ class Comment {
       postId: postId ?? this.postId,
       userId: userId ?? this.userId,
       userName: userName ?? this.userName,
+      userProfileImageUrl:
+          userProfileImageUrl ?? this.userProfileImageUrl, // Add this line
       text: text ?? this.text,
       timestamp: timestamp ?? this.timestamp,
       parentCommentId: parentCommentId ?? this.parentCommentId,
