@@ -102,8 +102,9 @@ class _PostTileState extends State<PostTile> {
     }
   }
 
-  // Add this method to force reload comments when needed
   Future<void> reloadComments() async {
+    if (!mounted) return; // Add this check
+
     setState(() {
       commentsLoaded = false;
     });

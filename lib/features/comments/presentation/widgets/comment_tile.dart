@@ -9,6 +9,7 @@ import 'package:ig_mate/features/comments/presentation/widgets/reply/comment_rep
 import 'package:ig_mate/features/comments/presentation/widgets/reply/comment_reply_input.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_constants.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_helpers.dart';
+import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
 import 'comment_avatar.dart';
 
 class CommentTile extends StatefulWidget {
@@ -136,7 +137,9 @@ class _CommentTileState extends State<CommentTile>
               children: [
                 CommentAvatar(
                   userName: widget.comment.userName,
+                  userId: widget.comment.userId, // Add this line
                   color: avatarColor,
+                  onTap: _navigateToProfile, // Add this line
                 ),
                 const SizedBox(width: CommentConstants.avatarSpacing),
                 Expanded(
@@ -183,6 +186,16 @@ class _CommentTileState extends State<CommentTile>
               color: theme.outline.withOpacity(0.1),
             ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToProfile() {
+    // Navigate to user profile page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfilePage(uid: widget.currentUserId),
       ),
     );
   }
