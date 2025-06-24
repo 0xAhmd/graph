@@ -8,6 +8,7 @@ class StoryHeader extends StatelessWidget {
   final VoidCallback onClosePressed;
   final String? currentUserId; // Add current user ID
   final void Function()? onTap;
+
   const StoryHeader({
     super.key,
     required this.onTap,
@@ -32,15 +33,6 @@ class StoryHeader extends StatelessWidget {
     }
   }
 
-  String _formatViewsCount(int viewsCount) {
-    if (viewsCount >= 1000000) {
-      return '${(viewsCount / 1000000).toStringAsFixed(1)}M views';
-    } else if (viewsCount >= 1000) {
-      return '${(viewsCount / 1000).toStringAsFixed(1)}K views';
-    } else {
-      return '$viewsCount views';
-    }
-  }
 
   bool _isCurrentUserStory() {
     return currentUserId != null && currentUserId == story.userId;
@@ -74,7 +66,7 @@ class StoryHeader extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // Username and time/views
+          // Username and time ago (always show time ago instead of views)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,12 +79,9 @@ class StoryHeader extends StatelessWidget {
                     fontSize: 16,
                   ),
                 ),
-                // Only show view count if it's the current user's story
-                // Otherwise show time ago
+                // Always show time ago for all stories
                 Text(
-                  _isCurrentUserStory()
-                      ? _formatViewsCount(story.viewCount)
-                      : _formatTimeAgo(story.createdAt),
+                  _formatTimeAgo(story.createdAt),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.8),
                     fontSize: 12,

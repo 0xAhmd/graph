@@ -1,5 +1,4 @@
 // lib/features/stories/presentation/pages/story_viewer_page.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
@@ -73,18 +72,6 @@ class _StoryViewerPageState extends State<StoryViewerPage>
         _nextStory();
       }
     });
-  }
-
-  Future<String> _getUserName(String uid) async {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      return doc.data()?['name'] ?? 'Unknown';
-    } catch (e) {
-      return 'Unknown';
-    }
   }
 
   void _pauseStory() {
@@ -172,16 +159,19 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     }
   }
 
+  // Updated _markCurrentStoryAsViewed method for StoryViewerPage
   void _markCurrentStoryAsViewed() {
     if (!mounted) return;
 
     final currentUser = context.read<AuthCubit>().currentUser;
     if (currentUser != null) {
       final currentStory = widget.stories[_currentStoryIndex];
-      if (!currentStory.viewers.contains(currentUser.uid)) {
+
+      // Check if current user's name is already in viewers list
+      if (!currentStory.viewers.contains(currentUser.name)) {
         context.read<StoriesCubit>().markStoryAsViewed(
           currentStory.id,
-          currentUser.name,
+          currentUser.name, // Use username instead of UID
         );
       }
     }
@@ -320,6 +310,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     );
   }
 
+  // Updated _showViewersList method for StoryViewerPage
   void _showViewersList() {
     if (!mounted) return;
 
@@ -371,30 +362,23 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                   controller: scrollController,
                   itemCount: widget.stories[_currentStoryIndex].viewers.length,
                   itemBuilder: (context, index) {
-                    final viewerId =
+                    final viewerName =
                         widget.stories[_currentStoryIndex].viewers[index];
 
-                    return FutureBuilder<String>(
-                      future: _getUserName(viewerId),
-                      builder: (context, snapshot) {
-                        final viewerName = snapshot.data ?? '...';
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            child: Text(
-                              viewerName.isNotEmpty
-                                  ? viewerName[0].toUpperCase()
-                                  : '?',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
-                            ),
+                    // Since viewers list contains usernames directly, just display them
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        child: Text(
+                          viewerName.isNotEmpty
+                              ? viewerName[0].toUpperCase()
+                              : '?',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
-                          title: Text(viewerName),
-                        );
-                      },
+                        ),
+                      ),
+                      title: Text(viewerName),
                     );
                   },
                 ),
