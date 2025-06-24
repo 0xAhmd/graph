@@ -159,12 +159,17 @@ class _PostTileState extends State<PostTile> {
   }
 
   Widget _buildLatestComment(List<Comment> comments) {
-    if (comments.isEmpty) {
+    // Filter out comments from blocked users
+    final filteredComments = comments
+        .where((comment) => !profileCubit.isUserBlocked(comment.userId))
+        .toList();
+
+    if (filteredComments.isEmpty) {
       return const SizedBox();
     }
 
-    // Get the latest comment (last in the list)
-    final latestComment = comments.last;
+    // Get the latest comment (last in the filtered list)
+    final latestComment = filteredComments.last;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

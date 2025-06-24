@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/core/utils/comment_organizer.dart';
 import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/comment_tile.dart';
+import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
 
 import '../../domain/entities/comment.dart';
 import '../../../auth/domain/entities/app_user.dart';
@@ -58,25 +59,36 @@ class CommentListView extends StatelessWidget {
         }
 
         final comments = _getCommentsForCurrentPost(state);
+        // Filter out comments from blocked users
+        final filteredComments = _filterBlockedUserComments(comments, context);
 
-        if (comments.isEmpty) {
+        if (filteredComments.isEmpty) {
           return const CommentEmptyState();
         }
 
         return Column(
           children: [
             CommentStatsHeader(
-              comments: comments,
+              comments: filteredComments,
               sortBy: sortBy,
               onSortChanged: onSortChanged,
             ),
-            Expanded(
-              child: _buildCommentsList(comments),
-            ),
+            Expanded(child: _buildCommentsList(filteredComments)),
           ],
         );
       },
     );
+  }
+
+  /// Filters out comments from blocked users
+  List<Comment> _filterBlockedUserComments(
+    List<Comment> comments,
+    BuildContext context,
+  ) {
+    final profileCubit = BlocProvider.of<ProfileCubit>(context, listen: false);
+    return comments
+        .where((comment) => !profileCubit.isUserBlocked(comment.userId))
+        .toList();
   }
 
   Widget _buildCommentsList(List<Comment> comments) {
@@ -90,12 +102,15 @@ class CommentListView extends StatelessWidget {
         final comment = parentComments[index];
         final replies = repliesMap[comment.id] ?? [];
 
+        // Also filter replies from blocked users
+        final filteredReplies = _filterBlockedUserComments(replies, context);
+
         return CommentTile(
           comment: comment,
           currentUserId: currentUser.uid,
           onDeleteComment: () => onDeleteComment(comment.id),
           onEditComment: onEditComment,
-          replies: replies,
+          replies: filteredReplies,
           showReplies: true,
         );
       },
