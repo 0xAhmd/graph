@@ -1,14 +1,7 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/features/profile/presentation/widgets/profile_image_viewer.dart';
-import 'package:ig_mate/features/stories/domain/entities/story.dart';
-import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
-import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
-import 'package:ig_mate/features/stories/presentation/pages/story_viewer_page.dart';
+
 import '../pages/index.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -26,6 +19,7 @@ class _ProfilePageState extends State<ProfilePage>
   late final storyCubit = context.read<StoriesCubit>(); // Add story cubit
   late AppUser? currentUser = authCubit.currentUser;
   bool _isFollowLoading = false;
+  bool _isBlockLoading = false;
   late TabController _tabController;
 
   @override
@@ -75,6 +69,159 @@ class _ProfilePageState extends State<ProfilePage>
       if (mounted) {
         setState(() {
           _isFollowLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showOptionsBottomSheet(
+    BuildContext context,
+    AppUser user,
+  ) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Block user option
+              ListTile(
+                leading: const Icon(Icons.block, color: Colors.red),
+                title: Text(
+                  'Block ${user.name}',
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close bottom sheet
+                  _showBlockConfirmationDialog(context, user);
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.report_gmailerrorred_outlined,
+                  color: Colors.amber,
+                ),
+                title: Text(
+                  'Report ${user.name}',
+                  style: const TextStyle(
+                    color: Colors.amber,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context); // Close bottom sheet
+                  await Future.delayed(const Duration(seconds: 2));
+
+                  Fluttertoast.showToast(
+                    msg: "${user.name} has been reported",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.green,
+                    textColor: Colors.white,
+                  );
+                },
+              ),
+              // Cancel option
+              ListTile(
+                leading: const Icon(Icons.cancel_outlined),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showBlockConfirmationDialog(
+    BuildContext context,
+    AppUser user,
+  ) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Block ${user.name}?'),
+          content: Text(
+            'Are you sure you want to block ${user.name}? You won\'t be able to see their posts, stories, or profile.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                _blockUser(user);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Block'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _blockUser(AppUser user) async {
+    if (_isBlockLoading || currentUser == null) return;
+
+    setState(() {
+      _isBlockLoading = true;
+    });
+
+    try {
+      // Call your block user method from ProfileCubit
+      // You'll need to implement this method in your ProfileCubit
+      await profileCubit.blockUser(currentUser!.uid, widget.uid);
+
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: "${user.name} has been blocked",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.green,
+          textColor: Colors.white,
+        );
+
+        // Navigate back to previous screen
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        Fluttertoast.showToast(
+          msg: "Failed to block user: $e",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBlockLoading = false;
         });
       }
     }
@@ -135,7 +282,23 @@ class _ProfilePageState extends State<ProfilePage>
                               refreshProfile();
                             },
                             icon: const Icon(Icons.settings),
-                          ),
+                          )
+                        else
+                          // Options icon for other users' profiles
+                          _isBlockLoading
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12.0),
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CupertinoActivityIndicator(),
+                                  ),
+                                )
+                              : IconButton(
+                                  onPressed: () =>
+                                      _showOptionsBottomSheet(context, user),
+                                  icon: const Icon(Icons.more_vert),
+                                ),
                       ],
                       centerTitle: true,
                       title: Text(user.name),
@@ -175,7 +338,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   decoration: userStories.isNotEmpty
                                       ? const BoxDecoration(
                                           shape: BoxShape.circle,
-                                          gradient:  LinearGradient(
+                                          gradient: LinearGradient(
                                             colors: [
                                               Color(0xFFF58529),
                                               Color(0xFFDD2A7B),
