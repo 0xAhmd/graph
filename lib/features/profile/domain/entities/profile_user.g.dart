@@ -8,6 +8,7 @@ part of 'profile_user.dart';
 
 ProfileUserEntity _$ProfileUserEntityFromJson(Map<String, dynamic> json) =>
     ProfileUserEntity(
+      isPrivate: json['isPrivate'] as bool? ?? false,
       lastEmailUpdate: (json['lastEmailUpdate'] as num?)?.toInt() ?? 0,
       followers:
           (json['followers'] as List<dynamic>?)
@@ -36,4 +37,5 @@ Map<String, dynamic> _$ProfileUserEntityToJson(ProfileUserEntity instance) =>
       'followers': instance.followers,
       'followings': instance.followings,
       'lastEmailUpdate': instance.lastEmailUpdate,
+      'isPrivate': instance.isPrivate,
     };

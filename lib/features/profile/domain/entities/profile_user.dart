@@ -15,8 +15,11 @@ class ProfileUserEntity extends AppUser {
   final List<String> followings;
   @JsonKey(defaultValue: 0)
   final int? lastEmailUpdate;
+  @JsonKey(defaultValue: false)
+  final bool isPrivate; // NEW FIELD
 
   ProfileUserEntity({
+    required this.isPrivate, // NEW REQUIRED PARAMETER
     this.lastEmailUpdate,
     required this.followers,
     required this.followings,
@@ -32,8 +35,9 @@ class ProfileUserEntity extends AppUser {
     List<String>? newFollowings,
     String? newBio,
     String? newProfileImgUrl,
-    String? newEmail, // ✅ Add email parameter
-    int? newLastEmailUpdate, // ✅ Add lastEmailUpdate parameter
+    String? newEmail,
+    int? newLastEmailUpdate,
+    bool? newIsPrivate, // NEW PARAMETER
   }) {
     return ProfileUserEntity(
       lastEmailUpdate: newLastEmailUpdate ?? lastEmailUpdate,
@@ -41,9 +45,10 @@ class ProfileUserEntity extends AppUser {
       profileImgUrl: newProfileImgUrl ?? profileImgUrl,
       uid: uid,
       name: name,
-      email: newEmail ?? email, // ✅ Use newEmail parameter
+      email: newEmail ?? email,
       followers: newFollowers ?? followers,
       followings: newFollowings ?? followings,
+      isPrivate: newIsPrivate ?? isPrivate, // NEW FIELD
     );
   }
 
