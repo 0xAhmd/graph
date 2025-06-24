@@ -129,7 +129,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 onTap: () async {
                   Navigator.pop(context); // Close bottom sheet
-                  await Future.delayed(const Duration(seconds: 2));
+                  await Future.delayed(const Duration(seconds: 2))
 
                   Fluttertoast.showToast(
                     msg: "${user.name} has been reported",

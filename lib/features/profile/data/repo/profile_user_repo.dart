@@ -36,6 +36,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
             uid: uid,
             name: userData['name'],
             email: userData['email'],
+            isPrivate: userData['isPrivate'] ?? false, // <-- Add this line
           );
         }
       }
