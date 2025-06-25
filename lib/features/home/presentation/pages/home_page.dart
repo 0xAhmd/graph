@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage>
   late TabController _tabController;
 
   List<String> followingUserIds = [];
+  Map<String, bool> userPrivacyStatus = {}; // Track which users are private
   bool isDeleting = false;
   String? currentUserProfileImage;
   String? currentUsername;
@@ -97,6 +98,34 @@ class _HomePageState extends State<HomePage>
     }
   }
 
+  // NEW: Load privacy status for all unique users in posts
+  Future<void> loadUserPrivacyStatus(List<dynamic> posts) async {
+    try {
+      final uniqueUserIds = posts.map((post) => post.userId).toSet();
+      final Map<String, bool> privacyMap = {};
+
+      for (final userId in uniqueUserIds) {
+        if (!userPrivacyStatus.containsKey(userId)) {
+          final userProfile = await profileCubit.getUserProfile(userId);
+          if (userProfile != null) {
+            privacyMap[userId] = userProfile.isPrivate;
+          } else {
+            privacyMap[userId] =
+                false; // Default to public if profile not found
+          }
+        }
+      }
+
+      if (privacyMap.isNotEmpty) {
+        setState(() {
+          userPrivacyStatus.addAll(privacyMap);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user privacy status: $e');
+    }
+  }
+
   // Load comments for all visible posts
   Future<void> loadCommentsForPosts(List<dynamic> posts) async {
     try {
@@ -119,7 +148,8 @@ class _HomePageState extends State<HomePage>
 
     final currentState = postCubit.state;
     if (currentState is PostLoaded) {
-      final filteredPosts = filterBlockedUserPosts(currentState.posts);
+      await loadUserPrivacyStatus(currentState.posts);
+      final filteredPosts = filterPostsForForYouFeed(currentState.posts);
       await loadCommentsForPosts(filteredPosts);
     }
   }
@@ -200,14 +230,52 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  // Filter out posts from blocked users
-  List<dynamic> filterBlockedUserPosts(List<dynamic> posts) {
-    return posts
-        .where((post) => !profileCubit.isUserBlocked(post.userId))
-        .toList();
+  // UPDATED: Privacy-aware filtering for "For You" feed
+  List<dynamic> filterPostsForForYouFeed(List<dynamic> posts) {
+    final currentUser = authCubit.currentUser;
+    if (currentUser == null) return [];
+
+    return posts.where((post) {
+      // Filter out blocked users
+      if (profileCubit.isUserBlocked(post.userId)) {
+        return false;
+      }
+
+      // Always show own posts
+      if (post.userId == currentUser.uid) {
+        return true;
+      }
+
+      // Check if the post author has a private account
+      final isPrivateAccount = userPrivacyStatus[post.userId] ?? false;
+
+      if (isPrivateAccount) {
+        // Only show private posts if we're following the user
+        return followingUserIds.contains(post.userId);
+      } else {
+        // Show all public posts
+        return true;
+      }
+    }).toList();
   }
 
-  // Filter stories to show only from followed users
+  // UPDATED: Privacy-aware filtering for "Following" feed
+  List<dynamic> filterPostsForFollowingFeed(List<dynamic> posts) {
+    final currentUser = authCubit.currentUser;
+    if (currentUser == null) return [];
+
+    return posts.where((post) {
+      // Filter out blocked users
+      if (profileCubit.isUserBlocked(post.userId)) {
+        return false;
+      }
+
+      // Only show posts from users we follow (including private accounts we follow)
+      return followingUserIds.contains(post.userId);
+    }).toList();
+  }
+
+  // Filter stories to show only from followed users (respecting privacy)
   Map<String, List<StoryEntity>> filterFollowingStories(
     Map<String, List<StoryEntity>> allStories,
   ) {
@@ -218,6 +286,7 @@ class _HomePageState extends State<HomePage>
       final userStories = entry.value;
 
       // Include stories only from users we follow (not blocked)
+      // Stories follow the same privacy rules as posts
       if (followingUserIds.contains(userId) &&
           !profileCubit.isUserBlocked(userId)) {
         filteredStories[userId] = userStories;
@@ -227,45 +296,109 @@ class _HomePageState extends State<HomePage>
     return filteredStories;
   }
 
-  Widget buildPostsList(List<dynamic> posts, {bool showEmptyMessage = true}) {
-    final filteredPosts = filterBlockedUserPosts(posts);
-
-    if (filteredPosts.isEmpty && showEmptyMessage) {
-      return Center(
-        child: Text(
-          _tabController.index == 0
-              ? "No Posts Available here..."
-              : "No posts from users you follow...",
-          style: TextStyle(color: Theme.of(context).colorScheme.inversePrimary),
+  Widget buildEmptyForYouMessage() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.explore_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No new posts yet",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Follow more people or invite friends to see more content!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(
+                  context,
+                ).colorScheme.inversePrimary.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Navigate to discover/search page
+                // You can implement this navigation
+                debugPrint('Navigate to discover page');
+              },
+              icon: const Icon(Icons.search),
+              label: const Text("Discover People"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    return RefreshIndicator(
-      onRefresh: refreshData,
-      displacement: 40,
-      color: Theme.of(context).colorScheme.primary,
-      child: ListView.builder(
-        itemBuilder: (context, index) {
-          final post = filteredPosts[index];
-          final currentUser = authCubit.currentUser;
-          final isCurrentUserPost = currentUser?.uid == post.userId;
-          final isUserBlocked = profileCubit.isUserBlocked(post.userId);
-
-          return PostTile(
-            key: ValueKey(post.id),
-            post: post,
-            onDeletePressed: () => deletePost(post.id),
-            onBlockPressed: isCurrentUserPost
-                ? null
-                : () => blockUser(post.userId),
-            onUnblockPressed: isCurrentUserPost
-                ? null
-                : () => unBlockUser(post.userId),
-            isUserBlocked: isUserBlocked,
-          );
-        },
-        itemCount: filteredPosts.length,
+  Widget buildEmptyFollowingMessage() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "You're not following anyone yet",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.inversePrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Start following accounts to see their posts here!",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(
+                  context,
+                ).colorScheme.inversePrimary.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Navigate to discover/search page
+                debugPrint('Navigate to discover page');
+              },
+              icon: const Icon(Icons.person_add),
+              label: const Text("Find People"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -492,51 +625,52 @@ class _HomePageState extends State<HomePage>
               } else if (state is PostLoaded) {
                 final allPosts = state.posts;
 
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  loadCommentsForPosts(filterBlockedUserPosts(allPosts));
+                // Load privacy status for all users
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  await loadUserPrivacyStatus(allPosts);
+                  final forYouPosts = filterPostsForForYouFeed(allPosts);
+                  await loadCommentsForPosts(forYouPosts);
                 });
 
-                final followingPosts = filterBlockedUserPosts(
-                  allPosts
-                      .where((post) => followingUserIds.contains(post.userId))
-                      .toList(),
-                );
+                final forYouPosts = filterPostsForForYouFeed(allPosts);
+                final followingPosts = filterPostsForFollowingFeed(allPosts);
 
                 return TabBarView(
                   controller: _tabController,
                   children: [
-                    /// Tab 1: For You (All posts)
+                    /// Tab 1: For You (Public posts + private posts from followed accounts)
                     RefreshIndicator(
                       onRefresh: refreshData,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          ...filterBlockedUserPosts(allPosts).map((post) {
-                            final currentUser = authCubit.currentUser;
-                            final isCurrentUserPost =
-                                currentUser?.uid == post.userId;
-                            final isUserBlocked = profileCubit.isUserBlocked(
-                              post.userId,
-                            );
+                      child: forYouPosts.isEmpty
+                          ? buildEmptyForYouMessage()
+                          : ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: forYouPosts.length,
+                              itemBuilder: (context, index) {
+                                final post = forYouPosts[index];
+                                final currentUser = authCubit.currentUser;
+                                final isCurrentUserPost =
+                                    currentUser?.uid == post.userId;
+                                final isUserBlocked = profileCubit
+                                    .isUserBlocked(post.userId);
 
-                            return PostTile(
-                              key: ValueKey(post.id),
-                              post: post,
-                              onDeletePressed: () => deletePost(post.id),
-                              onBlockPressed: isCurrentUserPost
-                                  ? null
-                                  : () => blockUser(post.userId),
-                              onUnblockPressed: isCurrentUserPost
-                                  ? null
-                                  : () => unBlockUser(post.userId),
-                              isUserBlocked: isUserBlocked,
-                            );
-                          }),
-                        ],
-                      ),
+                                return PostTile(
+                                  key: ValueKey(post.id),
+                                  post: post,
+                                  onDeletePressed: () => deletePost(post.id),
+                                  onBlockPressed: isCurrentUserPost
+                                      ? null
+                                      : () => blockUser(post.userId),
+                                  onUnblockPressed: isCurrentUserPost
+                                      ? null
+                                      : () => unBlockUser(post.userId),
+                                  isUserBlocked: isUserBlocked,
+                                );
+                              },
+                            ),
                     ),
 
-                    /// Tab 2: Following (Stories + Posts)
+                    /// Tab 2: Following (Stories + Posts from followed accounts)
                     RefreshIndicator(
                       onRefresh: refreshData,
                       child: ListView(
@@ -546,21 +680,7 @@ class _HomePageState extends State<HomePage>
                           buildStoriesSection(),
                           const SizedBox(height: 8),
                           if (followingPosts.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 32.0,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "No posts from people you follow.",
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.inversePrimary,
-                                  ),
-                                ),
-                              ),
-                            )
+                            buildEmptyFollowingMessage()
                           else
                             ...followingPosts.map((post) {
                               final currentUser = authCubit.currentUser;

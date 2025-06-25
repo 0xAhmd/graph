@@ -11,6 +11,8 @@ class PostRepo implements PostRepoContract {
   final _bucket = Supabase.instance.client.storage.from('images');
   final CollectionReference postCollection = FirebaseFirestore.instance
       .collection('posts');
+  final CollectionReference userCollection = FirebaseFirestore.instance
+      .collection('users');
 
   @override
   Future<void> createPost(Post post) async {
@@ -80,6 +82,189 @@ class PostRepo implements PostRepoContract {
       }).toList();
     } catch (e) {
       throw Exception("Error: $e");
+    }
+  }
+
+  /// Fetches posts for "For You" feed with privacy filtering
+  /// Shows public posts + private posts from accounts the current user follows
+  @override
+  Future<List<Post>> fetchForYouPosts(String currentUserId) async {
+    try {
+      // First, get the current user's following list
+      final currentUserDoc = await userCollection.doc(currentUserId).get();
+      final currentUserData = currentUserDoc.data() as Map<String, dynamic>?;
+      final followingList = List<String>.from(
+        currentUserData?['following'] ?? [],
+      );
+
+      // Fetch all posts
+      final postsSnapshot = await postCollection
+          .orderBy('timeStamp', descending: true)
+          .get();
+
+      // Get all unique user IDs from posts to batch fetch user privacy settings
+      final userIds = postsSnapshot.docs
+          .map(
+            (doc) => (doc.data() as Map<String, dynamic>)['userId'] as String,
+          )
+          .toSet()
+          .toList();
+
+      // Batch fetch user privacy settings
+      final userPrivacyMap = await _fetchUserPrivacySettings(userIds);
+
+      // Filter posts based on privacy rules
+      final filteredPosts = <Post>[];
+
+      for (final doc in postsSnapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final postUserId = data['userId'] as String;
+        final isPrivate = userPrivacyMap[postUserId] ?? false;
+
+        // Include post if:
+        // 1. Account is public, OR
+        // 2. Account is private AND current user follows them, OR
+        // 3. Current user is the post owner
+        if (!isPrivate ||
+            followingList.contains(postUserId) ||
+            postUserId == currentUserId) {
+          // Calculate comment count
+          final comments = data['comments'] as List<dynamic>? ?? [];
+          data['commentCount'] = comments.length;
+          data.remove('comments');
+
+          filteredPosts.add(Post.fromJson(data));
+        }
+      }
+
+      return filteredPosts;
+    } catch (e) {
+      throw Exception("Error fetching For You posts: $e");
+    }
+  }
+
+  /// Fetches posts for "Following" feed
+  /// Shows all posts from accounts the current user follows (including private accounts)
+  @override
+  Future<List<Post>> fetchFollowingPosts(String currentUserId) async {
+    try {
+      // Get the current user's following list
+      final currentUserDoc = await userCollection.doc(currentUserId).get();
+      final currentUserData = currentUserDoc.data() as Map<String, dynamic>?;
+      final followingList = List<String>.from(
+        currentUserData?['following'] ?? [],
+      );
+
+      if (followingList.isEmpty) {
+        return []; // Return empty list if not following anyone
+      }
+
+      // Fetch posts only from followed users
+      final postsSnapshot = await postCollection
+          .where('userId', whereIn: followingList)
+          .orderBy('timeStamp', descending: true)
+          .get();
+
+      return postsSnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        // Calculate comment count
+        final comments = data['comments'] as List<dynamic>? ?? [];
+        data['commentCount'] = comments.length;
+        data.remove('comments');
+
+        return Post.fromJson(data);
+      }).toList();
+    } catch (e) {
+      throw Exception("Error fetching Following posts: $e");
+    }
+  }
+
+  /// Helper method to batch fetch user privacy settings
+  Future<Map<String, bool>> _fetchUserPrivacySettings(
+    List<String> userIds,
+  ) async {
+    try {
+      final userPrivacyMap = <String, bool>{};
+
+      // Firestore 'whereIn' has a limit of 10 items, so we need to batch the requests
+      const batchSize = 10;
+
+      for (int i = 0; i < userIds.length; i += batchSize) {
+        final batch = userIds.skip(i).take(batchSize).toList();
+
+        final usersSnapshot = await userCollection
+            .where(FieldPath.documentId, whereIn: batch)
+            .get();
+
+        for (final doc in usersSnapshot.docs) {
+          final userData = doc.data() as Map<String, dynamic>?;
+          userPrivacyMap[doc.id] = userData?['isPrivate'] ?? false;
+        }
+      }
+
+      return userPrivacyMap;
+    } catch (e) {
+      debugPrint('Error fetching user privacy settings: $e');
+      // Return empty map on error - this will treat all accounts as public (safer fallback)
+      return {};
+    }
+  }
+
+  /// Checks if a specific user account is private
+  @override
+  Future<bool> isUserAccountPrivate(String userId) async {
+    try {
+      final userDoc = await userCollection.doc(userId).get();
+      final userData = userDoc.data() as Map<String, dynamic>?;
+      return userData?['isPrivate'] ?? false;
+    } catch (e) {
+      debugPrint('Error checking user privacy status: $e');
+      return false; // Default to public on error
+    }
+  }
+
+  /// Checks if current user is following a specific user
+  @override
+  Future<bool> isFollowingUser(
+    String currentUserId,
+    String targetUserId,
+  ) async {
+    try {
+      final currentUserDoc = await userCollection.doc(currentUserId).get();
+      final currentUserData = currentUserDoc.data() as Map<String, dynamic>?;
+      final followingList = List<String>.from(
+        currentUserData?['following'] ?? [],
+      );
+      return followingList.contains(targetUserId);
+    } catch (e) {
+      debugPrint('Error checking following status: $e');
+      return false;
+    }
+  }
+
+  /// Fetches posts with privacy check for profile viewing
+  /// This is useful when viewing someone else's profile
+  @override
+  Future<List<Post>> fetchUserPostsWithPrivacyCheck(
+    String targetUserId,
+    String currentUserId,
+  ) async {
+    try {
+      // Check if target user account is private
+      final isPrivate = await isUserAccountPrivate(targetUserId);
+
+      // If account is private and current user is not following (and not viewing own profile)
+      if (isPrivate &&
+          targetUserId != currentUserId &&
+          !(await isFollowingUser(currentUserId, targetUserId))) {
+        return []; // Return empty list - cannot view private posts
+      }
+
+      // Otherwise, fetch posts normally
+      return await fetchPostsByUserId(targetUserId);
+    } catch (e) {
+      throw Exception("Error fetching user posts with privacy check: $e");
     }
   }
 

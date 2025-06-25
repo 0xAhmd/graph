@@ -342,7 +342,6 @@ class _ProfilePageState extends State<ProfilePage>
     return Container(
       padding: const EdgeInsets.all(40),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.lock_outline, size: 80, color: Colors.grey.shade400),
           const SizedBox(height: 16),

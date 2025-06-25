@@ -10,4 +10,12 @@ abstract class PostRepoContract {
   Future<String?> uploadPostImage(File file, String postId);
   Future<void> toggleLikes(String postId, String userId);
   Future<void> updateCommentCount(String postId, int count);
+  Future<List<Post>> fetchForYouPosts(String currentUserId);
+  Future<List<Post>> fetchFollowingPosts(String currentUserId);
+  Future<bool> isUserAccountPrivate(String userId);
+  Future<bool> isFollowingUser(String currentUserId, String targetUserId);
+  Future<List<Post>> fetchUserPostsWithPrivacyCheck(
+    String targetUserId,
+    String currentUserId,
+  );
 }
