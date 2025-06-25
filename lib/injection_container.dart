@@ -12,10 +12,21 @@ import 'features/chat/data/chat_repo.dart';
 import 'features/comments/data/repo/comment_repo.dart';
 import 'features/stories/data/repo/store_repo_impl.dart';
 
+import 'features/auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'features/posts/presentation/cubit/post_cubit.dart';
+import 'features/profile/presentation/cubit/cubit/profile_cubit.dart';
+import 'features/search/presentation/cubit/search_cubit.dart';
+import 'features/private/presentation/cubit/privacy_cubit.dart';
+import 'features/private/presentation/cubit/follow_request_cubit.dart';
+import 'features/chat/presentation/cubit/chat_cubit.dart';
+import 'features/comments/presentation/cubit/comment_cubit.dart';
+import 'features/stories/presentation/cubit/story_cubit.dart';
+import 'core/themes/theme_cubit.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
-  // Repositories
+  // Repos
   sl.registerLazySingleton(() => FirebaseAuthRepo());
   sl.registerLazySingleton(() => PostRepo());
   sl.registerLazySingleton(() => ProfileUserRepo());
@@ -30,4 +41,16 @@ Future<void> initDependencies() async {
       supabase: Supabase.instance.client,
     ),
   );
+
+  // Cubits
+  sl.registerFactory(() => AuthCubit(sl()));
+  sl.registerFactory(() => PostCubit(postRepo: sl()));
+  sl.registerFactory(() => ProfileCubit(sl()));
+  sl.registerFactory(() => SearchCubit(sl()));
+  sl.registerFactory(() => PrivacyCubit(sl()));
+  sl.registerFactory(() => FollowRequestCubit(sl()));
+  sl.registerFactory(() => ChatCubit(sl()));
+  sl.registerFactory(() => CommentCubit(commentRepo: sl()));
+  sl.registerFactory(() => StoriesCubit(repository: sl()));
+  sl.registerLazySingleton(() => ThemeCubit());
 }
