@@ -463,7 +463,7 @@ class _ProfilePageState extends State<ProfilePage>
                               PopupMenuItem<String>(
                                 value: 'toggle_privacy',
                                 child: ListTile(
-                                  leading: Icon(Icons.lock),
+                                  leading: const Icon(Icons.lock),
                                   title: Text(
                                     user.isPrivate
                                         ? 'Set to Public'
