@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../layout/constrained_scaffold.dart';
 import '../cubit/cubit/profile_cubit.dart';
-import '../widgets/user_list_tile.dart';
 
 class FollowerPage extends StatelessWidget {
   const FollowerPage({
@@ -62,7 +61,21 @@ class FollowerPage extends StatelessWidget {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     final user = snapshot.data!;
-                    return UserListTile(profileUserEntity: user);
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: user.profileImgUrl.isNotEmpty
+                            ? NetworkImage(user.profileImgUrl)
+                            : null,
+                        child: (user.profileImgUrl.isEmpty)
+                            ? Icon(Icons.person)
+                            : null,
+                      ),
+                      title: Text(user.name),
+                      subtitle: Text(user.email),
+                      onTap: () {
+                        // Optionally navigate to user profile
+                      },
+                    );
                   } else if (snapshot.connectionState ==
                       ConnectionState.waiting) {
                     return const ListTile(title: Text("Loading.."));
