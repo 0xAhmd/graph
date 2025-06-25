@@ -48,6 +48,24 @@ class _ProfilePageState extends State<ProfilePage>
   bool _isBlockLoading = false;
   late TabController _tabController;
   FollowRequestEntity? _followRequest;
+  String? _lastLoadedUid; // Track the last loaded UID
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // CRITICAL FIX: Reset state when UID changes
+    if (oldWidget.uid != widget.uid) {
+      // Reset all state variables
+      _isFollowLoading = false;
+      _isBlockLoading = false;
+      _followRequest = null;
+      _lastLoadedUid = null; // Reset the tracked UID
+
+      // Re-initialize data for new UID
+      _initializeData();
+    }
+  }
 
   @override
   void initState() {
@@ -56,15 +74,27 @@ class _ProfilePageState extends State<ProfilePage>
     _initializeData();
   }
 
-  Future<void> _initializeData() async {
-    profileCubit.fetchUserProfile(widget.uid);
-    context.read<PostCubit>().fetchAllPosts();
-    storyCubit.fetchStories();
+  // REMOVE the didChangeDependencies method - it's causing issues
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //   // Remove this - it's causing unnecessary refreshes
+  // }
 
-    // Load follow request data if not own profile
-    if (!_isOwnProfile) {
-      followRequestCubit.loadFollowRequests(currentUser!.uid);
-      _loadFollowRequest();
+  Future<void> _initializeData() async {
+    // Only initialize if we haven't loaded this UID yet or if it's different
+    if (_lastLoadedUid != widget.uid) {
+      _lastLoadedUid = widget.uid;
+
+      profileCubit.fetchUserProfile(widget.uid);
+      context.read<PostCubit>().fetchAllPosts();
+      storyCubit.fetchStories();
+
+      // Load follow request data if not own profile
+      if (!_isOwnProfile) {
+        followRequestCubit.loadFollowRequests(currentUser!.uid);
+        _loadFollowRequest();
+      }
     }
   }
 
@@ -101,6 +131,8 @@ class _ProfilePageState extends State<ProfilePage>
       _loadFollowRequest();
     }
   }
+
+  // ... rest of your methods stay the same ...
 
   FollowButtonState _getFollowButtonState(ProfileUserEntity user) {
     final isFollowing = user.followers.contains(currentUser!.uid);
@@ -537,7 +569,6 @@ class _ProfilePageState extends State<ProfilePage>
                               ),
                               const SizedBox(height: 25),
 
-                              // Stats - Show limited info for private profiles
                               ProfileStats(
                                 onTap: canViewContent
                                     ? () {
@@ -547,6 +578,8 @@ class _ProfilePageState extends State<ProfilePage>
                                             builder: (context) => FollowerPage(
                                               followers: user.followers,
                                               followings: user.followings,
+                                              originalProfileUid: widget
+                                                  .uid, // Pass the current profile UID
                                             ),
                                           ),
                                         );
@@ -560,7 +593,6 @@ class _ProfilePageState extends State<ProfilePage>
                                     ? user.followings.length
                                     : 0,
                               ),
-
                               const SizedBox(height: 25),
 
                               // Follow button for non-own profiles
