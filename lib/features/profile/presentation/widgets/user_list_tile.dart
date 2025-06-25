@@ -18,8 +18,14 @@ class UserListTile extends StatelessWidget {
       child: ListTile(
         title: Text(profileUserEntity.name),
         subtitle: Text(profileUserEntity.email),
-
-        leading: const Icon(Icons.person),
+        leading: CircleAvatar(
+          backgroundImage: (profileUserEntity.profileImgUrl.isNotEmpty)
+              ? NetworkImage(profileUserEntity.profileImgUrl)
+              : null,
+          child: (profileUserEntity.profileImgUrl.isEmpty)
+              ? const Icon(Icons.person)
+              : null,
+        ),
         trailing: GestureDetector(
           onTap: () => Navigator.push(
             context,
