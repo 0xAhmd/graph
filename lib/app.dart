@@ -1,104 +1,62 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/features/comments/data/repo/comment_repo.dart';
-import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
-import 'package:ig_mate/features/private/data/repo/follow_request_repo_impl.dart';
-import 'package:ig_mate/features/private/data/repo/privacy_repo_impl.dart';
-import 'package:ig_mate/features/private/presentation/cubit/follow_request_cubit.dart';
-import 'package:ig_mate/features/private/presentation/cubit/privacy_cubit.dart';
-import 'package:ig_mate/features/stories/data/repo/store_repo_impl.dart';
-import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
-import 'core/themes/dark_mode.dart';
-import 'core/themes/light_mode.dart';
+import 'injection_container.dart';
+
 import 'core/themes/theme_cubit.dart';
-import 'features/auth/presentation/pages/login_page.dart';
-import 'features/chat/data/chat_repo.dart';
-import 'features/chat/presentation/cubit/chat_cubit.dart';
-import 'features/search/data/repo/search_repo.dart';
-import 'features/search/presentation/cubit/search_cubit.dart';
-import 'layout/constrained_scaffold.dart';
-import 'features/auth/data/repo/firebase_auth_repo.dart';
-import 'features/auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'core/themes/light_mode.dart';
+import 'core/themes/dark_mode.dart';
 
-import 'features/auth/presentation/pages/auth_page.dart';
-import 'features/home/presentation/pages/home_page.dart';
-import 'features/posts/data/repo/post_repo.dart';
+import 'features/comments/presentation/cubit/comment_cubit.dart';
+import 'features/private/presentation/cubit/follow_request_cubit.dart';
+import 'features/private/presentation/cubit/privacy_cubit.dart';
+import 'features/stories/presentation/cubit/story_cubit.dart';
+import 'features/chat/presentation/cubit/chat_cubit.dart';
+import 'features/search/presentation/cubit/search_cubit.dart';
+import 'features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'features/posts/presentation/cubit/post_cubit.dart';
-import 'features/profile/data/repo/profile_user_repo.dart';
 import 'features/profile/presentation/cubit/cubit/profile_cubit.dart';
 
+import 'features/auth/presentation/pages/login_page.dart';
+import 'features/auth/presentation/pages/auth_page.dart';
+import 'features/home/presentation/pages/home_page.dart';
+import 'layout/constrained_scaffold.dart';
+
 class MyApp extends StatelessWidget {
-  final authRepo = FirebaseAuthRepo();
-  final profileRepo = ProfileUserRepo();
-  final postRepo = PostRepo();
-  final searchRepo = SearchRepo();
-  final privRepo = PrivacyRepo();
-  final followRequestRepo = FollowRequestRepo();
-  final chatRepo = FirebaseChatRepo();
-  final commentRepo = CommentRepo();
-  final storiesRepo = StoriesRepositoryImpl(
-    firestore: FirebaseFirestore.instance,
-    supabase: Supabase.instance.client,
-  );
-  MyApp({super.key});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<StoriesCubit>(
-          create: (context) => StoriesCubit(repository: storiesRepo),
-        ),
-        BlocProvider<FollowRequestCubit>(
-          create: (context) => FollowRequestCubit(followRequestRepo),
-        ),
-        BlocProvider<PrivacyCubit>(create: (context) => PrivacyCubit(privRepo)),
-        BlocProvider<ChatCubit>(create: (context) => ChatCubit(chatRepo)),
-        BlocProvider<CommentCubit>(
-          create: (context) => CommentCubit(commentRepo: commentRepo),
-        ),
-
-        BlocProvider<AuthCubit>(
-          create: (context) => AuthCubit(authRepo)..checkAuth(),
-        ),
-        BlocProvider<SearchCubit>(create: (context) => SearchCubit(searchRepo)),
-        BlocProvider<ProfileCubit>(
-          create: (context) => ProfileCubit(profileRepo),
-        ),
-        BlocProvider<PostCubit>(
-          create: (context) => PostCubit(postRepo: postRepo),
-        ),
-        BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
+        BlocProvider(create: (_) => StoriesCubit(repository: sl())),
+        BlocProvider(create: (_) => FollowRequestCubit(sl())),
+        BlocProvider(create: (_) => PrivacyCubit(sl())),
+        BlocProvider(create: (_) => ChatCubit(sl())),
+        BlocProvider(create: (_) => CommentCubit(commentRepo: sl())),
+        BlocProvider(create: (_) => AuthCubit(sl())..checkAuth()),
+        BlocProvider(create: (_) => SearchCubit(sl())),
+        BlocProvider(create: (_) => ProfileCubit(sl())),
+        BlocProvider(create: (_) => PostCubit(postRepo: sl())),
+        BlocProvider(create: (_) => ThemeCubit()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {
           return MaterialApp(
-            routes: {'/login': (context) => const LoginPage(onTap: null)},
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
             theme: lightMode,
             darkTheme: darkMode,
+            routes: {'/login': (context) => const LoginPage(onTap: null)},
             home: BlocConsumer<AuthCubit, AuthState>(
               builder: (context, state) {
-                debugPrint(state.toString());
-                if (state is UnAuthenticated) {
-                  return const AuthPage();
-                } else if (state is Authenticated) {
-                  return const HomePage();
-                } else if (state is AuthLoading) {
-                  return const ConstrainedScaffold(
-                    body: Center(child: CupertinoActivityIndicator()),
-                  );
-                } else {
-                  return const ConstrainedScaffold(
-                    body: Center(child: CupertinoActivityIndicator()),
-                  );
-                }
+                if (state is UnAuthenticated) return const AuthPage();
+                if (state is Authenticated) return const HomePage();
+                return const ConstrainedScaffold(
+                  body: Center(child: CupertinoActivityIndicator()),
+                );
               },
               listener: (context, state) {
                 if (state is AuthError) {
