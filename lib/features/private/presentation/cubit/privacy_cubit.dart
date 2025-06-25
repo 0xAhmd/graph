@@ -28,7 +28,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
       }
     } catch (e) {
       debugPrint('Error loading privacy settings: $e');
-      emit(PrivacyError(message: 'Failed to load privacy settings'));
+      emit(const PrivacyError(message: 'Failed to load privacy settings'));
     }
   }
 
@@ -53,7 +53,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
       }
     } catch (e) {
       debugPrint('Error updating privacy settings: $e');
-      emit(PrivacyError(message: 'Failed to update privacy settings'));
+      emit(const PrivacyError(message: 'Failed to update privacy settings'));
     }
   }
 
@@ -77,8 +77,15 @@ class PrivacyCubit extends Cubit<PrivacyState> {
           },
           onError: (error) {
             debugPrint('Error streaming privacy settings: $error');
-            emit(PrivacyError(message: 'Failed to stream privacy settings'));
+            emit(
+              const PrivacyError(message: 'Failed to stream privacy settings'),
+            );
           },
         );
+  }
+
+  Future<void> togglePrivacy(String userId, bool isPrivate) async {
+    emit(PrivacyLoading());
+    await updatePrivacySettings(userId: userId, isPrivate: isPrivate);
   }
 }

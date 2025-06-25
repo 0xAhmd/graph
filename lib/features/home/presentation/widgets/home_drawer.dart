@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/private/presentation/pages/follow_request_page.dart';
 import '../../../chat/presentation/pages/chat_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
@@ -12,9 +13,10 @@ class HomeDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AuthCubit>().currentUser;
+
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
-
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 25.0),
@@ -32,30 +34,29 @@ class HomeDrawer extends StatelessWidget {
               ),
               Divider(color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 10),
+
               // home tile
               DrawerTile(
                 icon: Icons.home_filled,
                 title: "H O M E ",
-                onTap: () {
-                  Navigator.pop(context);
-                },
+                onTap: () => Navigator.pop(context),
               ),
+
               // profile tile
               DrawerTile(
                 icon: Icons.person,
                 title: "P R O F I L E",
                 onTap: () {
                   Navigator.pop(context);
-                  final user = context.read<AuthCubit>().currentUser;
-                  String? uid = user!.uid;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ProfilePage(uid: uid),
+                      builder: (context) => ProfilePage(uid: user!.uid),
                     ),
                   );
                 },
               ),
+
               // settings tile
               DrawerTile(
                 icon: Icons.settings,
@@ -69,6 +70,7 @@ class HomeDrawer extends StatelessWidget {
                   );
                 },
               ),
+
               // search tile
               DrawerTile(
                 icon: Icons.search_rounded,
@@ -80,6 +82,7 @@ class HomeDrawer extends StatelessWidget {
                   );
                 },
               ),
+
               // chat tile
               DrawerTile(
                 icon: Icons.chat_rounded,
@@ -93,8 +96,25 @@ class HomeDrawer extends StatelessWidget {
                   );
                 },
               ),
-              // logout tile
+
+              // ✅ follow requests tile (fixed)
+              DrawerTile(
+                icon: Icons.group_add_sharp,
+                title: "N E W F A N S",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          FollowRequestsPage(userId: user!.uid),
+                    ),
+                  );
+                },
+              ),
+
               const Spacer(),
+
+              // logout
               DrawerTile(
                 icon: Icons.logout,
                 title: "L O G O U T ",

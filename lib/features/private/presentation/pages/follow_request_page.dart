@@ -22,7 +22,7 @@ class FollowRequestsPage extends StatefulWidget {
 class _FollowRequestsPageState extends State<FollowRequestsPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  Map<String, ProfileUserEntity> _userProfiles = {};
+  final Map<String, ProfileUserEntity> _userProfiles = {};
 
   @override
   void initState() {
@@ -64,6 +64,7 @@ class _FollowRequestsPageState extends State<FollowRequestsPage>
         centerTitle: true,
         foregroundColor: Theme.of(context).colorScheme.primary,
         bottom: TabBar(
+          dividerColor: Colors.transparent,
           controller: _tabController,
           indicatorColor: Theme.of(context).colorScheme.primary,
           labelColor: Theme.of(context).colorScheme.primary,

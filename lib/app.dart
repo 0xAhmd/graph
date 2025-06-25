@@ -5,6 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:ig_mate/features/comments/data/repo/comment_repo.dart';
 import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
+import 'package:ig_mate/features/private/data/repo/follow_request_repo_impl.dart';
+import 'package:ig_mate/features/private/data/repo/privacy_repo_impl.dart';
+import 'package:ig_mate/features/private/presentation/cubit/follow_request_cubit.dart';
+import 'package:ig_mate/features/private/presentation/cubit/privacy_cubit.dart';
 import 'package:ig_mate/features/stories/data/repo/store_repo_impl.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
@@ -33,6 +37,8 @@ class MyApp extends StatelessWidget {
   final profileRepo = ProfileUserRepo();
   final postRepo = PostRepo();
   final searchRepo = SearchRepo();
+  final privRepo = PrivacyRepo();
+  final followRequestRepo = FollowRequestRepo();
   final chatRepo = FirebaseChatRepo();
   final commentRepo = CommentRepo();
   final storiesRepo = StoriesRepositoryImpl(
@@ -48,6 +54,10 @@ class MyApp extends StatelessWidget {
         BlocProvider<StoriesCubit>(
           create: (context) => StoriesCubit(repository: storiesRepo),
         ),
+        BlocProvider<FollowRequestCubit>(
+          create: (context) => FollowRequestCubit(followRequestRepo),
+        ),
+        BlocProvider<PrivacyCubit>(create: (context) => PrivacyCubit(privRepo)),
         BlocProvider<ChatCubit>(create: (context) => ChatCubit(chatRepo)),
         BlocProvider<CommentCubit>(
           create: (context) => CommentCubit(commentRepo: commentRepo),
@@ -68,9 +78,7 @@ class MyApp extends StatelessWidget {
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {
           return MaterialApp(
-            routes: {
-              '/login': (context) => const LoginPage(onTap: null),
-            },
+            routes: {'/login': (context) => const LoginPage(onTap: null)},
             debugShowCheckedModeBanner: false,
             themeMode: themeMode,
             theme: lightMode,

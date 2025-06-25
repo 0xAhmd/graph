@@ -31,7 +31,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       );
     } catch (e) {
       debugPrint('Error loading follow requests: $e');
-      emit(FollowRequestError(message: 'Failed to load follow requests'));
+      emit(const FollowRequestError(message: 'Failed to load follow requests'));
     }
   }
 
@@ -49,7 +49,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       loadFollowRequests(fromUserId);
     } catch (e) {
       debugPrint('Error sending follow request: $e');
-      emit(FollowRequestError(message: 'Failed to send follow request'));
+      emit(const FollowRequestError(message: 'Failed to send follow request'));
     }
   }
 
@@ -70,7 +70,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       loadFollowRequests(toUserId);
     } catch (e) {
       debugPrint('Error accepting follow request: $e');
-      emit(FollowRequestError(message: 'Failed to accept follow request'));
+      emit(const FollowRequestError(message: 'Failed to accept follow request'));
     }
   }
 
@@ -86,7 +86,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       loadFollowRequests(userId);
     } catch (e) {
       debugPrint('Error declining follow request: $e');
-      emit(FollowRequestError(message: 'Failed to decline follow request'));
+      emit(const FollowRequestError(message: 'Failed to decline follow request'));
     }
   }
 
@@ -104,7 +104,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       loadFollowRequests(fromUserId);
     } catch (e) {
       debugPrint('Error cancelling follow request: $e');
-      emit(FollowRequestError(message: 'Failed to cancel follow request'));
+      emit(const FollowRequestError(message: 'Failed to cancel follow request'));
     }
   }
 
@@ -150,7 +150,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
           onError: (error) {
             debugPrint('Error streaming incoming requests: $error');
             emit(
-              FollowRequestError(message: 'Failed to stream follow requests'),
+              const FollowRequestError(message: 'Failed to stream follow requests'),
             );
           },
         );

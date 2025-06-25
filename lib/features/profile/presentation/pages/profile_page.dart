@@ -1,8 +1,32 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
+import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
+import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/preview_page.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/profile_grid.dart';
+import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
+import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
+import 'package:ig_mate/layout/constrained_scaffold.dart';
+import '../../../auth/domain/entities/app_user.dart';
+import '../../../posts/presentation/cubit/post_cubit.dart';
+import '../../../stories/domain/entities/story.dart';
+import '../../../stories/presentation/pages/story_viewer_page.dart';
+import '../../../private/domain/entities/follow_request.dart';
+import '../../../private/presentation/cubit/follow_request_cubit.dart';
+import '../../../private/presentation/cubit/privacy_cubit.dart';
 
-import '../pages/index.dart';
+import '../widgets/follow_button.dart';
+import '../widgets/profile_image_viewer.dart';
+import '../widgets/profile_stats.dart';
+import '../widgets/bio_box.dart';
+import '../pages/edit_profile_page.dart';
+import '../pages/follower_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String uid;
@@ -16,22 +40,47 @@ class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
   late final authCubit = context.read<AuthCubit>();
   late final profileCubit = context.read<ProfileCubit>();
-  late final storyCubit = context.read<StoriesCubit>(); // Add story cubit
+  late final storyCubit = context.read<StoriesCubit>();
+  late final followRequestCubit = context.read<FollowRequestCubit>();
+  late final privacyCubit = context.read<PrivacyCubit>();
   late AppUser? currentUser = authCubit.currentUser;
   bool _isFollowLoading = false;
   bool _isBlockLoading = false;
   late TabController _tabController;
+  FollowRequestEntity? _followRequest;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 1,
-      vsync: this,
-    ); // Only one tab for posts
+    _tabController = TabController(length: 1, vsync: this);
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
     profileCubit.fetchUserProfile(widget.uid);
     context.read<PostCubit>().fetchAllPosts();
-    storyCubit.fetchStories(); // Fetch stories
+    storyCubit.fetchStories();
+
+    // Load follow request data if not own profile
+    if (!_isOwnProfile) {
+      followRequestCubit.loadFollowRequests(currentUser!.uid);
+      _loadFollowRequest();
+    }
+  }
+
+  Future<void> _loadFollowRequest() async {
+    if (currentUser == null) return;
+
+    final request = await followRequestCubit.getFollowRequestBetweenUsers(
+      fromUserId: currentUser!.uid,
+      toUserId: widget.uid,
+    );
+
+    if (mounted) {
+      setState(() {
+        _followRequest = request;
+      });
+    }
   }
 
   @override
@@ -40,13 +89,33 @@ class _ProfilePageState extends State<ProfilePage>
     super.dispose();
   }
 
+  bool get _isOwnProfile => (widget.uid == currentUser?.uid);
+
   Future<void> refreshProfile() async {
     await profileCubit.fetchUserProfile(widget.uid);
     await context.read<PostCubit>().fetchAllPosts();
-    storyCubit.fetchStories(); // Refresh stories too
+    storyCubit.fetchStories();
+
+    if (!_isOwnProfile) {
+      followRequestCubit.loadFollowRequests(currentUser!.uid);
+      _loadFollowRequest();
+    }
   }
 
-  Future<void> followButtonPressed() async {
+  FollowButtonState _getFollowButtonState(ProfileUserEntity user) {
+    final isFollowing = user.followers.contains(currentUser!.uid);
+    final hasRequestSent =
+        _followRequest != null &&
+        _followRequest!.status == FollowRequestStatus.pending;
+
+    return FollowButtonStateHelper.determineState(
+      isFollowing: isFollowing,
+      isPrivate: user.isPrivate,
+      hasRequestSent: hasRequestSent,
+    );
+  }
+
+  Future<void> _handleFollowButtonPressed(ProfileUserEntity user) async {
     if (_isFollowLoading || currentUser == null) return;
 
     setState(() {
@@ -54,11 +123,44 @@ class _ProfilePageState extends State<ProfilePage>
     });
 
     try {
-      await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
+      final followButtonState = _getFollowButtonState(user);
+
+      switch (followButtonState) {
+        case FollowButtonState.follow:
+          // Direct follow for public profiles
+          await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
+          break;
+
+        case FollowButtonState.sendRequest:
+          // Send follow request for private profiles
+          await followRequestCubit.sendFollowRequest(
+            fromUserId: currentUser!.uid,
+            toUserId: widget.uid,
+          );
+          await _loadFollowRequest();
+          break;
+
+        case FollowButtonState.following:
+          // Unfollow
+          await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
+          break;
+
+        case FollowButtonState.requestSent:
+          // Cancel follow request
+          await followRequestCubit.cancelFollowRequest(
+            fromUserId: currentUser!.uid,
+            toUserId: widget.uid,
+          );
+          await _loadFollowRequest();
+          break;
+      }
+
+      // Refresh profile data
+      await refreshProfile();
     } catch (e) {
       if (mounted) {
         Fluttertoast.showToast(
-          msg: "Failed to update follow stats",
+          msg: "Failed to update follow status",
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.red,
@@ -76,7 +178,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Future<void> _showOptionsBottomSheet(
     BuildContext context,
-    AppUser user,
+    ProfileUserEntity user,
   ) async {
     showModalBottomSheet(
       context: context,
@@ -111,7 +213,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 onTap: () {
-                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.pop(context);
                   _showBlockConfirmationDialog(context, user);
                 },
               ),
@@ -128,9 +230,8 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 onTap: () async {
-                  Navigator.pop(context); // Close bottom sheet
-                  await Future.delayed(const Duration(seconds: 2))
-
+                  Navigator.pop(context);
+                  await Future.delayed(const Duration(seconds: 1));
                   Fluttertoast.showToast(
                     msg: "${user.name} has been reported",
                     toastLength: Toast.LENGTH_SHORT,
@@ -155,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Future<void> _showBlockConfirmationDialog(
     BuildContext context,
-    AppUser user,
+    ProfileUserEntity user,
   ) async {
     showDialog(
       context: context,
@@ -172,7 +273,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(context);
                 _blockUser(user);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -184,7 +285,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Future<void> _blockUser(AppUser user) async {
+  Future<void> _blockUser(ProfileUserEntity user) async {
     if (_isBlockLoading || currentUser == null) return;
 
     setState(() {
@@ -192,8 +293,6 @@ class _ProfilePageState extends State<ProfilePage>
     });
 
     try {
-      // Call your block user method from ProfileCubit
-      // You'll need to implement this method in your ProfileCubit
       await profileCubit.blockUser(currentUser!.uid, widget.uid);
 
       if (mounted) {
@@ -205,7 +304,6 @@ class _ProfilePageState extends State<ProfilePage>
           textColor: Colors.white,
         );
 
-        // Navigate back to previous screen
         Navigator.pop(context);
       }
     } catch (e) {
@@ -240,9 +338,41 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  Widget _buildPrivateAccountMessage() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.lock_outline, size: 80, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            'This Account is Private',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Follow this account to see their photos and videos.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _canViewContent(ProfileUserEntity user) {
+    if (_isOwnProfile) return true;
+    if (!user.isPrivate) return true;
+    return user.followers.contains(currentUser?.uid);
+  }
+
   @override
   Widget build(BuildContext context) {
-    bool isOwn = (widget.uid == currentUser!.uid);
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, profileState) {
         return BlocBuilder<PostCubit, PostState>(
@@ -251,16 +381,17 @@ class _ProfilePageState extends State<ProfilePage>
               builder: (context, storyState) {
                 if (profileState is ProfileLoaded) {
                   final user = profileState.profileUserEntity;
+                  final canViewContent = _canViewContent(user);
 
-                  final List<Post> userPosts = (postState is PostLoaded)
+                  final List<Post> userPosts =
+                      (postState is PostLoaded && canViewContent)
                       ? postState.posts
                             .where((post) => post.userId == widget.uid)
                             .toList()
                       : <Post>[];
 
-                  // Filter user's stories
                   final List<StoryEntity> userStories =
-                      (storyState is StoriesLoaded)
+                      (storyState is StoriesLoaded && canViewContent)
                       ? storyState.stories
                             .where((story) => story.userId == widget.uid)
                             .toList()
@@ -269,22 +400,50 @@ class _ProfilePageState extends State<ProfilePage>
                   return ConstrainedScaffold(
                     appBar: AppBar(
                       actions: [
-                        if (isOwn)
-                          IconButton(
-                            onPressed: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      EditProfilePage(profileUserEntity: user),
-                                ),
-                              );
-                              refreshProfile();
+                        if (_isOwnProfile)
+                          PopupMenuButton<String>(
+                            onSelected: (value) async {
+                              if (value == 'edit') {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditProfilePage(
+                                      profileUserEntity: user,
+                                    ),
+                                  ),
+                                );
+                                refreshProfile();
+                              } else if (value == 'toggle_privacy') {
+                                await privacyCubit.togglePrivacy(
+                                  user.uid,
+                                  !user.isPrivate,
+                                );
+                                refreshProfile();
+                              }
                             },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem<String>(
+                                value: 'edit',
+                                child: ListTile(
+                                  leading: Icon(Icons.edit),
+                                  title: Text('Edit Profile'),
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'toggle_privacy',
+                                child: ListTile(
+                                  leading: Icon(Icons.lock),
+                                  title: Text(
+                                    user.isPrivate
+                                        ? 'Set to Public'
+                                        : 'Set to Private',
+                                  ),
+                                ),
+                              ),
+                            ],
                             icon: const Icon(Icons.settings),
                           )
                         else
-                          // Options icon for other users' profiles
                           _isBlockLoading
                               ? const Padding(
                                   padding: EdgeInsets.all(12.0),
@@ -301,13 +460,20 @@ class _ProfilePageState extends State<ProfilePage>
                                 ),
                       ],
                       centerTitle: true,
-                      title: Text(user.name),
+                      title: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(user.name),
+                          if (user.isPrivate) ...[
+                            const SizedBox(width: 8),
+                            const Icon(Icons.lock_outline, size: 16),
+                          ],
+                        ],
+                      ),
                       foregroundColor: Theme.of(context).colorScheme.primary,
                     ),
                     body: RefreshIndicator(
-                      onRefresh: () {
-                        return refreshProfile();
-                      },
+                      onRefresh: refreshProfile,
                       child: SingleChildScrollView(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -316,7 +482,7 @@ class _ProfilePageState extends State<ProfilePage>
                             children: [
                               const SizedBox(height: 20),
 
-                              // Profile image with story ring if user has stories
+                              // Profile image with story ring
                               GestureDetector(
                                 onTap: userStories.isNotEmpty
                                     ? () {
@@ -372,92 +538,113 @@ class _ProfilePageState extends State<ProfilePage>
                               ),
                               const SizedBox(height: 25),
 
+                              // Stats - Show limited info for private profiles
                               ProfileStats(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => FollowerPage(
-                                        followers: user.followers,
-                                        followings: user.followings,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                postCount: userPosts.length,
+                                onTap: canViewContent
+                                    ? () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => FollowerPage(
+                                              followers: user.followers,
+                                              followings: user.followings,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    : null,
+                                postCount: canViewContent
+                                    ? userPosts.length
+                                    : 0,
                                 followersCount: user.followers.length,
-                                followingCount: user.followings.length,
+                                followingCount: canViewContent
+                                    ? user.followings.length
+                                    : 0,
                               ),
 
                               const SizedBox(height: 25),
-                              if (!isOwn)
+
+                              // Follow button for non-own profiles
+                              if (!_isOwnProfile)
                                 _isFollowLoading
                                     ? const CupertinoActivityIndicator()
                                     : FollowButton(
-                                        isFollowing: user.followers.contains(
-                                          currentUser!.uid,
+                                        followButtonState:
+                                            _getFollowButtonState(user),
+                                        onTap: () =>
+                                            _handleFollowButtonPressed(user),
+                                        isLoading: _isFollowLoading,
+                                      ),
+
+                              // Bio section
+                              if (canViewContent) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 16.0),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "Bio",
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                         ),
-                                        onTap: followButtonPressed,
                                       ),
-
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      "Bio",
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              BioBox(text: user.bio),
+                                const SizedBox(height: 10),
+                                BioBox(text: user.bio),
+                              ],
 
-                              // Tab Bar and Posts Grid
+                              // Content section
                               Padding(
                                 padding: const EdgeInsets.only(top: 25),
                                 child: Column(
                                   children: [
-                                    // Tab Bar
-                                    TabBar(
-                                      dividerColor: Colors.transparent,
-                                      controller: _tabController,
-                                      indicatorColor: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      tabs: const [
-                                        Tab(icon: Icon(Icons.grid_on)),
-                                      ],
-                                    ),
-
-                                    // Posts Grid
-                                    SizedBox(
-                                      height: 400, // Fixed height for the grid
-                                      child: TabBarView(
+                                    if (canViewContent) ...[
+                                      // Tab Bar
+                                      TabBar(
+                                        dividerColor: Colors.transparent,
                                         controller: _tabController,
-                                        children: [
-                                          if (postState is PostLoading)
-                                            const Center(
-                                              child:
-                                                  CupertinoActivityIndicator(),
-                                            )
-                                          else
-                                            ProfilePostsGrid(
-                                              posts: userPosts,
-                                              onPostTap: (index) =>
-                                                  _navigateToPostPreview(
-                                                    userPosts,
-                                                    index,
-                                                  ),
-                                            ),
+                                        indicatorColor: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        tabs: const [
+                                          Tab(icon: Icon(Icons.grid_on)),
                                         ],
                                       ),
-                                    ),
+
+                                      // Posts Grid
+                                      SizedBox(
+                                        height: 400,
+                                        child: TabBarView(
+                                          controller: _tabController,
+                                          children: [
+                                            if (postState is PostLoading)
+                                              const Center(
+                                                child:
+                                                    CupertinoActivityIndicator(),
+                                              )
+                                            else
+                                              ProfilePostsGrid(
+                                                posts: userPosts,
+                                                onPostTap: (index) =>
+                                                    _navigateToPostPreview(
+                                                      userPosts,
+                                                      index,
+                                                    ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      // Private profile message
+                                      SizedBox(
+                                        height: 400,
+                                        child: _buildPrivateAccountMessage(),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
