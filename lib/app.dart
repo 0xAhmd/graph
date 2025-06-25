@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:ig_mate/features/profile/presentation/pages/index.dart';
 import 'index.dart';
 
