@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:ig_mate/features/search/presentation/pages/search_page.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
 import 'package:ig_mate/features/stories/presentation/pages/story_page.dart';
@@ -357,6 +358,8 @@ class _HomePageState extends State<HomePage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 80),
+
             Icon(
               Icons.people_outline,
               size: 64,
@@ -387,6 +390,10 @@ class _HomePageState extends State<HomePage>
               onPressed: () {
                 // Navigate to discover/search page
                 debugPrint('Navigate to discover page');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SearchPage()),
+                );
               },
               icon: const Icon(Icons.person_add),
               label: const Text("Find People"),
