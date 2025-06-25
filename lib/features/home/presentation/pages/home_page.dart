@@ -33,7 +33,6 @@ class _HomePageState extends State<HomePage>
   late final profileCubit = context.read<ProfileCubit>();
   late final commentCubit = context.read<CommentCubit>();
   late TabController _tabController;
-
   List<String> followingUserIds = [];
   Map<String, bool> userPrivacyStatus = {}; // Track which users are private
   bool isDeleting = false;
@@ -52,7 +51,7 @@ class _HomePageState extends State<HomePage>
     // Load stories
     context.read<StoriesCubit>().fetchStories();
 
-    AppUpdater();
+    AppUpdater.checkForUpdate(context);
   }
 
   @override
