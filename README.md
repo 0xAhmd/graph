@@ -3,7 +3,6 @@
 
 ![Cover](https://github.com/user-attachments/assets/7d58765b-bbbc-4779-84cc-bb40f5b07db6)
 
-
 Graph is a minimalist, modern social media app built with **Flutter**, featuring authentication, user profiles, post feeds, comments, messaging, and more. Designed with a focus on clean UI/UX, real-time updates, and responsive behavior for both mobile and web.
 
 ---
@@ -45,6 +44,15 @@ Graph is a minimalist, modern social media app built with **Flutter**, featuring
 - Edit or delete own messages (long-press)
 - Bottom sheet UI for editing
 - Text-only chat (no media/voice)
+
+### 📚 Stories & Private Accounts
+- **Stories are only visible to followers if the account is private.**
+- If a user is blocked, their stories are not shown.
+- If a user is public, their stories are visible to everyone (unless blocked).
+- The filtering logic ensures that only stories from users you follow (and are not blocked by you) are shown in your feed.
+- For private accounts, you must be an accepted follower to see their stories.
+- For public accounts, you just need to follow (or not be blocked) to see their stories.
+- Stories respect the same privacy and block rules as posts. Private account stories are only visible to accepted followers, ensuring user privacy is always maintained.
 
 ### 🎨 Theming
 - Full light/dark mode support
@@ -119,7 +127,7 @@ dev_dependencies:
   build_runner: ^2.4.15
   flutter_test:
     sdk: flutter
-````
+```
 
 </details>
 
