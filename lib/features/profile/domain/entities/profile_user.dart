@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../../auth/domain/entities/app_user.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -13,8 +15,9 @@ class ProfileUserEntity extends AppUser {
   final List<String> followers;
   @JsonKey(defaultValue: <String>[])
   final List<String> followings;
-  @JsonKey(defaultValue: 0)
+  @JsonKey(fromJson: _timestampToInt, toJson: _intToTimestamp, defaultValue: 0)
   final int? lastEmailUpdate;
+
   @JsonKey(defaultValue: false)
   final bool isPrivate; // NEW FIELD
 
@@ -57,4 +60,19 @@ class ProfileUserEntity extends AppUser {
 
   factory ProfileUserEntity.fromJson(Map<String, dynamic> json) =>
       _$ProfileUserEntityFromJson(json);
+}
+
+int _timestampToInt(dynamic timestamp) {
+  if (timestamp is Timestamp) {
+    return timestamp.millisecondsSinceEpoch;
+  } else if (timestamp is int) {
+    return timestamp;
+  } else {
+    return 0;
+  }
+}
+
+dynamic _intToTimestamp(int? millis) {
+  if (millis == null) return null;
+  return Timestamp.fromMillisecondsSinceEpoch(millis);
 }
