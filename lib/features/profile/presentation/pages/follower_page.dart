@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
 import '../../../../layout/constrained_scaffold.dart';
 import '../cubit/cubit/profile_cubit.dart';
 
@@ -67,13 +68,18 @@ class FollowerPage extends StatelessWidget {
                             ? NetworkImage(user.profileImgUrl)
                             : null,
                         child: (user.profileImgUrl.isEmpty)
-                            ? Icon(Icons.person)
+                            ? const Icon(Icons.person)
                             : null,
                       ),
                       title: Text(user.name),
                       subtitle: Text(user.email),
                       onTap: () {
-                        // Optionally navigate to user profile
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfilePage(uid: user.uid),
+                          ),
+                        );
                       },
                     );
                   } else if (snapshot.connectionState ==
