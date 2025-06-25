@@ -22,5 +22,5 @@ void main() async {
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initDependencies();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
