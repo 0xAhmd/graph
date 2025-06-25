@@ -22,6 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordControllerConfirm =
       TextEditingController();
+  bool _isLoading = false;
 
   PasswordStrength _passwordStrength = PasswordStrength.weak;
   String? _nameError;
@@ -112,7 +113,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _passwordControllerConfirm.text.isNotEmpty;
   }
 
-  void register() {
+  void register() async {
     // Validate all fields first
     _validateName();
     _validateEmail();
@@ -125,13 +126,15 @@ class _RegisterPageState extends State<RegisterPage> {
       final String password = _passwordController.text;
       final authCubit = context.read<AuthCubit>();
 
-      authCubit.register(name, email, password);
+      setState(() => _isLoading = true);
+      await authCubit.register(name, email, password);
+      setState(() => _isLoading = false);
     } else {
       Fluttertoast.showToast(
         msg: "please end all fields before proceeding",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red, // or Colors.green, etc.
+        backgroundColor: Colors.red,
         textColor: Colors.white,
       );
     }
@@ -272,7 +275,11 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 20),
 
               // Register Button
-              CustomButton(text: 'Register', onTap: register),
+              CustomButton(
+                isLoading: _isLoading,
+                text: 'Register',
+                onTap: register,
+              ),
               const SizedBox(height: 18),
 
               // Login Link

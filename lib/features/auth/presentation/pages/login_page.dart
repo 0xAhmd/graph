@@ -17,20 +17,23 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
-  void login() {
+  void login() async {
     final String email = _emailController.text;
     final String password = _passwordController.text;
     final authCubit = context.read<AuthCubit>();
 
     if (email.isNotEmpty && password.isNotEmpty) {
-      authCubit.login(email, password);
+      setState(() => _isLoading = true);
+      await authCubit.login(email, password);
+      setState(() => _isLoading = false);
     } else {
       Fluttertoast.showToast(
         msg: "Please write correct email and password ",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red, // or Colors.green, etc.
+        backgroundColor: Colors.red,
         textColor: Colors.white,
       );
     }
@@ -76,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
               isObscured: true,
             ),
             const SizedBox(height: 8),
-            CustomButton(text: 'Login', onTap: login),
+            CustomButton(isLoading: _isLoading, text: 'Login', onTap: login),
             const SizedBox(height: 18),
 
             Padding(

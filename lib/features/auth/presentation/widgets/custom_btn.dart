@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class CustomButton extends StatelessWidget {
   final void Function()? onTap;
   final String text;
-  const CustomButton({super.key, this.onTap, required this.text});
+  final bool isLoading;
+
+  const CustomButton({
+    super.key,
+    this.onTap,
+    required this.text,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 25),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -18,14 +26,16 @@ class CustomButton extends StatelessWidget {
           color: Theme.of(context).colorScheme.tertiary,
         ),
         child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
+          child: isLoading
+              ? const CupertinoActivityIndicator()
+              : Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
         ),
       ),
     );
