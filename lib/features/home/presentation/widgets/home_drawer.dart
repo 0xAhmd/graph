@@ -100,7 +100,7 @@ class HomeDrawer extends StatelessWidget {
               // ✅ follow requests tile (fixed)
               DrawerTile(
                 icon: Icons.group_add_sharp,
-                title: "N E W F A N S",
+                title: "N E W N O D E S",
                 onTap: () {
                   Navigator.push(
                     context,
