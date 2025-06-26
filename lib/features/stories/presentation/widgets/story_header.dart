@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/stories/domain/entities/story.dart';
+import '../../domain/entities/story.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class StoryHeader extends StatelessWidget {

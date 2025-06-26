@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ig_mate/features/comments/domain/repo/comment_repo_interface.dart';
+import '../../domain/repo/comment_repo_interface.dart';
 import '../../domain/entities/comment.dart';
 
 class CommentRepo implements CommentRepoContract {

@@ -110,7 +110,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(UnAuthenticated());
       }
     } catch (e) {
-      debugPrint(e.toString());
+
       emit(AuthError(errMessage: e.toString()));
       emit(UnAuthenticated());
     }
@@ -128,7 +128,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(UnAuthenticated());
       }
     } catch (e) {
-      debugPrint('GitHub sign-in error: $e');
+
       emit(AuthError(errMessage: e.toString()));
       emit(UnAuthenticated());
     }

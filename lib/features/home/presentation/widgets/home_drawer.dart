@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/private/presentation/pages/follow_request_page.dart';
+import '../../../private/presentation/pages/follow_request_page.dart';
 import '../../../chat/presentation/pages/chat_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';

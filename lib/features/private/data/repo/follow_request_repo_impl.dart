@@ -35,9 +35,9 @@ class FollowRequestRepo implements FollowRequestRepoContract {
       };
 
       await _firestore.collection('follow_requests').add(requestData);
-      debugPrint('Follow request sent from $fromUserId to $toUserId');
+
     } catch (e) {
-      debugPrint('Error sending follow request: $e');
+
       rethrow;
     }
   }
@@ -95,9 +95,8 @@ class FollowRequestRepo implements FollowRequestRepoContract {
         });
       });
 
-      debugPrint('Follow request accepted: $requestId');
     } catch (e) {
-      debugPrint('Error accepting follow request: $e');
+
       rethrow;
     }
   }
@@ -110,9 +109,8 @@ class FollowRequestRepo implements FollowRequestRepoContract {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      debugPrint('Follow request declined: $requestId');
     } catch (e) {
-      debugPrint('Error declining follow request: $e');
+
       rethrow;
     }
   }
@@ -132,10 +130,10 @@ class FollowRequestRepo implements FollowRequestRepoContract {
 
       if (query.docs.isNotEmpty) {
         await query.docs.first.reference.delete();
-        debugPrint('Follow request cancelled from $fromUserId to $toUserId');
+
       }
     } catch (e) {
-      debugPrint('Error cancelling follow request: $e');
+
       rethrow;
     }
   }
@@ -166,7 +164,7 @@ class FollowRequestRepo implements FollowRequestRepoContract {
         );
       }).toList();
     } catch (e) {
-      debugPrint('Error getting incoming follow requests: $e');
+
       return [];
     }
   }
@@ -197,7 +195,7 @@ class FollowRequestRepo implements FollowRequestRepoContract {
         );
       }).toList();
     } catch (e) {
-      debugPrint('Error getting outgoing follow requests: $e');
+
       return [];
     }
   }
@@ -232,7 +230,7 @@ class FollowRequestRepo implements FollowRequestRepoContract {
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting follow request between users: $e');
+
       return null;
     }
   }
@@ -248,7 +246,7 @@ class FollowRequestRepo implements FollowRequestRepoContract {
 
       return query.docs.length;
     } catch (e) {
-      debugPrint('Error getting follow requests count: $e');
+
       return 0;
     }
   }
@@ -279,7 +277,7 @@ class FollowRequestRepo implements FollowRequestRepoContract {
           }).toList();
         })
         .handleError((error) {
-          debugPrint('Error streaming incoming follow requests: $error');
+
           return <FollowRequestEntity>[];
         });
   }
@@ -293,7 +291,7 @@ class FollowRequestRepo implements FollowRequestRepoContract {
         .snapshots()
         .map((snapshot) => snapshot.docs.length)
         .handleError((error) {
-          debugPrint('Error streaming follow requests count: $error');
+
           return 0;
         });
   }
@@ -320,9 +318,9 @@ class FollowRequestRepo implements FollowRequestRepoContract {
       }
 
       await batch.commit();
-      debugPrint('All follow requests deleted for user: $userId');
+
     } catch (e) {
-      debugPrint('Error deleting all user follow requests: $e');
+
       rethrow;
     }
   }

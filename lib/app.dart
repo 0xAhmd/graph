@@ -1,4 +1,4 @@
-import 'package:ig_mate/features/profile/presentation/pages/index.dart';
+import 'features/profile/presentation/pages/index.dart';
 import 'index.dart';
 
 class MyApp extends StatelessWidget {

@@ -1,11 +1,11 @@
 import 'package:get_it/get_it.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:ig_mate/features/auth/domain/repo/auth_repo.dart';
-import 'package:ig_mate/features/chat/domain/repo/chat_repo_contract.dart';
-import 'package:ig_mate/features/comments/domain/repo/comment_repo_interface.dart';
-import 'package:ig_mate/features/posts/domain/repo/post_repo.dart';
-import 'package:ig_mate/features/profile/domain/repo/follow_request_repo.dart';
-import 'package:ig_mate/features/stories/domain/repo/story_repo_interface.dart';
+import 'features/auth/domain/repo/auth_repo.dart';
+import 'features/chat/domain/repo/chat_repo_contract.dart';
+import 'features/comments/domain/repo/comment_repo_interface.dart';
+import 'features/posts/domain/repo/post_repo.dart';
+import 'features/profile/domain/repo/follow_request_repo.dart';
+import 'features/stories/domain/repo/story_repo_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'features/auth/data/repo/firebase_auth_repo.dart';

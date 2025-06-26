@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
+
 import '../../domain/entities/chat_convo.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_user.dart';
@@ -180,7 +181,7 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       await chatRepo.updateUserOnlineStatus(userId, isOnline);
     } catch (e) {
-      debugPrint('Error updating online status: $e');
+
     }
   }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/home/presentation/widgets/empty_messages.dart';
-import 'package:ig_mate/features/home/presentation/widgets/stories_section.dart';
+import 'empty_messages.dart';
+import 'stories_section.dart';
 
 import '../../../posts/presentation/widgets/post_tile.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';

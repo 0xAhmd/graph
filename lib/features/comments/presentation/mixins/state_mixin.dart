@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/comments/presentation/mixins/input_mixin.dart';
-import 'package:ig_mate/features/comments/presentation/mixins/sorting_mixin.dart';
+import 'input_mixin.dart';
+import 'sorting_mixin.dart';
 import '../cubit/comment_cubit.dart';
 import '../../domain/entities/comment.dart';
 import '../../../auth/domain/entities/app_user.dart';

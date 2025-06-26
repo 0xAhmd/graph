@@ -36,7 +36,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
       await prefs.setInt(_themeKey, themeMode.index);
     } catch (e) {
       // Handle error silently or log it
-      debugPrint('Error saving theme: $e');
+
     }
   }
 

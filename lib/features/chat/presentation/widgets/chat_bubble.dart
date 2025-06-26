@@ -1,6 +1,7 @@
 // lib/features/chat/presentation/widgets/chat_message_bubble.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_bubble/chat_bubble.dart';
+
 import '../../domain/entities/chat_message.dart';
 
 class ChatMessageBubble extends StatelessWidget {

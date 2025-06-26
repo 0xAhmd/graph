@@ -205,7 +205,7 @@ class PostRepo implements PostRepoContract {
 
       return userPrivacyMap;
     } catch (e) {
-      debugPrint('Error fetching user privacy settings: $e');
+
       // Return empty map on error - this will treat all accounts as public (safer fallback)
       return {};
     }
@@ -219,7 +219,7 @@ class PostRepo implements PostRepoContract {
       final userData = userDoc.data() as Map<String, dynamic>?;
       return userData?['isPrivate'] ?? false;
     } catch (e) {
-      debugPrint('Error checking user privacy status: $e');
+
       return false; // Default to public on error
     }
   }
@@ -238,7 +238,7 @@ class PostRepo implements PostRepoContract {
       );
       return followingList.contains(targetUserId);
     } catch (e) {
-      debugPrint('Error checking following status: $e');
+
       return false;
     }
   }
@@ -284,7 +284,7 @@ class PostRepo implements PostRepoContract {
 
       return _bucket.getPublicUrl(fileName);
     } catch (e) {
-      debugPrint('Image upload error: $e');
+
       return null;
     }
   }

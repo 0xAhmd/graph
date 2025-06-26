@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/core/utils/text_bomb_detector.dart';
+import '../../../../../core/utils/text_bomb_detector.dart';
 
 class CommentHelpers {
   static String formatTimestamp(DateTime timestamp) {

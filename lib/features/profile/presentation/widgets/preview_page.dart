@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../layout/constrained_scaffold.dart';
 import '../../../posts/domain/entities/post_entity.dart';
 import '../../../posts/presentation/cubit/post_cubit.dart';
 import '../../../posts/presentation/widgets/post_tile.dart';
-import '../../../../layout/constrained_scaffold.dart';
 
 class PostPreviewPage extends StatefulWidget {
   final List<Post> userPosts;

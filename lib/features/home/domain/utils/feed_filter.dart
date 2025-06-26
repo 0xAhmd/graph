@@ -32,7 +32,7 @@ class FeedFilter {
 
       return privacyMap;
     } catch (e) {
-      debugPrint('Error loading user privacy status: $e');
+
       return {};
     }
   }

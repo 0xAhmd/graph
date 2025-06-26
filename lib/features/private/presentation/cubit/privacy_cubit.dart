@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:ig_mate/features/profile/domain/repo/privacy_repo.dart';
-import 'package:ig_mate/features/private/domain/entities/privacy_settings.dart';
+import '../../../profile/domain/repo/privacy_repo.dart';
+import '../../domain/entities/privacy_settings.dart';
 
 part 'privacy_state.dart';
 
@@ -27,7 +27,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
         emit(PrivacyLoaded(privacySettings: defaultSettings));
       }
     } catch (e) {
-      debugPrint('Error loading privacy settings: $e');
+
       emit(const PrivacyError(message: 'Failed to load privacy settings'));
     }
   }
@@ -52,7 +52,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
         emit(PrivacyLoaded(privacySettings: updatedSettings));
       }
     } catch (e) {
-      debugPrint('Error updating privacy settings: $e');
+
       emit(const PrivacyError(message: 'Failed to update privacy settings'));
     }
   }
@@ -61,7 +61,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
     try {
       return await _privacyRepo.isUserPrivate(userId);
     } catch (e) {
-      debugPrint('Error checking if user is private: $e');
+
       return false;
     }
   }
@@ -76,7 +76,7 @@ class PrivacyCubit extends Cubit<PrivacyState> {
             }
           },
           onError: (error) {
-            debugPrint('Error streaming privacy settings: $error');
+
             emit(
               const PrivacyError(message: 'Failed to stream privacy settings'),
             );

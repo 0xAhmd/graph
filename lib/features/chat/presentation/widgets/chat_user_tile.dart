@@ -1,5 +1,6 @@
 // lib/features/chat/presentation/widgets/chat_user_tile.dart
 import 'package:flutter/material.dart';
+
 import '../../domain/entities/chat_user.dart';
 
 class ChatUserTile extends StatelessWidget {

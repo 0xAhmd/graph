@@ -2,9 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/features/home/domain/utils/feed_filter.dart';
-import 'package:ig_mate/features/search/presentation/pages/search_page.dart';
-import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
+import '../../domain/utils/feed_filter.dart';
+import '../../../search/presentation/pages/search_page.dart';
+import '../../../stories/presentation/cubit/story_cubit.dart';
 
 import '../../../../core/utils/app_updater.dart';
 import '../../../../layout/constrained_scaffold.dart';
@@ -44,8 +44,11 @@ class _HomePageState extends State<HomePage>
     _tabController = TabController(length: 2, vsync: this);
     _feedFilter = FeedFilter(authCubit: authCubit, profileCubit: profileCubit);
 
-    _initializeData();
-    AppUpdater.checkForUpdate(context);
+    // Defer initialization to after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeData();
+      AppUpdater.checkForUpdate(context);
+    });
   }
 
   @override
@@ -113,7 +116,7 @@ class _HomePageState extends State<HomePage>
         });
       }
     } catch (e) {
-      debugPrint('Error loading user privacy status: $e');
+
     }
   }
 
@@ -123,7 +126,7 @@ class _HomePageState extends State<HomePage>
         await commentCubit.fetchComments(post.id);
       }
     } catch (e) {
-      debugPrint('Error loading comments for posts: $e');
+
     }
   }
 
@@ -289,7 +292,7 @@ class _HomePageState extends State<HomePage>
                       onBlockUser: blockUser,
                       onUnblockUser: unBlockUser,
                       onNavigateToDiscover: () {
-                        debugPrint('Navigate to discover page');
+
                       },
                     ),
                     FollowingFeed(

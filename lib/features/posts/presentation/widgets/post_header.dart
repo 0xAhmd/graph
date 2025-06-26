@@ -2,9 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import '../../../profile/domain/entities/profile_user.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../domain/entities/post_entity.dart';
-import '../../../profile/domain/entities/profile_user.dart';
 
 class PostHeader extends StatelessWidget {
   final Post post;
@@ -104,7 +105,7 @@ class PostHeader extends StatelessWidget {
                     image: NetworkImage(postUser!.profileImgUrl),
                     fit: BoxFit.cover,
                     onError: (exception, stackTrace) {
-                      debugPrint('Image load error: $exception');
+
                     },
                   )
                 : null,

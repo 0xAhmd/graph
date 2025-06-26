@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/comments/presentation/comments_page_widgets/comment_input_section.dart';
-import 'package:ig_mate/features/comments/presentation/comments_page_widgets/comment_list_view.dart';
-import 'package:ig_mate/features/comments/presentation/mixins/input_mixin.dart';
-import 'package:ig_mate/features/comments/presentation/mixins/sorting_mixin.dart';
-import 'package:ig_mate/features/comments/presentation/mixins/state_mixin.dart';
+import '../comments_page_widgets/comment_input_section.dart';
+import '../comments_page_widgets/comment_list_view.dart';
+import '../mixins/input_mixin.dart';
+import '../mixins/sorting_mixin.dart';
+import '../mixins/state_mixin.dart';
 import '../../../../layout/constrained_scaffold.dart';
 import '../cubit/comment_cubit.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';

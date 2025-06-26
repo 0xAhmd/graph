@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 
 class CommentAvatar extends StatelessWidget {
   final String userName;
@@ -42,7 +42,7 @@ class CommentAvatar extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                   errorWidget: (context, url, error) {
-                    debugPrint('❌ Image load error for $userName: $error');
+
                     return _buildFallbackAvatar();
                   },
                 ),

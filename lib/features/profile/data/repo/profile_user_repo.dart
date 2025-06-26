@@ -42,7 +42,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
       }
       return null;
     } catch (e) {
-      debugPrint('Error fetching user profile: $e');
+
       return null;
     }
   }
@@ -91,7 +91,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
 
       return publicUrl;
     } catch (e) {
-      debugPrint('Image upload error: $e');
+
       return null;
     }
   }
@@ -115,7 +115,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
           // Delete from Supabase storage
           await _bucket.remove([fileName]);
         } catch (e) {
-          debugPrint('Error deleting image from storage: $e');
+
           // Continue to update Firestore even if storage deletion fails
         }
       }
@@ -127,7 +127,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
 
       return true;
     } catch (e) {
-      debugPrint('Error deleting profile image: $e');
+
       return false;
     }
   }
@@ -177,9 +177,8 @@ class ProfileUserRepo implements ProfileUserRepoContract {
         transaction.update(targetUserRef, {'followers': targetFollowers});
       });
 
-      debugPrint('Follow/Unfollow operation completed successfully');
     } catch (e) {
-      debugPrint('Error in toggleFollow: $e');
+
       throw Exception('Failed to toggle follow: $e');
     }
   }
@@ -194,7 +193,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
           .get();
       return snapshot.docs.map((doc) => doc.id).toList();
     } catch (e) {
-      debugPrint('Error getting blocked users: $e');
+
       return [];
     }
   }
@@ -202,7 +201,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
   @override
   Future<void> blockUser(String currentUserId, String userId) async {
     try {
-      debugPrint('Blocking $userId for user $currentUserId');
+
       await firestore
           .collection('users')
           .doc(currentUserId)
@@ -210,7 +209,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
           .doc(userId)
           .set({'blockedAt': FieldValue.serverTimestamp()});
     } catch (e) {
-      debugPrint('Error blocking user: $e');
+
       throw Exception('Failed to block user');
     }
   }
@@ -225,7 +224,7 @@ class ProfileUserRepo implements ProfileUserRepoContract {
           .doc(blockedUserId)
           .delete();
     } catch (e) {
-      debugPrint('Error unblocking user: $e');
+
       throw Exception('Failed to unblock user');
     }
   }

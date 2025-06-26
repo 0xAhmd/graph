@@ -65,25 +65,23 @@ class FirebaseAuthRepo implements AuthRepoContract {
     String? password,
   }) async {
     try {
-      debugPrint('Attempting FirebaseAuth login for $email');
+
       UserCredential userCredential = await firebaseAuth
           .signInWithEmailAndPassword(email: email!, password: password!);
       final uid = userCredential.user!.uid;
-      debugPrint('FirebaseAuth login success, uid: $uid');
 
       final doc = await firestore.collection('users').doc(uid).get();
       if (!doc.exists || doc.data() == null) {
-        debugPrint('User Firestore document not found for $uid');
+
         throw "User data not found.";
       }
 
-      debugPrint('User Firestore document found for $uid');
       return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-      debugPrint('FirebaseAuthException: ${e.code}');
+
       throw _mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-      debugPrint('Unknown error: $e');
+
       throw "Something went wrong. Please try again.";
     }
   }
@@ -114,27 +112,24 @@ class FirebaseAuthRepo implements AuthRepoContract {
       }
 
       final uid = user.uid;
-      debugPrint('Attempting to delete account for uid: $uid');
 
       // Delete all user data from Firestore first
       await deleteUserInfoFromFirebase(uid);
-      debugPrint('All user data deleted from Firestore');
 
       // Finally, delete the Firebase Auth user
       await user.delete();
-      debugPrint('Firebase Auth user deleted successfully');
+
     } on FirebaseAuthException catch (e) {
-      debugPrint('FirebaseAuthException during account deletion: ${e.code}');
+
       throw _mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-      debugPrint('Unknown error during account deletion: $e');
+
       throw "Failed to delete account. Please try again.";
     }
   }
 
   @override
   Future<void> deleteUserInfoFromFirebase(String uid) async {
-    debugPrint('Starting comprehensive data deletion for user: $uid');
 
     try {
       // Initialize Supabase storage bucket
@@ -186,7 +181,7 @@ class FirebaseAuthRepo implements AuthRepoContract {
             'Successfully deleted ${imagesToDelete.length} images from Supabase storage',
           );
         } catch (e) {
-          debugPrint('Error deleting images from Supabase storage: $e');
+
           // Continue with Firestore deletion even if image deletion fails
         }
       }
@@ -235,7 +230,6 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       // Commit the updates first
       await updateBatch.commit();
-      debugPrint('User references removed from posts and user relationships');
 
       // Then handle all deletions in a separate batch
       WriteBatch deleteBatch = firestore.batch();
@@ -248,7 +242,6 @@ class FirebaseAuthRepo implements AuthRepoContract {
       for (var post in userPosts.docs) {
         deleteBatch.delete(post.reference);
       }
-      debugPrint('Queued deletion of ${userPosts.docs.length} user posts');
 
       // Delete user's comments
       QuerySnapshot userComments = await firestore
@@ -264,9 +257,9 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       // Commit the deletion batch
       await deleteBatch.commit();
-      debugPrint('All user data and documents deleted successfully');
+
     } catch (e) {
-      debugPrint('Error during comprehensive user data deletion: $e');
+
       rethrow;
     }
   }
@@ -290,7 +283,7 @@ class FirebaseAuthRepo implements AuthRepoContract {
       // Alternative: just get the last segment if the above doesn't work
       return pathSegments.last;
     } catch (e) {
-      debugPrint('Error extracting filename from URL: $url, Error: $e');
+
       return null;
     }
   }
@@ -332,10 +325,10 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-      debugPrint('FirebaseAuthException: ${e.code}');
+
       throw _mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-      debugPrint('Google sign-in error: $e');
+
       throw "Google sign-in failed. Please try again.";
     }
   }
@@ -360,8 +353,6 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       if (firebaseUser == null) return null;
 
-      debugPrint('GitHub sign-in success, uid: ${firebaseUser.uid}');
-
       // Check if user exists in Firestore
       final docRef = firestore.collection('users').doc(firebaseUser.uid);
       final doc = await docRef.get();
@@ -379,10 +370,10 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-      debugPrint('FirebaseAuthException: ${e.code}');
+
       throw _mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-      debugPrint('GitHub sign-in error: $e');
+
       throw "GitHub sign-in failed. Please try again.";
     }
   }

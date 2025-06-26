@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:ig_mate/features/comments/domain/entities/comment.dart';
-import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_constants.dart';
-import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_helpers.dart';
+import '../../../domain/entities/comment.dart';
+import '../utils/comment_constants.dart';
+import '../utils/comment_helpers.dart';
 
 
 class CommentTextDisplay extends StatefulWidget {

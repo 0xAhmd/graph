@@ -1,4 +1,6 @@
 // lib/features/stories/presentation/pages/story_viewer_page.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
@@ -7,7 +9,6 @@ import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_content.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_header.dart';
 import 'package:ig_mate/features/stories/presentation/widgets/story_progress_indicator.dart';
-import 'dart:async';
 
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 

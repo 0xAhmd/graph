@@ -1,9 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../layout/constrained_scaffold.dart';
 import '../../../profile/presentation/widgets/user_list_tile.dart';
 import '../cubit/search_cubit.dart';
-import '../../../../layout/constrained_scaffold.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});

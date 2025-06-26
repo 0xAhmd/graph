@@ -1,4 +1,4 @@
-import 'package:ig_mate/features/comments/domain/entities/comment.dart';
+import '../../features/comments/domain/entities/comment.dart';
 
 Map<String, List<Comment>> organizeComments(List<Comment> allComments) {
   final Map<String, List<Comment>> repliesMap = {};

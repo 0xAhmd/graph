@@ -1,13 +1,12 @@
 // lib/features/stories/data/repo/store_repo_impl.dart
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-import 'package:ig_mate/features/stories/domain/entities/story.dart';
-import 'package:ig_mate/features/stories/domain/repo/story_repo_interface.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ig_mate/features/stories/domain/entities/story.dart';
+import 'package:ig_mate/features/stories/domain/repo/story_repo_interface.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/story_model.dart';
 
@@ -222,7 +221,7 @@ class StoriesRepositoryImpl implements StoriesRepository {
         } else {}
       }
     } catch (e) {
-      debugPrint(e.toString());
+
     }
   }
 

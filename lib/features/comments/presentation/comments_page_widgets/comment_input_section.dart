@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/comments/presentation/utils/constants.dart';
-import 'package:ig_mate/features/comments/presentation/utils/validator.dart';
+import '../utils/constants.dart';
+import '../utils/validator.dart';
 
 class CommentInputSection extends StatelessWidget {
   final TextEditingController controller;

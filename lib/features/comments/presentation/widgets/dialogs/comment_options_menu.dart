@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/comments/domain/entities/comment.dart';
-import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
-import 'package:ig_mate/features/comments/presentation/widgets/dialogs/comment_delete_dialog.dart';
-import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_constants.dart';
-import 'package:ig_mate/features/comments/presentation/widgets/utils/comment_helpers.dart';
+import '../../../domain/entities/comment.dart';
+import '../../cubit/comment_cubit.dart';
+import 'comment_delete_dialog.dart';
+import '../utils/comment_constants.dart';
+import '../utils/comment_helpers.dart';
 
 class CommentOptionsMenu {
   static void show({

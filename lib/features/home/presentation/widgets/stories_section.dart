@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
-import 'package:ig_mate/features/stories/presentation/cubit/story_state.dart';
-import 'package:ig_mate/features/stories/presentation/pages/story_page.dart';
-import 'package:ig_mate/features/stories/presentation/pages/story_viewer_page.dart';
-import 'package:ig_mate/features/stories/presentation/widgets/story_ring.dart';
+import '../../../stories/presentation/cubit/story_cubit.dart';
+import '../../../stories/presentation/cubit/story_state.dart';
+import '../../../stories/presentation/pages/story_page.dart';
+import '../../../stories/presentation/pages/story_viewer_page.dart';
+import '../../../stories/presentation/widgets/story_ring.dart';
 
 
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
@@ -25,7 +25,7 @@ class StoriesSection extends StatelessWidget {
   Widget _buildAddStoryButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        debugPrint('Add story tapped');
+
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const CreateStoryPage()),
@@ -139,7 +139,6 @@ class StoriesSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: BlocBuilder<StoriesCubit, StoriesState>(
         builder: (context, state) {
-          debugPrint('Stories state: $state');
 
           if (state is StoriesLoading) {
             return const Center(child: CupertinoActivityIndicator());
@@ -151,8 +150,6 @@ class StoriesSection extends StatelessWidget {
               state.groupedStories,
               followingUserIds,
             );
-
-            debugPrint('Filtered stories count: ${filteredStories.length}');
 
             // Always show the horizontal list with "Add Story" button
             return ListView.builder(
@@ -189,7 +186,7 @@ class StoriesSection extends StatelessWidget {
               },
             );
           } else if (state is StoriesError) {
-            debugPrint('Stories error: ${state.message}');
+
             return Center(
               child: Text(
                 'Error loading stories',

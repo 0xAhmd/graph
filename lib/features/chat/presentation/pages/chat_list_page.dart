@@ -4,6 +4,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../layout/constrained_scaffold.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../domain/entities/chat_user.dart';

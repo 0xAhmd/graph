@@ -2,12 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../auth/presentation/cubit/cubit/auth_cubit.dart';
-import '../profile/presentation/cubit/cubit/profile_cubit.dart';
-import '../profile/domain/entities/profile_user.dart';
-import '../../layout/constrained_scaffold.dart';
 import 'package:quickalert/models/quickalert_type.dart';
 import 'package:quickalert/widgets/quickalert_dialog.dart';
+
+import '../../layout/constrained_scaffold.dart';
+import '../auth/presentation/cubit/cubit/auth_cubit.dart';
+import '../profile/domain/entities/profile_user.dart';
+import '../profile/presentation/cubit/cubit/profile_cubit.dart';
 
 class BlockListPage extends StatefulWidget {
   const BlockListPage({super.key});
@@ -44,7 +45,7 @@ class _BlockListPageState extends State<BlockListPage> {
         setState(() => isLoading = false);
       }
     } catch (e) {
-      debugPrint('Error loading blocked users: $e');
+
       setState(() => isLoading = false);
     }
   }
@@ -85,7 +86,7 @@ class _BlockListPageState extends State<BlockListPage> {
         );
       }
     } catch (e) {
-      debugPrint('Error unblocking user: $e');
+
       if (mounted) {
         Fluttertoast.showToast(
           msg: "Failed unblock user $e",

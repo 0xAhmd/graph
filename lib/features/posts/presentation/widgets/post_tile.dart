@@ -3,17 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/comment_avatar.dart';
-import '../widgets/index.dart';
-import '../../../comments/presentation/pages/comments_page.dart';
-import '../../../comments/presentation/cubit/comment_cubit.dart';
-import '../../../comments/domain/entities/comment.dart';
+
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
-import '../../domain/entities/post_entity.dart';
-import '../cubit/post_cubit.dart';
-
+import '../../../comments/domain/entities/comment.dart';
+import '../../../comments/presentation/cubit/comment_cubit.dart';
+import '../../../comments/presentation/pages/comments_page.dart';
 import '../../../profile/domain/entities/profile_user.dart';
 import '../../../profile/presentation/cubit/cubit/profile_cubit.dart';
+import '../../domain/entities/post_entity.dart';
+import '../cubit/post_cubit.dart';
+import '../widgets/index.dart';
 
 class PostTile extends StatefulWidget {
   const PostTile({
@@ -99,7 +99,7 @@ class _PostTileState extends State<PostTile> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading comments: $e');
+
     }
   }
 

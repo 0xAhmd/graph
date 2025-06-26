@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ig_mate/features/profile/domain/repo/privacy_repo.dart';
+
 import '../../domain/entities/privacy_settings.dart';
 
 class PrivacyRepo implements PrivacyRepoContract {
@@ -23,7 +24,7 @@ class PrivacyRepo implements PrivacyRepoContract {
         'Privacy settings updated for user: $userId, isPrivate: $isPrivate',
       );
     } catch (e) {
-      debugPrint('Error updating privacy settings: $e');
+
       rethrow;
     }
   }
@@ -45,7 +46,7 @@ class PrivacyRepo implements PrivacyRepoContract {
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting privacy settings: $e');
+
       return null;
     }
   }
@@ -61,7 +62,7 @@ class PrivacyRepo implements PrivacyRepoContract {
       }
       return false;
     } catch (e) {
-      debugPrint('Error checking if user is private: $e');
+
       return false;
     }
   }
@@ -86,7 +87,7 @@ class PrivacyRepo implements PrivacyRepoContract {
           return null;
         })
         .handleError((error) {
-          debugPrint('Error streaming privacy settings: $error');
+
           return null;
         });
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/comments/domain/entities/comment.dart';
+import '../../../domain/entities/comment.dart';
 
 class CommentDeleteDialog {
   static void show({

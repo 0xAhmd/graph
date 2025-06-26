@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:ig_mate/features/profile/domain/repo/follow_request_repo.dart';
-import 'package:ig_mate/features/private/domain/entities/follow_request.dart';
+import '../../../profile/domain/repo/follow_request_repo.dart';
+import '../../domain/entities/follow_request.dart';
 
 part 'follow_request_state.dart';
 
@@ -30,7 +30,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
         ),
       );
     } catch (e) {
-      debugPrint('Error loading follow requests: $e');
+
       emit(const FollowRequestError(message: 'Failed to load follow requests'));
     }
   }
@@ -48,7 +48,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       // Reload data to reflect changes
       loadFollowRequests(fromUserId);
     } catch (e) {
-      debugPrint('Error sending follow request: $e');
+
       emit(const FollowRequestError(message: 'Failed to send follow request'));
     }
   }
@@ -69,7 +69,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       // Reload data to reflect changes
       loadFollowRequests(toUserId);
     } catch (e) {
-      debugPrint('Error accepting follow request: $e');
+
       emit(const FollowRequestError(message: 'Failed to accept follow request'));
     }
   }
@@ -85,7 +85,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       // Reload data to reflect changes
       loadFollowRequests(userId);
     } catch (e) {
-      debugPrint('Error declining follow request: $e');
+
       emit(const FollowRequestError(message: 'Failed to decline follow request'));
     }
   }
@@ -103,7 +103,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
       // Reload data to reflect changes
       loadFollowRequests(fromUserId);
     } catch (e) {
-      debugPrint('Error cancelling follow request: $e');
+
       emit(const FollowRequestError(message: 'Failed to cancel follow request'));
     }
   }
@@ -118,7 +118,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
         toUserId: toUserId,
       );
     } catch (e) {
-      debugPrint('Error getting follow request between users: $e');
+
       return null;
     }
   }
@@ -148,7 +148,7 @@ class FollowRequestCubit extends Cubit<FollowRequestState> {
             }
           },
           onError: (error) {
-            debugPrint('Error streaming incoming requests: $error');
+
             emit(
               const FollowRequestError(message: 'Failed to stream follow requests'),
             );

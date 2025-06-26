@@ -40,7 +40,7 @@ class AppUpdater {
       final cachedUrl = prefs.getString(_cachedUrlKey);
       if (cachedVersion != null && cachedUrl != null) {
         if (_isNewerVersion(packageInfo.version, cachedVersion)) {
-          debugPrint('Update snoozed: skipping dialog.');
+
         }
       }
       return;
@@ -72,7 +72,7 @@ class AppUpdater {
         }
       }
     } catch (e) {
-      debugPrint('Update check error: $e');
+
     }
   }
 

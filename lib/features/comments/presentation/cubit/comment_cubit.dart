@@ -1,7 +1,7 @@
 
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/comments/domain/repo/comment_repo_interface.dart';
+import '../../domain/repo/comment_repo_interface.dart';
 import '../../domain/entities/comment.dart';
 
 part 'comment_state.dart';

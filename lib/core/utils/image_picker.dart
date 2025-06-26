@@ -1,11 +1,12 @@
 // cspell:disable
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 class ImageHelper {
   static final ImagePicker _picker = ImagePicker();
@@ -22,7 +23,7 @@ class ImageHelper {
       }
       return null;
     } catch (e) {
-      debugPrint('Error picking image: $e');
+
       return null;
     }
   }
@@ -50,7 +51,7 @@ class ImageHelper {
       }
       return null;
     } catch (e) {
-      debugPrint('Error picking and cropping image: $e');
+
       return null;
     }
   }
@@ -94,7 +95,7 @@ class ImageHelper {
 
       return tempFile;
     } catch (e) {
-      debugPrint('Error cropping image: $e');
+
       return imageFile; // Return original if crop fails
     }
   }
@@ -243,7 +244,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
         Navigator.of(context).pop(croppedFile);
       }
     } catch (e) {
-      debugPrint('Error cropping image: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,

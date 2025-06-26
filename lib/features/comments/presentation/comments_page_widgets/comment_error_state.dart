@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ig_mate/features/comments/presentation/cubit/comment_cubit.dart';
+import '../cubit/comment_cubit.dart';
 
 class CommentErrorState extends StatelessWidget {
   final CommentError errorState;

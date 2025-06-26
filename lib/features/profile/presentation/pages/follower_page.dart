@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
-import 'package:ig_mate/features/profile/presentation/pages/profile_page.dart';
+import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
+import 'profile_page.dart';
 import '../../../../layout/constrained_scaffold.dart';
 import '../cubit/cubit/profile_cubit.dart';
 

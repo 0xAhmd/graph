@@ -60,7 +60,7 @@ class FirebaseChatRepo implements ChatRepoContract {
 
       return chatUsers;
     } catch (e) {
-      debugPrint('Error getting available users: $e');
+
       return [];
     }
   }
@@ -88,7 +88,7 @@ class FirebaseChatRepo implements ChatRepoContract {
         );
       }).toList();
     } catch (e) {
-      debugPrint('Error getting user conversations: $e');
+
       return [];
     }
   }
@@ -137,7 +137,7 @@ class FirebaseChatRepo implements ChatRepoContract {
       await conversationRef.set(newConversation.toJson());
       return newConversation;
     } catch (e) {
-      debugPrint('Error getting or creating conversation: $e');
+
       rethrow;
     }
   }
@@ -176,7 +176,7 @@ class FirebaseChatRepo implements ChatRepoContract {
 
       return message;
     } catch (e) {
-      debugPrint('Error sending message: $e');
+
       rethrow;
     }
   }
@@ -228,7 +228,7 @@ class FirebaseChatRepo implements ChatRepoContract {
         'unreadCount.$userId': 0,
       });
     } catch (e) {
-      debugPrint('Error marking messages as read: $e');
+
     }
   }
 
@@ -241,7 +241,7 @@ class FirebaseChatRepo implements ChatRepoContract {
         'editedAt': DateTime.now(),
       });
     } catch (e) {
-      debugPrint('Error editing message: $e');
+
       rethrow;
     }
   }
@@ -251,7 +251,7 @@ class FirebaseChatRepo implements ChatRepoContract {
     try {
       await _firestore.collection('messages').doc(messageId).delete();
     } catch (e) {
-      debugPrint('Error deleting message: $e');
+
       rethrow;
     }
   }
@@ -268,7 +268,7 @@ class FirebaseChatRepo implements ChatRepoContract {
 
       return totalUnread;
     } catch (e) {
-      debugPrint('Error getting unread message count: $e');
+
       return 0;
     }
   }
@@ -281,7 +281,7 @@ class FirebaseChatRepo implements ChatRepoContract {
         'lastSeen': DateTime.now(),
       });
     } catch (e) {
-      debugPrint('Error updating online status: $e');
+
     }
   }
 
@@ -316,14 +316,13 @@ class FirebaseChatRepo implements ChatRepoContract {
       try {
         return DateTime.parse(value);
       } catch (e) {
-        debugPrint('Error parsing DateTime from string: $value, error: $e');
+
         return null;
       }
     } else if (value is DateTime) {
       return value;
     }
 
-    debugPrint('Unexpected DateTime type: ${value.runtimeType}');
     return null;
   }
 }
