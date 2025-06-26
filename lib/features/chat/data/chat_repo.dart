@@ -1,6 +1,5 @@
 // lib/features/chat/data/repo/firebase_chat_repo.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:ig_mate/features/chat/domain/entities/chat_convo.dart';
 import 'package:ig_mate/features/chat/domain/entities/chat_message.dart';
 import 'package:ig_mate/features/chat/domain/entities/chat_user.dart';

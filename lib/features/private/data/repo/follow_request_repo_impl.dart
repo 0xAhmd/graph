@@ -1,7 +1,6 @@
 // lib/features/follow_requests/data/repo/follow_request_repo.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:ig_mate/features/profile/domain/repo/follow_request_repo.dart';
 import '../../domain/entities/follow_request.dart';
 
