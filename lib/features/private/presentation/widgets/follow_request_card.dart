@@ -48,7 +48,7 @@ class FollowRequestCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            
+
             // User Info
             Expanded(
               child: Column(
@@ -64,23 +64,17 @@ class FollowRequestCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     userProfile?.email ?? '',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _formatTimestamp(request.createdAt),
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
                   ),
                 ],
               ),
             ),
-            
+
             // Action Buttons
             if (isIncoming) ...[
               _buildIncomingActions(),
@@ -101,7 +95,7 @@ class FollowRequestCard extends StatelessWidget {
         child: CupertinoActivityIndicator(),
       );
     }
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -115,10 +109,7 @@ class FollowRequestCard extends StatelessWidget {
             onPressed: onDecline,
             icon: const Icon(Icons.close, color: Colors.red),
             iconSize: 20,
-            constraints: const BoxConstraints(
-              minWidth: 36,
-              minHeight: 36,
-            ),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           ),
         ),
         const SizedBox(width: 8),
@@ -132,10 +123,7 @@ class FollowRequestCard extends StatelessWidget {
             onPressed: onAccept,
             icon: const Icon(Icons.check, color: Colors.white),
             iconSize: 20,
-            constraints: const BoxConstraints(
-              minWidth: 36,
-              minHeight: 36,
-            ),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
           ),
         ),
       ],
@@ -164,18 +152,17 @@ class FollowRequestCard extends StatelessWidget {
             ),
           ),
         ),
-        if (request.status == FollowRequestStatus.pending) ...[
+        if (onCancel != null) ...[
           const SizedBox(height: 8),
           TextButton(
             onPressed: onCancel,
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(fontSize: 12),
-            ),
+            child: const Text('Cancel', style: TextStyle(fontSize: 12)),
           ),
         ],
       ],
