@@ -1,9 +1,11 @@
 // lib/features/chat/data/repo/firebase_chat_repo.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ig_mate/features/chat/domain/entities/chat_convo.dart';
 import 'package:ig_mate/features/chat/domain/entities/chat_message.dart';
 import 'package:ig_mate/features/chat/domain/entities/chat_user.dart';
 import 'package:ig_mate/features/chat/domain/repo/chat_repo_contract.dart';
+import 'package:ig_mate/index.dart';
 
 class FirebaseChatRepo implements ChatRepoContract {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -227,6 +229,7 @@ class FirebaseChatRepo implements ChatRepoContract {
         'unreadCount.$userId': 0,
       });
     } catch (e) {
+      debugPrint(e.toString());
 
     }
   }
@@ -280,6 +283,7 @@ class FirebaseChatRepo implements ChatRepoContract {
         'lastSeen': DateTime.now(),
       });
     } catch (e) {
+      debugPrint(e.toString());
 
     }
   }

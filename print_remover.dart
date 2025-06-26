@@ -14,9 +14,7 @@ void main() async {
 
       if (content != updated) {
         await file.writeAsString(updated);
-        print('Removed debugPrint from: ${file.path}');
       }
     }
   }
-  print('All debugPrint statements removed from lib');
 }

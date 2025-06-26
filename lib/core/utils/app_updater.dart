@@ -3,6 +3,7 @@
 /*url:
 https://github.com/0xAhmd/graph/releases/tag/v1.0.0
  */
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -39,9 +40,7 @@ class AppUpdater {
       final cachedVersion = prefs.getString(_cachedVersionKey);
       final cachedUrl = prefs.getString(_cachedUrlKey);
       if (cachedVersion != null && cachedUrl != null) {
-        if (_isNewerVersion(packageInfo.version, cachedVersion)) {
-
-        }
+        if (_isNewerVersion(packageInfo.version, cachedVersion)) {}
       }
       return;
     }
@@ -72,7 +71,7 @@ class AppUpdater {
         }
       }
     } catch (e) {
-
+      debugPrint(e.toString());
     }
   }
 

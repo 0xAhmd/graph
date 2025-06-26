@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/comment_avatar.dart';
@@ -99,7 +100,7 @@ class _PostTileState extends State<PostTile> {
         });
       }
     } catch (e) {
-
+      debugPrint(e.toString());
     }
   }
 

@@ -181,6 +181,7 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       await chatRepo.updateUserOnlineStatus(userId, isOnline);
     } catch (e) {
+      debugPrint(e.toString());
 
     }
   }
