@@ -1,15 +1,28 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'injection_container.dart';
+import 'package:ig_mate/layout/blocked.dart';
+import 'package:jailbreak_root_detection/jailbreak_root_detection.dart';
 
-import 'app.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'firebase_options.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'injection_container.dart';
+import 'app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Security checks
+  final isJailBroken = await JailbreakRootDetection.instance.isJailBroken;
+  final isRealDevice = await JailbreakRootDetection.instance.isRealDevice;
+
+  final isUnsafe = isJailBroken || !isRealDevice ;
+
+  if (isUnsafe) {
+    runApp(const BlockedDeviceApp());
+    return;
+  }
 
   await dotenv.load(fileName: ".env");
 
