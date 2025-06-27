@@ -13,7 +13,7 @@ class EmptyFeedMessages {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 100),
+              const SizedBox(height: 150),
               Icon(
                 Icons.explore_outlined,
                 size: 64,

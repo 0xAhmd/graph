@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../../../core/utils/text_bomb_detector.dart';
 import '../../../../layout/constrained_scaffold.dart';
-import '../../../../core/utils/image_picker.dart';
+import '../../../../core/utils/images/image_picker.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/presentation/cubit/cubit/auth_cubit.dart';
 import '../../../auth/presentation/widgets/custom_text_field.dart';

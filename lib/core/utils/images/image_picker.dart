@@ -1,6 +1,7 @@
 // cspell:disable
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
@@ -23,7 +24,7 @@ class ImageHelper {
       }
       return null;
     } catch (e) {
-
+      debugPrint('Error picking image: $e');
       return null;
     }
   }
@@ -51,7 +52,7 @@ class ImageHelper {
       }
       return null;
     } catch (e) {
-
+      debugPrint('Error picking and cropping image: $e');
       return null;
     }
   }
@@ -59,7 +60,9 @@ class ImageHelper {
   static Future<File> cropImage(
     File imageFile,
     Rect cropRect,
-    Size imageSize,
+    Size displaySize,
+    Size actualImageSize,
+    Offset imageOffset,
   ) async {
     try {
       // Read the image
@@ -68,14 +71,34 @@ class ImageHelper {
 
       if (image == null) throw Exception('Could not decode image');
 
-      // Calculate actual crop coordinates
-      final scaleX = image.width / imageSize.width;
-      final scaleY = image.height / imageSize.height;
+      // Convert display coordinates to actual image coordinates
+      final scaleX = image.width / displaySize.width;
+      final scaleY = image.height / displaySize.height;
 
-      final cropX = (cropRect.left * scaleX).round();
-      final cropY = (cropRect.top * scaleY).round();
-      final cropWidth = (cropRect.width * scaleX).round();
-      final cropHeight = (cropRect.height * scaleY).round();
+      // Adjust crop rect to account for image offset in display
+      final adjustedCropRect = Rect.fromLTWH(
+        cropRect.left - imageOffset.dx,
+        cropRect.top - imageOffset.dy,
+        cropRect.width,
+        cropRect.height,
+      );
+
+      // Calculate actual crop coordinates
+      final cropX = max(0, (adjustedCropRect.left * scaleX).round());
+      final cropY = max(0, (adjustedCropRect.top * scaleY).round());
+      final cropWidth = min(
+        image.width - cropX,
+        (adjustedCropRect.width * scaleX).round(),
+      );
+      final cropHeight = min(
+        image.height - cropY,
+        (adjustedCropRect.height * scaleY).round(),
+      );
+
+      // Ensure crop dimensions are valid
+      if (cropWidth <= 0 || cropHeight <= 0) {
+        throw Exception('Invalid crop dimensions');
+      }
 
       // Crop the image
       final croppedImage = img.copyCrop(
@@ -95,7 +118,7 @@ class ImageHelper {
 
       return tempFile;
     } catch (e) {
-
+      debugPrint('Error cropping image: $e');
       return imageFile; // Return original if crop fails
     }
   }
@@ -113,7 +136,9 @@ class ImageCropScreen extends StatefulWidget {
 class _ImageCropScreenState extends State<ImageCropScreen> {
   bool _isProcessing = false;
   Rect? _cropRect;
-  Size? _imageSize;
+  Size? _displaySize;
+  Size? _actualImageSize;
+  Offset? _imageOffset;
   final GlobalKey _imageKey = GlobalKey();
 
   @override
@@ -160,9 +185,11 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
               child: ImageCropWidget(
                 key: _imageKey,
                 imageFile: widget.originalFile,
-                onCropRectChanged: (rect, imageSize) {
-                  _cropRect = rect;
-                  _imageSize = imageSize;
+                onCropDataChanged: (cropRect, displaySize, actualSize, offset) {
+                  _cropRect = cropRect;
+                  _displaySize = displaySize;
+                  _actualImageSize = actualSize;
+                  _imageOffset = offset;
                 },
               ),
             ),
@@ -227,7 +254,15 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
   }
 
   Future<void> _cropImage() async {
-    if (_cropRect == null || _imageSize == null) return;
+    if (_cropRect == null ||
+        _displaySize == null ||
+        _actualImageSize == null ||
+        _imageOffset == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a crop area')),
+      );
+      return;
+    }
 
     setState(() {
       _isProcessing = true;
@@ -237,14 +272,16 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       final croppedFile = await ImageHelper.cropImage(
         widget.originalFile,
         _cropRect!,
-        _imageSize!,
+        _displaySize!,
+        _actualImageSize!,
+        _imageOffset!,
       );
 
       if (mounted) {
         Navigator.of(context).pop(croppedFile);
       }
     } catch (e) {
-
+      debugPrint('Error during crop: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -262,12 +299,12 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
 
 class ImageCropWidget extends StatefulWidget {
   final File imageFile;
-  final Function(Rect, Size) onCropRectChanged;
+  final Function(Rect, Size, Size, Offset) onCropDataChanged;
 
   const ImageCropWidget({
     super.key,
     required this.imageFile,
-    required this.onCropRectChanged,
+    required this.onCropDataChanged,
   });
 
   @override
@@ -276,25 +313,29 @@ class ImageCropWidget extends StatefulWidget {
 
 class _ImageCropWidgetState extends State<ImageCropWidget> {
   Rect _cropRect = const Rect.fromLTWH(50, 50, 200, 200);
-  Size _imageSize = Size.zero;
+  Size _displaySize = Size.zero;
+  Size _actualImageSize = Size.zero;
+  Offset _imageOffset = Offset.zero;
   double? _aspectRatio;
-  late Offset _imageOffset = Offset.zero;
+  bool _isImageLoaded = false;
 
   void setAspectRatio(double? ratio) {
     setState(() {
       _aspectRatio = ratio;
-      _updateCropRect();
+      if (_isImageLoaded) {
+        _updateCropRect();
+      }
     });
   }
 
   void _updateCropRect() {
-    if (_imageSize == Size.zero) return;
+    if (_displaySize == Size.zero) return;
 
     final center = Offset(
-      _imageOffset.dx + _imageSize.width / 2,
-      _imageOffset.dy + _imageSize.height / 2,
+      _imageOffset.dx + _displaySize.width / 2,
+      _imageOffset.dy + _displaySize.height / 2,
     );
-    final maxSize = min(_imageSize.width, _imageSize.height) * 0.8;
+    final maxSize = min(_displaySize.width, _displaySize.height) * 0.8;
 
     double width, height;
 
@@ -307,13 +348,13 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
         width = height * _aspectRatio!;
       }
     } else {
-      width = _cropRect.width;
-      height = _cropRect.height;
+      width = min(_cropRect.width, _displaySize.width * 0.8);
+      height = min(_cropRect.height, _displaySize.height * 0.8);
     }
 
     _cropRect = Rect.fromCenter(center: center, width: width, height: height);
     _constrainCropRect();
-    widget.onCropRectChanged(_cropRect, _imageSize);
+    _notifyChanges();
   }
 
   void _constrainCropRect() {
@@ -322,9 +363,10 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
     double width = _cropRect.width;
     double height = _cropRect.height;
 
-    final rightLimit = _imageOffset.dx + _imageSize.width;
-    final bottomLimit = _imageOffset.dy + _imageSize.height;
+    final rightLimit = _imageOffset.dx + _displaySize.width;
+    final bottomLimit = _imageOffset.dy + _displaySize.height;
 
+    // Constrain to image bounds
     if (left < _imageOffset.dx) left = _imageOffset.dx;
     if (top < _imageOffset.dy) top = _imageOffset.dy;
 
@@ -338,7 +380,20 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
       if (_aspectRatio != null) width = height * _aspectRatio!;
     }
 
+    // Ensure minimum size
+    width = max(width, 50);
+    height = max(height, 50);
+
     _cropRect = Rect.fromLTWH(left, top, width, height);
+  }
+
+  void _notifyChanges() {
+    widget.onCropDataChanged(
+      _cropRect,
+      _displaySize,
+      _actualImageSize,
+      _imageOffset,
+    );
   }
 
   @override
@@ -349,62 +404,89 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
           children: [
             // Image
             Positioned.fill(
-              child: Image.file(widget.imageFile, fit: BoxFit.contain),
-            ),
-            // Crop overlay
-            Positioned.fill(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Calculate actual image size within the container
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _calculateImageSize(constraints);
-                  });
-
-                  return CustomPaint(
-                    painter: CropOverlayPainter(
-                      cropRect: _cropRect,
-                      imageSize: _imageSize,
-                      containerSize: constraints.biggest,
-                    ),
-                  );
+              child: Image.file(
+                widget.imageFile,
+                fit: BoxFit.contain,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (frame != null && !_isImageLoaded) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _calculateImageSize(constraints);
+                    });
+                  }
+                  return child;
                 },
               ),
             ),
+            // Crop overlay
+            if (_isImageLoaded)
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: CropOverlayPainter(
+                    cropRect: _cropRect,
+                    imageSize: _displaySize,
+                    containerSize: constraints.biggest,
+                  ),
+                ),
+              ),
             // Crop handles
-            if (_imageSize != Size.zero) ..._buildCropHandles(),
+            if (_isImageLoaded) ..._buildCropHandles(),
           ],
         );
       },
     );
   }
 
-  void _calculateImageSize(BoxConstraints constraints) async {
-    final containerSize = constraints.biggest;
+  Future<void> _calculateImageSize(BoxConstraints constraints) async {
+    try {
+      final containerSize = constraints.biggest;
+      final bytes = await widget.imageFile.readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
 
-    final decodedImage = await decodeImageFromList(
-      widget.imageFile.readAsBytesSync(),
-    );
-    final imageAspectRatio = decodedImage.width / decodedImage.height;
-    final containerAspectRatio = containerSize.width / containerSize.height;
+      final imageAspectRatio = image.width / image.height;
+      final containerAspectRatio = containerSize.width / containerSize.height;
 
-    double displayWidth, displayHeight;
+      double displayWidth, displayHeight;
 
-    if (imageAspectRatio > containerAspectRatio) {
-      displayWidth = containerSize.width;
-      displayHeight = displayWidth / imageAspectRatio;
-    } else {
-      displayHeight = containerSize.height;
-      displayWidth = displayHeight * imageAspectRatio;
+      if (imageAspectRatio > containerAspectRatio) {
+        displayWidth = containerSize.width;
+        displayHeight = displayWidth / imageAspectRatio;
+      } else {
+        displayHeight = containerSize.height;
+        displayWidth = displayHeight * imageAspectRatio;
+      }
+
+      final offsetX = (containerSize.width - displayWidth) / 2;
+      final offsetY = (containerSize.height - displayHeight) / 2;
+
+      setState(() {
+        _displaySize = Size(displayWidth, displayHeight);
+        _actualImageSize = Size(
+          image.width.toDouble(),
+          image.height.toDouble(),
+        );
+        _imageOffset = Offset(offsetX, offsetY);
+        _isImageLoaded = true;
+
+        // Initialize crop rect to center of image
+        final initialSize = min(displayWidth, displayHeight) * 0.6;
+        _cropRect = Rect.fromCenter(
+          center: Offset(
+            offsetX + displayWidth / 2,
+            offsetY + displayHeight / 2,
+          ),
+          width: initialSize,
+          height: initialSize,
+        );
+
+        _notifyChanges();
+      });
+
+      image.dispose();
+    } catch (e) {
+      debugPrint('Error calculating image size: $e');
     }
-
-    final offsetX = (containerSize.width - displayWidth) / 2;
-    final offsetY = (containerSize.height - displayHeight) / 2;
-
-    setState(() {
-      _imageSize = Size(displayWidth, displayHeight);
-      _imageOffset = Offset(offsetX, offsetY);
-      _updateCropRect(); // Use this to reset the crop area based on new size
-    });
   }
 
   List<Widget> _buildCropHandles() {
@@ -463,38 +545,68 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
 
   void _handleCornerDrag(int cornerIndex, Offset delta) {
     setState(() {
+      final minSize = 50.0;
+
       switch (cornerIndex) {
         case 0: // Top-left
-          _cropRect = Rect.fromLTRB(
-            _cropRect.left + delta.dx,
-            _cropRect.top + delta.dy,
-            _cropRect.right,
-            _cropRect.bottom,
-          );
+          final newLeft = _cropRect.left + delta.dx;
+          final newTop = _cropRect.top + delta.dy;
+          final newWidth = _cropRect.right - newLeft;
+          final newHeight = _cropRect.bottom - newTop;
+
+          if (newWidth >= minSize && newHeight >= minSize) {
+            _cropRect = Rect.fromLTRB(
+              newLeft,
+              newTop,
+              _cropRect.right,
+              _cropRect.bottom,
+            );
+          }
           break;
         case 1: // Top-right
-          _cropRect = Rect.fromLTRB(
-            _cropRect.left,
-            _cropRect.top + delta.dy,
-            _cropRect.right + delta.dx,
-            _cropRect.bottom,
-          );
+          final newTop = _cropRect.top + delta.dy;
+          final newRight = _cropRect.right + delta.dx;
+          final newWidth = newRight - _cropRect.left;
+          final newHeight = _cropRect.bottom - newTop;
+
+          if (newWidth >= minSize && newHeight >= minSize) {
+            _cropRect = Rect.fromLTRB(
+              _cropRect.left,
+              newTop,
+              newRight,
+              _cropRect.bottom,
+            );
+          }
           break;
         case 2: // Bottom-left
-          _cropRect = Rect.fromLTRB(
-            _cropRect.left + delta.dx,
-            _cropRect.top,
-            _cropRect.right,
-            _cropRect.bottom + delta.dy,
-          );
+          final newLeft = _cropRect.left + delta.dx;
+          final newBottom = _cropRect.bottom + delta.dy;
+          final newWidth = _cropRect.right - newLeft;
+          final newHeight = newBottom - _cropRect.top;
+
+          if (newWidth >= minSize && newHeight >= minSize) {
+            _cropRect = Rect.fromLTRB(
+              newLeft,
+              _cropRect.top,
+              _cropRect.right,
+              newBottom,
+            );
+          }
           break;
         case 3: // Bottom-right
-          _cropRect = Rect.fromLTRB(
-            _cropRect.left,
-            _cropRect.top,
-            _cropRect.right + delta.dx,
-            _cropRect.bottom + delta.dy,
-          );
+          final newRight = _cropRect.right + delta.dx;
+          final newBottom = _cropRect.bottom + delta.dy;
+          final newWidth = newRight - _cropRect.left;
+          final newHeight = newBottom - _cropRect.top;
+
+          if (newWidth >= minSize && newHeight >= minSize) {
+            _cropRect = Rect.fromLTRB(
+              _cropRect.left,
+              _cropRect.top,
+              newRight,
+              newBottom,
+            );
+          }
           break;
       }
 
@@ -503,14 +615,28 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
       }
 
       _constrainCropRect();
-      widget.onCropRectChanged(_cropRect, _imageSize);
+      _notifyChanges();
     });
   }
 
   void _maintainAspectRatio(int cornerIndex) {
     final center = _cropRect.center;
-    final width = _cropRect.width;
-    final height = width / _aspectRatio!;
+    double width = _cropRect.width;
+    double height = width / _aspectRatio!;
+
+    // Ensure the aspect ratio constrained size fits within bounds
+    final maxWidth = _displaySize.width * 0.95;
+    final maxHeight = _displaySize.height * 0.95;
+
+    if (width > maxWidth) {
+      width = maxWidth;
+      height = width / _aspectRatio!;
+    }
+
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = height * _aspectRatio!;
+    }
 
     _cropRect = Rect.fromCenter(center: center, width: width, height: height);
   }
@@ -519,7 +645,7 @@ class _ImageCropWidgetState extends State<ImageCropWidget> {
     setState(() {
       _cropRect = _cropRect.translate(delta.dx, delta.dy);
       _constrainCropRect();
-      widget.onCropRectChanged(_cropRect, _imageSize);
+      _notifyChanges();
     });
   }
 }
