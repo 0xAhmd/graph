@@ -8,16 +8,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => sl<StoriesCubit>()),
-        BlocProvider(create: (_) => sl<FollowRequestCubit>()),
-        BlocProvider(create: (_) => sl<PrivacyCubit>()),
-        BlocProvider(create: (_) => sl<ChatCubit>()),
-        BlocProvider(create: (_) => sl<CommentCubit>()),
-        BlocProvider(create: (_) => sl<AuthCubit>()..checkAuth()),
-        BlocProvider(create: (_) => sl<SearchCubit>()),
-        BlocProvider(create: (_) => sl<ProfileCubit>()),
-        BlocProvider(create: (_) => sl<PostCubit>()),
-        BlocProvider(create: (_) => sl<ThemeCubit>()),
+        BlocProvider(create: (_) => locator<StoriesCubit>()),
+        BlocProvider(create: (_) => locator<FollowRequestCubit>()),
+        BlocProvider(create: (_) => locator<PrivacyCubit>()),
+        BlocProvider(create: (_) => locator<ChatCubit>()),
+        BlocProvider(create: (_) => locator<CommentCubit>()),
+        BlocProvider(create: (_) => locator<AuthCubit>()..checkAuth()),
+        BlocProvider(create: (_) => locator<SearchCubit>()),
+        BlocProvider(create: (_) => locator<ProfileCubit>()),
+        BlocProvider(create: (_) => locator<PostCubit>()),
+        BlocProvider(create: (_) => locator<ThemeCubit>()),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

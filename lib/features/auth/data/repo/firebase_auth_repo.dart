@@ -261,7 +261,6 @@ class FirebaseAuthRepo implements AuthRepoContract {
       final doc = await docRef.get();
 
       if (!doc.exists) {
-        // New user - create their profile
         final newUser = AppUser(
           uid: firebaseUser.uid,
           name: firebaseUser.displayName ?? 'Unknown',

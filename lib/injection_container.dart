@@ -29,43 +29,47 @@ import 'features/comments/presentation/cubit/comment_cubit.dart';
 import 'features/stories/presentation/cubit/story_cubit.dart';
 import 'core/themes/theme_cubit.dart';
 
-final sl = GetIt.instance;
+final locator = GetIt.instance;
 
 Future<void> initDependencies() async {
   // Repos
-  sl.registerLazySingleton<AuthRepoContract>(() => FirebaseAuthRepo());
-  sl.registerLazySingleton<PostRepoContract>(() => PostRepo());
-  sl.registerLazySingleton(() => ProfileUserRepo());
-  sl.registerLazySingleton(() => SearchRepo());
-  sl.registerLazySingleton(() => PrivacyRepo());
-  sl.registerLazySingleton<FollowRequestRepoContract>(
+  locator.registerLazySingleton<AuthRepoContract>(() => FirebaseAuthRepo());
+  locator.registerLazySingleton<PostRepoContract>(() => PostRepo());
+  locator.registerLazySingleton(() => ProfileUserRepo());
+  locator.registerLazySingleton(() => SearchRepo());
+  locator.registerLazySingleton(() => PrivacyRepo());
+  locator.registerLazySingleton<FollowRequestRepoContract>(
     () => FollowRequestRepo(),
   );
-  sl.registerLazySingleton<ChatRepoContract>(() => FirebaseChatRepo());
-  sl.registerLazySingleton<CommentRepoContract>(() => CommentRepo());
-  sl.registerLazySingleton(
+  locator.registerLazySingleton<ChatRepoContract>(() => FirebaseChatRepo());
+  locator.registerLazySingleton<CommentRepoContract>(() => CommentRepo());
+  locator.registerLazySingleton(
     () => StoriesRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       supabase: Supabase.instance.client,
     ),
   );
-  sl.registerLazySingleton<StoriesRepository>(
+  locator.registerLazySingleton<StoriesRepository>(
     () => StoriesRepositoryImpl(
       firestore: FirebaseFirestore.instance,
       supabase: Supabase.instance.client,
     ),
   );
   // Cubits
-  sl.registerFactory(() => AuthCubit(sl<AuthRepoContract>()));
-  sl.registerFactory(() => PostCubit(postRepo: sl()));
-  sl.registerFactory(() => ProfileCubit(sl()));
-  sl.registerFactory(() => SearchCubit(sl()));
-  sl.registerFactory(() => PrivacyCubit(sl()));
-  sl.registerFactory(() => FollowRequestCubit(sl<FollowRequestRepoContract>()));
-  sl.registerFactory(() => ChatCubit(sl<ChatRepoContract>()));
-  sl.registerFactory(
-    () => CommentCubit(commentRepo: sl<CommentRepoContract>()),
+  locator.registerFactory(() => AuthCubit(locator<AuthRepoContract>()));
+  locator.registerFactory(() => PostCubit(postRepo: locator()));
+  locator.registerFactory(() => ProfileCubit(locator()));
+  locator.registerFactory(() => SearchCubit(locator()));
+  locator.registerFactory(() => PrivacyCubit(locator()));
+  locator.registerFactory(
+    () => FollowRequestCubit(locator<FollowRequestRepoContract>()),
   );
-  sl.registerFactory(() => StoriesCubit(repository: sl<StoriesRepository>()));
-  sl.registerLazySingleton(() => ThemeCubit());
+  locator.registerFactory(() => ChatCubit(locator<ChatRepoContract>()));
+  locator.registerFactory(
+    () => CommentCubit(commentRepo: locator<CommentRepoContract>()),
+  );
+  locator.registerFactory(
+    () => StoriesCubit(repository: locator<StoriesRepository>()),
+  );
+  locator.registerLazySingleton(() => ThemeCubit());
 }
