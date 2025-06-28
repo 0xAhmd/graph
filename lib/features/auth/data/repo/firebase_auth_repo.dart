@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:ig_mate/core/utils/err_mapper.dart';
+import 'package:ig_mate/core/utils/file_name.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     hide User, OAuthProvider;
 import '../../domain/entities/app_user.dart';
@@ -53,7 +55,7 @@ class FirebaseAuthRepo implements AuthRepoContract {
       return user;
     } on FirebaseAuthException catch (e) {
       // convert Firebase error code to user-friendly message and throw it
-      throw _mapFirebaseAuthErrorToMessage(e);
+      throw mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
       throw "Something went wrong. Please try again.";
     }
@@ -65,41 +67,20 @@ class FirebaseAuthRepo implements AuthRepoContract {
     String? password,
   }) async {
     try {
-
       UserCredential userCredential = await firebaseAuth
           .signInWithEmailAndPassword(email: email!, password: password!);
       final uid = userCredential.user!.uid;
 
       final doc = await firestore.collection('users').doc(uid).get();
       if (!doc.exists || doc.data() == null) {
-
         throw "User data not found.";
       }
 
       return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-
-      throw _mapFirebaseAuthErrorToMessage(e);
+      throw mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-
       throw "Something went wrong. Please try again.";
-    }
-  }
-
-  String _mapFirebaseAuthErrorToMessage(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return "No user found for that email.";
-      case 'wrong-password':
-        return "Incorrect password. Please try again.";
-      case 'invalid-email':
-        return "The email address is badly formatted.";
-      case 'user-disabled':
-        return "This user account has been disabled.";
-      case 'too-many-requests':
-        return "Too many login attempts. Try again later.";
-      default:
-        return "Login failed. Please try again.";
     }
   }
 
@@ -118,19 +99,15 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       // Finally, delete the Firebase Auth user
       await user.delete();
-
     } on FirebaseAuthException catch (e) {
-
-      throw _mapFirebaseAuthErrorToMessage(e);
+      throw mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-
       throw "Failed to delete account. Please try again.";
     }
   }
 
   @override
   Future<void> deleteUserInfoFromFirebase(String uid) async {
-
     try {
       // Initialize Supabase storage bucket
       final bucket = Supabase.instance.client.storage.from('images');
@@ -145,7 +122,7 @@ class FirebaseAuthRepo implements AuthRepoContract {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
         String? profileImgUrl = userData['profileImgUrl'];
         if (profileImgUrl != null && profileImgUrl.isNotEmpty) {
-          String? fileName = _extractFileNameFromSupabaseUrl(profileImgUrl);
+          String? fileName = extractFileNameFromSupabaseUrl(profileImgUrl);
           if (fileName != null) {
             imagesToDelete.add(fileName);
           }
@@ -162,7 +139,7 @@ class FirebaseAuthRepo implements AuthRepoContract {
         Map<String, dynamic> postData = post.data() as Map<String, dynamic>;
         String? postImgUrl = postData['postImgUrl'];
         if (postImgUrl != null && postImgUrl.isNotEmpty) {
-          String? fileName = _extractFileNameFromSupabaseUrl(postImgUrl);
+          String? fileName = extractFileNameFromSupabaseUrl(postImgUrl);
           if (fileName != null) {
             imagesToDelete.add(fileName);
           }
@@ -181,14 +158,11 @@ class FirebaseAuthRepo implements AuthRepoContract {
             'Successfully deleted ${imagesToDelete.length} images from Supabase storage',
           );
         } catch (e) {
-
-          // Continue with Firestore deletion even if image deletion fails
+          debugPrint('Failed to delete images from Supabase storage: $e');
+          throw "Failed to delete images from storage. Please try again.";
         }
       }
 
-      // Now proceed with existing Firestore cleanup...
-
-      // First, handle all updates (removing likes from posts and follow relationships)
       QuerySnapshot allPosts = await firestore.collection('posts').get();
       WriteBatch updateBatch = firestore.batch();
 
@@ -257,34 +231,8 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       // Commit the deletion batch
       await deleteBatch.commit();
-
     } catch (e) {
-
       rethrow;
-    }
-  }
-
-  // Helper method to extract filename from Supabase public URL
-  String? _extractFileNameFromSupabaseUrl(String url) {
-    try {
-      // Supabase public URLs typically look like:
-      // https://[project-id].supabase.co/storage/v1/object/public/images/[filename]
-
-      Uri uri = Uri.parse(url);
-      List<String> pathSegments = uri.pathSegments;
-
-      // Find the index of 'public' and get the next segment after bucket name
-      int publicIndex = pathSegments.indexOf('public');
-      if (publicIndex != -1 && publicIndex + 2 < pathSegments.length) {
-        // The filename should be after 'public/bucket-name/'
-        return pathSegments[publicIndex + 2];
-      }
-
-      // Alternative: just get the last segment if the above doesn't work
-      return pathSegments.last;
-    } catch (e) {
-
-      return null;
     }
   }
 
@@ -325,10 +273,8 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-
-      throw _mapFirebaseAuthErrorToMessage(e);
+      throw mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-
       throw "Google sign-in failed. Please try again.";
     }
   }
@@ -370,10 +316,8 @@ class FirebaseAuthRepo implements AuthRepoContract {
 
       return AppUser.fromJson(doc.data()!);
     } on FirebaseAuthException catch (e) {
-
-      throw _mapFirebaseAuthErrorToMessage(e);
+      throw mapFirebaseAuthErrorToMessage(e);
     } catch (e) {
-
       throw "GitHub sign-in failed. Please try again.";
     }
   }
