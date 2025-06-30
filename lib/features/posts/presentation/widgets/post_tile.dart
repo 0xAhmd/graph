@@ -1,6 +1,5 @@
 // ignore_for_file: deprecated_member_use
 
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ig_mate/features/comments/presentation/widgets/comment_avatar.dart';
@@ -325,14 +324,11 @@ class _PostTileState extends State<PostTile> {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: Theme.of(context).colorScheme.secondary,
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: PostHeader(
               onDeletePressed: widget.onDeletePressed,
               post: widget.post,
