@@ -380,8 +380,7 @@ class _ProfilePageState extends State<ProfilePage>
     return user.followers.contains(currentUser?.uid);
   }
 
-  // Build action buttons row (Follow + Message buttons)
-  // ...existing code...
+  
 
   Widget _buildActionButtons(ProfileUserEntity user) {
     return Padding(

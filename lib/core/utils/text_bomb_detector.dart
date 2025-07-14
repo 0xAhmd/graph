@@ -14,4 +14,3 @@ bool isTextBomb(String message) {
 
 
 
-// TODO make images rendering in web 

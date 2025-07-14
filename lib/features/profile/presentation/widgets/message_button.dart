@@ -108,7 +108,6 @@ class _EnhancedMessageButtonState extends State<EnhancedMessageButton> {
       ),
     );
   }
-  // ...existing code...
 
   @override
   Widget build(BuildContext context) {

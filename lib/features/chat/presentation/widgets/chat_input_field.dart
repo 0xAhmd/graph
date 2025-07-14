@@ -53,7 +53,6 @@ class _ChatInputFieldState extends State<ChatInputField> {
       _focusNode.requestFocus();
     }
   }
-  // ...existing code...
 
   @override
   Widget build(BuildContext context) {
@@ -144,6 +143,4 @@ class _ChatInputFieldState extends State<ChatInputField> {
       ),
     );
   }
-
-
 }

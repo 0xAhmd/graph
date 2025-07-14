@@ -104,9 +104,7 @@ class PostHeader extends StatelessWidget {
                 ? DecorationImage(
                     image: NetworkImage(postUser!.profileImgUrl),
                     fit: BoxFit.cover,
-                    onError: (exception, stackTrace) {
-
-                    },
+                    onError: (exception, stackTrace) {},
                   )
                 : null,
           ),
@@ -142,7 +140,6 @@ class PostHeader extends StatelessWidget {
     }
   }
 
-  // ...existing code...
   void showOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
