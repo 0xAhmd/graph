@@ -63,7 +63,7 @@ class FollowButton extends StatelessWidget {
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 25, left: 25, bottom: 25, top: 4),
+        margin: const EdgeInsets.only(top: 10),
         padding: const EdgeInsets.all(10),
         width: double.infinity,
         decoration: BoxDecoration(

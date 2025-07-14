@@ -10,7 +10,10 @@ class BlockedDeviceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: BlockedDeviceScreen());
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: BlockedDeviceScreen(),
+    );
   }
 }
 

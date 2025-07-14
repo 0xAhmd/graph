@@ -18,6 +18,60 @@ class ChatCubit extends Cubit<ChatState> {
 
   // Cache the loaded users to avoid refetching
   List<ChatUser>? _cachedUsers;
+  // Add these methods to your existing ChatCubit class
+
+  // Enhanced method to start conversation from profile
+  Future<void> startConversationFromProfile(
+    String currentUserId,
+    String targetUserId,
+  ) async {
+    try {
+      emit(ChatLoading());
+
+      // Get or create conversation
+      final conversation = await chatRepo.getOrCreateConversation(
+        currentUserId,
+        targetUserId,
+      );
+
+      // Load messages for the conversation
+      loadMessages(conversation.id, currentUserId);
+
+      emit(ChatConversationCreated(conversation));
+    } catch (e) {
+      emit(ChatError(e.toString()));
+    }
+  }
+
+  // Method to check if conversation exists between two users
+  Future<bool> conversationExists(String userId1, String userId2) async {
+    try {
+      final conversations = await chatRepo.getUserConversations(userId1);
+      return conversations.any(
+        (conversation) => conversation.participants.contains(userId2),
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Method to get existing conversation between two users
+  Future<ChatConversation?> getExistingConversation(
+    String userId1,
+    String userId2,
+  ) async {
+    try {
+      final conversations = await chatRepo.getUserConversations(userId1);
+      for (final conversation in conversations) {
+        if (conversation.participants.contains(userId2)) {
+          return conversation;
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   // Load available users to chat with
   Future<void> loadAvailableUsers(
@@ -182,7 +236,6 @@ class ChatCubit extends Cubit<ChatState> {
       await chatRepo.updateUserOnlineStatus(userId, isOnline);
     } catch (e) {
       debugPrint(e.toString());
-
     }
   }
 

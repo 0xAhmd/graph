@@ -8,6 +8,7 @@ import 'package:ig_mate/features/auth/presentation/cubit/cubit/auth_cubit.dart';
 import 'package:ig_mate/features/posts/domain/entities/post_entity.dart';
 import 'package:ig_mate/features/profile/domain/entities/profile_user.dart';
 import 'package:ig_mate/features/profile/presentation/cubit/cubit/profile_cubit.dart';
+import 'package:ig_mate/features/profile/presentation/widgets/message_button.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/preview_page.dart';
 import 'package:ig_mate/features/profile/presentation/widgets/profile_grid.dart';
 import 'package:ig_mate/features/stories/presentation/cubit/story_cubit.dart';
@@ -48,23 +49,23 @@ class _ProfilePageState extends State<ProfilePage>
   bool _isBlockLoading = false;
   late TabController _tabController;
   FollowRequestEntity? _followRequest;
-  String? _lastLoadedUid; // Track the last loaded UID
+  String? _lastLoadedUid;
 
   @override
   void didUpdateWidget(ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // CRITICAL FIX: Reset state when UID changes
     if (oldWidget.uid != widget.uid) {
-      // Reset all state variables
       _isFollowLoading = false;
       _isBlockLoading = false;
       _followRequest = null;
-      _lastLoadedUid = null; // Reset the tracked UID
-
-      // Re-initialize data for new UID
+      _lastLoadedUid = null;
       _initializeData();
     }
+  }
+
+  bool _isUserFollowing(ProfileUserEntity user) {
+    return user.followers.contains(currentUser?.uid);
   }
 
   @override
@@ -74,15 +75,7 @@ class _ProfilePageState extends State<ProfilePage>
     _initializeData();
   }
 
-  // REMOVE the didChangeDependencies method - it's causing issues
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-  //   // Remove this - it's causing unnecessary refreshes
-  // }
-
   Future<void> _initializeData() async {
-    // Only initialize if we haven't loaded this UID yet or if it's different
     if (_lastLoadedUid != widget.uid) {
       _lastLoadedUid = widget.uid;
 
@@ -90,7 +83,6 @@ class _ProfilePageState extends State<ProfilePage>
       context.read<PostCubit>().fetchAllPosts();
       storyCubit.fetchStories();
 
-      // Load follow request data if not own profile
       if (!_isOwnProfile) {
         followRequestCubit.loadFollowRequests(currentUser!.uid);
         _loadFollowRequest();
@@ -132,8 +124,6 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
-  // ... rest of your methods stay the same ...
-
   FollowButtonState _getFollowButtonState(ProfileUserEntity user) {
     final isFollowing = user.followers.contains(currentUser!.uid);
     final hasRequestSent =
@@ -159,26 +149,19 @@ class _ProfilePageState extends State<ProfilePage>
 
       switch (followButtonState) {
         case FollowButtonState.follow:
-          // Direct follow for public profiles
           await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
           break;
-
         case FollowButtonState.sendRequest:
-          // Send follow request for private profiles
           await followRequestCubit.sendFollowRequest(
             fromUserId: currentUser!.uid,
             toUserId: widget.uid,
           );
           await _loadFollowRequest();
           break;
-
         case FollowButtonState.following:
-          // Unfollow
           await profileCubit.toggleFollow(currentUser!.uid, widget.uid);
           break;
-
         case FollowButtonState.requestSent:
-          // Cancel follow request
           await followRequestCubit.cancelFollowRequest(
             fromUserId: currentUser!.uid,
             toUserId: widget.uid,
@@ -187,7 +170,6 @@ class _ProfilePageState extends State<ProfilePage>
           break;
       }
 
-      // Refresh profile data
       await refreshProfile();
     } catch (e) {
       if (mounted) {
@@ -223,7 +205,6 @@ class _ProfilePageState extends State<ProfilePage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -233,8 +214,6 @@ class _ProfilePageState extends State<ProfilePage>
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
-              // Block user option
               ListTile(
                 leading: const Icon(Icons.block, color: Colors.red),
                 title: Text(
@@ -273,7 +252,6 @@ class _ProfilePageState extends State<ProfilePage>
                   );
                 },
               ),
-              // Cancel option
               ListTile(
                 leading: const Icon(Icons.cancel_outlined),
                 title: const Text('Cancel'),
@@ -402,6 +380,40 @@ class _ProfilePageState extends State<ProfilePage>
     return user.followers.contains(currentUser?.uid);
   }
 
+  // Build action buttons row (Follow + Message buttons)
+  // ...existing code...
+
+  Widget _buildActionButtons(ProfileUserEntity user) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        children: [
+          // Follow button - equal space
+          Expanded(
+            flex: 1,
+            child: _isFollowLoading
+                ? const Center(child: CupertinoActivityIndicator())
+                : FollowButton(
+                    followButtonState: _getFollowButtonState(user),
+                    onTap: () => _handleFollowButtonPressed(user),
+                    isLoading: _isFollowLoading,
+                  ),
+          ),
+          const SizedBox(width: 12),
+          // Message button - equal space
+          Expanded(
+            flex: 1,
+            child: EnhancedMessageButton(
+              profileUser: user,
+              isOwnProfile: _isOwnProfile,
+              isFollowing: _isUserFollowing(user),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProfileCubit, ProfileState>(
@@ -430,6 +442,7 @@ class _ProfilePageState extends State<ProfilePage>
 
                   return ConstrainedScaffold(
                     appBar: AppBar(
+                      elevation: 0,
                       actions: [
                         if (_isOwnProfile)
                           PopupMenuButton<String>(
@@ -494,7 +507,10 @@ class _ProfilePageState extends State<ProfilePage>
                       title: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(user.name),
+                          Text(
+                            user.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           if (user.isPrivate) ...[
                             const SizedBox(width: 8),
                             const Icon(Icons.lock_outline, size: 16),
@@ -506,181 +522,184 @@ class _ProfilePageState extends State<ProfilePage>
                     body: RefreshIndicator(
                       onRefresh: refreshProfile,
                       child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 20),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          children: [
+                            // Profile Header Section
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 20),
 
-                              // Profile image with story ring
-                              GestureDetector(
-                                onTap: userStories.isNotEmpty
-                                    ? () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                StoryViewerPage(
-                                                  stories: userStories,
-                                                  initialIndex: 0,
-                                                ),
-                                          ),
-                                        );
-                                      }
-                                    : null,
-                                child: Container(
-                                  width: 170,
-                                  height: 170,
-                                  decoration: userStories.isNotEmpty
-                                      ? const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Color(0xFFF58529),
-                                              Color(0xFFDD2A7B),
-                                              Color(0xFF8134AF),
-                                              Color(0xFF515BD4),
-                                            ],
-                                            begin: Alignment.topRight,
-                                            end: Alignment.bottomLeft,
-                                          ),
-                                        )
-                                      : null,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(
-                                      userStories.isNotEmpty ? 5.0 : 0,
-                                    ),
-                                    child: ProfileImageViewer(
-                                      imageUrl: user.profileImgUrl,
-                                      size: 160,
-                                      heroTag: 'profile-image',
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 24),
-                              Text(
-                                user.email,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 25),
-
-                              ProfileStats(
-                                onTap: canViewContent
-                                    ? () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => FollowerPage(
-                                              followers: user.followers,
-                                              followings: user.followings,
-                                              originalProfileUid: widget
-                                                  .uid, // Pass the current profile UID
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    : null,
-                                postCount: canViewContent
-                                    ? userPosts.length
-                                    : 0,
-                                followersCount: user.followers.length,
-                                followingCount: canViewContent
-                                    ? user.followings.length
-                                    : 0,
-                              ),
-                              const SizedBox(height: 25),
-
-                              // Follow button for non-own profiles
-                              if (!_isOwnProfile)
-                                _isFollowLoading
-                                    ? const CupertinoActivityIndicator()
-                                    : FollowButton(
-                                        followButtonState:
-                                            _getFollowButtonState(user),
-                                        onTap: () =>
-                                            _handleFollowButtonPressed(user),
-                                        isLoading: _isFollowLoading,
-                                      ),
-
-                              // Bio section
-                              if (canViewContent) ...[
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        "Bio",
-                                        style: TextStyle(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                BioBox(text: user.bio),
-                              ],
-
-                              // Content section
-                              Padding(
-                                padding: const EdgeInsets.only(top: 25),
-                                child: Column(
-                                  children: [
-                                    if (canViewContent) ...[
-                                      // Tab Bar
-                                      TabBar(
-                                        dividerColor: Colors.transparent,
-                                        controller: _tabController,
-                                        indicatorColor: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        tabs: const [
-                                          Tab(icon: Icon(Icons.grid_on)),
-                                        ],
-                                      ),
-
-                                      // Posts Grid
-                                      SizedBox(
-                                        height: 400,
-                                        child: TabBarView(
-                                          controller: _tabController,
-                                          children: [
-                                            if (postState is PostLoading)
-                                              const Center(
-                                                child:
-                                                    CupertinoActivityIndicator(),
-                                              )
-                                            else
-                                              ProfilePostsGrid(
-                                                posts: userPosts,
-                                                onPostTap: (index) =>
-                                                    _navigateToPostPreview(
-                                                      userPosts,
-                                                      index,
+                                  // Profile image with story ring
+                                  GestureDetector(
+                                    onTap: userStories.isNotEmpty
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    StoryViewerPage(
+                                                      stories: userStories,
+                                                      initialIndex: 0,
                                                     ),
                                               ),
-                                          ],
+                                            );
+                                          }
+                                        : null,
+                                    child: Container(
+                                      width: 180,
+                                      height: 180,
+                                      decoration: userStories.isNotEmpty
+                                          ? const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Color(0xFFF58529),
+                                                  Color(0xFFDD2A7B),
+                                                  Color(0xFF8134AF),
+                                                  Color(0xFF515BD4),
+                                                ],
+                                                begin: Alignment.topRight,
+                                                end: Alignment.bottomLeft,
+                                              ),
+                                            )
+                                          : null,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(
+                                          userStories.isNotEmpty ? 3.0 : 0,
+                                        ),
+                                        child: ProfileImageViewer(
+                                          imageUrl: user.profileImgUrl,
+                                          size: userStories.isNotEmpty
+                                              ? 114
+                                              : 120,
+                                          heroTag: 'profile-image-${user.uid}',
                                         ),
                                       ),
-                                    ] else ...[
-                                      // Private profile message
-                                      SizedBox(
-                                        height: 400,
-                                        child: _buildPrivateAccountMessage(),
-                                      ),
-                                    ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // Username and email
+                                  Text(
+                                    user.name,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    user.email,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Stats
+                                  ProfileStats(
+                                    onTap: canViewContent
+                                        ? () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    FollowerPage(
+                                                      followers: user.followers,
+                                                      followings:
+                                                          user.followings,
+                                                      originalProfileUid:
+                                                          widget.uid,
+                                                    ),
+                                              ),
+                                            );
+                                          }
+                                        : null,
+                                    postCount: canViewContent
+                                        ? userPosts.length
+                                        : 0,
+                                    followersCount: user.followers.length,
+                                    followingCount: canViewContent
+                                        ? user.followings.length
+                                        : 0,
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Action buttons for non-own profiles
+                                  if (!_isOwnProfile) ...[
+                                    _buildActionButtons(user),
+                                    const SizedBox(height: 20),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  // Bio section
+                                  if (canViewContent &&
+                                      user.bio.isNotEmpty) ...[
+                                    BioBox(text: user.bio),
+                                  ],
+                                ],
+                              ),
+                            ),
+
+                            // Content section
+                            if (canViewContent) ...[
+                              // Tab Bar
+                              SizedBox(
+                                child: TabBar(
+                                  controller: _tabController,
+                                  dividerColor: Colors.transparent,
+                                  indicatorColor: Colors.transparent,
+                                  labelColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  unselectedLabelColor: Colors.grey,
+                                  tabs: const [
+                                    Tab(
+                                      icon: Icon(Icons.grid_on),
+                                      text: 'Posts',
+                                    ),
                                   ],
                                 ),
                               ),
+
+                              // Posts Grid
+                              SizedBox(
+                                height: 400,
+                                child: TabBarView(
+                                  controller: _tabController,
+                                  children: [
+                                    if (postState is PostLoading)
+                                      const Center(
+                                        child: CupertinoActivityIndicator(),
+                                      )
+                                    else if (userPosts.isEmpty)
+                                      const SizedBox()
+                                    else
+                                      ProfilePostsGrid(
+                                        posts: userPosts,
+                                        onPostTap: (index) =>
+                                            _navigateToPostPreview(
+                                              userPosts,
+                                              index,
+                                            ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ] else ...[
+                              // Private profile message
+                              SizedBox(
+                                height: 400,
+                                child: _buildPrivateAccountMessage(),
+                              ),
                             ],
-                          ),
+                          ],
                         ),
                       ),
                     ),
@@ -693,9 +712,26 @@ class _ProfilePageState extends State<ProfilePage>
                 } else if (profileState is ProfileError) {
                   return ConstrainedScaffold(
                     body: Center(
-                      child: Text(
-                        profileState.errMessage,
-                        style: const TextStyle(color: Colors.red),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 60,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            profileState.errMessage,
+                            style: const TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: refreshProfile,
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
                     ),
                   );
