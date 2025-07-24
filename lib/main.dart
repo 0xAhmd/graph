@@ -17,7 +17,7 @@ void main() async {
   final isJailBroken = await JailbreakRootDetection.instance.isJailBroken;
   final isRealDevice = await JailbreakRootDetection.instance.isRealDevice;
 
-  final isUnsafe = isJailBroken || isRealDevice;
+  final isUnsafe = isJailBroken || !isRealDevice;
 
   if (isUnsafe) {
     runApp(const BlockedDeviceApp());
