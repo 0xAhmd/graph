@@ -380,14 +380,15 @@ class _ProfilePageState extends State<ProfilePage>
     return user.followers.contains(currentUser?.uid);
   }
 
-  
-
   Widget _buildActionButtons(ProfileUserEntity user) {
+    final canViewContent = _canViewContent(user);
+    final showMessageButton = !_isOwnProfile && canViewContent;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          // Follow button - equal space
+          // Follow button - takes full width when message button is hidden
           Expanded(
             flex: 1,
             child: _isFollowLoading
@@ -398,16 +399,20 @@ class _ProfilePageState extends State<ProfilePage>
                     isLoading: _isFollowLoading,
                   ),
           ),
-          const SizedBox(width: 12),
-          // Message button - equal space
-          Expanded(
-            flex: 1,
-            child: EnhancedMessageButton(
-              profileUser: user,
-              isOwnProfile: _isOwnProfile,
-              isFollowing: _isUserFollowing(user),
+
+          // Only show message button and spacing if user can view content
+          if (showMessageButton) ...[
+            const SizedBox(width: 12),
+            // Message button - equal space when both buttons are shown
+            Expanded(
+              flex: 1,
+              child: EnhancedMessageButton(
+                profileUser: user,
+                isOwnProfile: _isOwnProfile,
+                isFollowing: _isUserFollowing(user),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

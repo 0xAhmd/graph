@@ -5,6 +5,7 @@ import 'features/chat/domain/repo/chat_repo_contract.dart';
 import 'features/comments/domain/repo/comment_repo_interface.dart';
 import 'features/posts/domain/repo/post_repo.dart';
 import 'features/profile/domain/repo/follow_request_repo.dart';
+import 'features/profile/domain/repo/privacy_repo.dart'; // Add this import
 import 'features/stories/domain/repo/story_repo_interface.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -37,7 +38,10 @@ Future<void> initDependencies() async {
   locator.registerLazySingleton<PostRepoContract>(() => PostRepo());
   locator.registerLazySingleton(() => ProfileUserRepo());
   locator.registerLazySingleton(() => SearchRepo());
-  locator.registerLazySingleton(() => PrivacyRepo());
+
+  // Fix: Register PrivacyRepo with its contract type
+  locator.registerLazySingleton<PrivacyRepoContract>(() => PrivacyRepo());
+
   locator.registerLazySingleton<FollowRequestRepoContract>(
     () => FollowRequestRepo(),
   );
@@ -55,12 +59,16 @@ Future<void> initDependencies() async {
       supabase: Supabase.instance.client,
     ),
   );
+
   // Cubits
   locator.registerFactory(() => AuthCubit(locator<AuthRepoContract>()));
   locator.registerFactory(() => PostCubit(postRepo: locator()));
   locator.registerFactory(() => ProfileCubit(locator()));
   locator.registerFactory(() => SearchCubit(locator()));
-  locator.registerFactory(() => PrivacyCubit(locator()));
+
+  // Fix: Specify the contract type for PrivacyCubit
+  locator.registerFactory(() => PrivacyCubit(locator<PrivacyRepoContract>()));
+
   locator.registerFactory(
     () => FollowRequestCubit(locator<FollowRequestRepoContract>()),
   );
