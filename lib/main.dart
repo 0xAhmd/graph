@@ -19,7 +19,7 @@ void main() async {
 
   final isUnsafe = isJailBroken || !isRealDevice;
 
-  if (isUnsafe) {
+  if (!isUnsafe) {
     runApp(const BlockedDeviceApp());
     return;
   }
